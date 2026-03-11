@@ -1,0 +1,18 @@
+{
+    "name": "hotel-rapor-bot",
+    "version": "1.0.0",
+    "description": "Azure Coast Resort - Yönetici Rapor Botu",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.0.0",
+        "axios": "^1.0.0",
+        "dotenv": "^16.0.0",
+        "ffmpeg-static": "^5.0.0",
+        "fluent-ffmpeg": "^2.1.0",
+        "openai": "^4.0.0",
+        "telegraf": "^4.0.0"
+    }
+}

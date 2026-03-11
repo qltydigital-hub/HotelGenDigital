@@ -1,0 +1,265 @@
+{
+  "otel": "Azure Coast Resort & SPA",
+  "gecerlilik": "2025 Sezonu",
+  "para_birimi": "EUR",
+  "son_guncelleme": "2025-01-15",
+
+  "sezon_tanimlari": {
+    "dusuk": { "donemler": ["01 Ocak - 31 Mart", "01 Kasim - 31 Aralik"], "aciklama": "Kis doenemi" },
+    "orta": { "donemler": ["01 Nisan - 31 Mayis", "16 Eylul - 31 Ekim"], "aciklama": "Bahar ve sonbahar" },
+    "yuksek": { "donemler": ["01 Haziran - 15 Temmuz", "01 Eylul - 15 Eylul"], "aciklama": "Yaz basi ve yaz sonu" },
+    "pik": { "donemler": ["16 Temmuz - 31 Agustos"], "aciklama": "En yogun donem" },
+    "bayram": { "donemler": ["23 Nisan", "19 Mayis", "30 Agustos", "29 Ekim", "Ramazan Bayrami", "Kurban Bayrami"], "aciklama": "Resmi tatiller - pik fiyat uygulanir" }
+  },
+
+  "oda_fiyatlari_gecelik_kisi_basi": {
+    "standart_oda_bahce": {
+      "dusuk_sezon": 55,
+      "orta_sezon": 85,
+      "yuksek_sezon": 130,
+      "pik_sezon": 165
+    },
+    "standart_oda_deniz": {
+      "dusuk_sezon": 70,
+      "orta_sezon": 100,
+      "yuksek_sezon": 150,
+      "pik_sezon": 190
+    },
+    "superior_oda": {
+      "dusuk_sezon": 90,
+      "orta_sezon": 125,
+      "yuksek_sezon": 180,
+      "pik_sezon": 230
+    },
+    "deluxe_oda": {
+      "dusuk_sezon": 120,
+      "orta_sezon": 160,
+      "yuksek_sezon": 220,
+      "pik_sezon": 280
+    },
+    "aile_odasi": {
+      "dusuk_sezon": 100,
+      "orta_sezon": 140,
+      "yuksek_sezon": 195,
+      "pik_sezon": 250
+    },
+    "junior_suite": {
+      "dusuk_sezon": 150,
+      "orta_sezon": 200,
+      "yuksek_sezon": 280,
+      "pik_sezon": 350
+    },
+    "king_suite": {
+      "dusuk_sezon": 220,
+      "orta_sezon": 300,
+      "yuksek_sezon": 420,
+      "pik_sezon": 520
+    },
+    "royal_suite": {
+      "dusuk_sezon": 400,
+      "orta_sezon": 550,
+      "yuksek_sezon": 750,
+      "pik_sezon": 950
+    }
+  },
+
+  "cocuk_politikasi": {
+    "0_2_yas": { "ucret": "Ucretsiz", "aciklama": "Bebek yatagi ucretsiz" },
+    "3_6_yas": { "indirim_orani": 75, "aciklama": "%75 indirim (yetiskin fiyati uzerinden)" },
+    "7_12_yas": { "indirim_orani": 50, "aciklama": "%50 indirim" },
+    "13_17_yas": { "indirim_orani": 25, "aciklama": "%25 indirim" }
+  },
+
+  "ekstra_yatak": {
+    "yetiskin_ekstra_yatak": 40,
+    "cocuk_ekstra_yatak_3_12": 20,
+    "bebek_yatagi": 0
+  },
+
+  "indirim_gruplari": [
+    {
+      "kod": "EB30",
+      "ad": "Erken Rezervasyon 30",
+      "indirim_orani": 30,
+      "kosul": "Check-in tarihinden en az 90 gun once yapilan rezervasyonlar",
+      "gecerlilik": "01 Ocak - 30 Nisan arasi rezervasyonlar",
+      "birlesebilir": false
+    },
+    {
+      "kod": "EB20",
+      "ad": "Erken Rezervasyon 20",
+      "indirim_orani": 20,
+      "kosul": "Check-in tarihinden en az 60 gun once yapilan rezervasyonlar",
+      "gecerlilik": "01 Mayis - 30 Haziran arasi rezervasyonlar",
+      "birlesebilir": false
+    },
+    {
+      "kod": "EB15",
+      "ad": "Erken Rezervasyon 15",
+      "indirim_orani": 15,
+      "kosul": "Check-in tarihinden en az 45 gun once",
+      "gecerlilik": "Tum sezon",
+      "birlesebilir": false
+    },
+    {
+      "kod": "HONEYMOON",
+      "ad": "Balayi Paketi",
+      "indirim_orani": 15,
+      "kosul": "Evlilik cuzdani ibraz edilmeli (son 6 ay)",
+      "gecerlilik": "Yil boyu",
+      "ekstra": "Oda dekorasyonu + meyve tabagi + 1 sise sampanya + SPA %20 indirim",
+      "birlesebilir": true
+    },
+    {
+      "kod": "LONGSTAY7",
+      "ad": "Uzun Konaklama 7+",
+      "indirim_orani": 10,
+      "kosul": "Minimum 7 gece konaklama",
+      "gecerlilik": "Yil boyu",
+      "birlesebilir": true
+    },
+    {
+      "kod": "LONGSTAY14",
+      "ad": "Uzun Konaklama 14+",
+      "indirim_orani": 18,
+      "kosul": "Minimum 14 gece konaklama",
+      "gecerlilik": "Yil boyu",
+      "birlesebilir": true
+    },
+    {
+      "kod": "REPEAT",
+      "ad": "Tekrar Misafir",
+      "indirim_orani": 10,
+      "kosul": "Daha once konaklama yapmis misafirler",
+      "gecerlilik": "Yil boyu",
+      "birlesebilir": true
+    },
+    {
+      "kod": "GROUP20",
+      "ad": "Grup Indirimi",
+      "indirim_orani": 12,
+      "kosul": "Minimum 20 oda ayni tarih araliginda",
+      "gecerlilik": "Yil boyu",
+      "birlesebilir": false
+    },
+    {
+      "kod": "AGENCY",
+      "ad": "Acenta Komisyonu",
+      "indirim_orani": 15,
+      "kosul": "Anlasmali seyahat acentalari",
+      "gecerlilik": "Yil boyu",
+      "birlesebilir": false
+    },
+    {
+      "kod": "LASTMIN",
+      "ad": "Son Dakika",
+      "indirim_orani": 25,
+      "kosul": "Check-in tarihinden 0-7 gun once (musaitlik durumuna gore)",
+      "gecerlilik": "Dusuk ve orta sezon",
+      "birlesebilir": false
+    }
+  ],
+
+  "ozel_paketler": [
+    {
+      "paket_adi": "Yilbasi Ozel Paketi",
+      "donem": "28 Aralik 2025 - 02 Ocak 2026",
+      "minimum_gece": 5,
+      "fiyat_kisi_basi_gece": 180,
+      "oda_tipi": "Superior ve uzeri",
+      "dahil_olanlar": [
+        "Ultra her sey dahil konsept",
+        "Yilbasi gala yemegi",
+        "Canli muzik ve eglence",
+        "Ozel yilbasi animasyonu",
+        "1 seans ucretsiz SPA masaji"
+      ]
+    },
+    {
+      "paket_adi": "Romantik Kacamak",
+      "donem": "Yil boyu (Cuma-Pazar)",
+      "minimum_gece": 2,
+      "fiyat_kisi_basi_gece": 140,
+      "oda_tipi": "Deluxe ve uzeri",
+      "dahil_olanlar": [
+        "Ultra her sey dahil konsept",
+        "Oda dekorasyonu (mum, cicek)",
+        "1 sise sampanya",
+        "Cift masaji (50 dk)",
+        "Gec cikis (14:00)"
+      ]
+    },
+    {
+      "paket_adi": "Aile Yaz Paketi",
+      "donem": "15 Haziran - 31 Agustos",
+      "minimum_gece": 7,
+      "fiyat_aile_gece": 320,
+      "oda_tipi": "Aile Odasi",
+      "dahil_olanlar": [
+        "Ultra her sey dahil konsept",
+        "2 yetiskin + 2 cocuk (0-12 yas)",
+        "Mini Club tam gun",
+        "Aquapark erisimi",
+        "1 aile fotograf cekimi"
+      ]
+    }
+  ],
+
+  "ucretli_ekstra_hizmetler": {
+    "transfer": {
+      "havalimani_tek_yon": 60,
+      "havalimani_gidis_donus": 100,
+      "vip_transfer_tek_yon": 120,
+      "aciklama": "Antalya Havalimani - Otel arasi (arac basi)"
+    },
+    "spa_fiyatlari": {
+      "aroma_terapi_masaji_50dk": 70,
+      "hot_stone_masaji_50dk": 80,
+      "bali_masaji_50dk": 75,
+      "thai_masaji_60dk": 85,
+      "cift_masaji_50dk": 130,
+      "yuz_bakimi_40dk": 55,
+      "vucut_peeling_30dk": 45
+    },
+    "su_sporlari": {
+      "jet_ski_15dk": 80,
+      "parasut": 60,
+      "banana": 15,
+      "sisme_bot_turu": 25,
+      "dalis_deneme": 70,
+      "dalis_sertifikali": 50
+    },
+    "diger": {
+      "ozel_aksam_yemegi_plajda": 150,
+      "dogum_gunu_pastasi": 45,
+      "oda_dekorasyon_paketi": 60,
+      "fotograf_cekimi_30dk": 80,
+      "ozel_tur_organizasyonu": "Talep uzerine"
+    }
+  },
+
+  "iptal_politikasi": {
+    "30_gun_oncesi": "Ucretsiz iptal",
+    "15_30_gun": "%25 kesinti",
+    "7_15_gun": "%50 kesinti",
+    "0_7_gun": "%100 kesinti (iade yok)",
+    "no_show": "%100 kesinti",
+    "ozel_not": "Bayram ve ozel donemlerde iptal kosullari farkli olabilir. Detaylar icin satis departmanini arayiniz."
+  },
+
+  "odeme_kosullari": {
+    "depozito": "%30 rezervasyon sirasinda",
+    "kalan_odeme": "Check-in sirasinda veya 7 gun oncesine kadar",
+    "kabul_edilen_odemeler": ["Nakit (TRY, EUR, USD)", "Visa", "Mastercard", "Amex", "Banka Havalesi"],
+    "kur_politikasi": "Odeme gunu TCMB doviz satis kuru uygulanir"
+  },
+
+  "notlar": [
+    "Tum fiyatlar kisi basi, gecelik ve EUR cinsinden belirtilmistir (aksi belirtilmedikce).",
+    "Fiyatlara KDV dahildir.",
+    "Ultra Her Sey Dahil konsepti tum fiyatlara dahildir.",
+    "Bayram donemleri pik sezon fiyati uygulanir (minimum konaklama suresi uygulanabilir).",
+    "Fiyatlar onceden haber verilmeksizin degistirebilir.",
+    "Grup rezervasyonlari icin ozel fiyat teklifi aliniz: sales@azurecoastresort.com"
+  ]
+}

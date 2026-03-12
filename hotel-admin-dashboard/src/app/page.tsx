@@ -109,6 +109,28 @@ export default function PresentationFunnel() {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/20 rounded-full blur-[120px] pointer-events-none" />
 
+      {/* Top Navigation Options */}
+      {slide < slides.length && (
+        <div className="absolute top-6 right-6 md:top-10 md:right-10 flex flex-col sm:flex-row gap-2 sm:gap-3 z-50">
+          <button 
+            onClick={() => { setSlide(slides.length); setShowModals('settings'); }} 
+            className="px-4 py-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-700/50 rounded-lg text-xs font-medium text-slate-300 backdrop-blur-md shadow-lg transition-all flex items-center justify-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">Sisteme Giriş Yapın</span>
+            <span className="sm:hidden">Sistem</span>
+          </button>
+          <button 
+            onClick={() => { setSlide(slides.length); setShowModals('admin'); }} 
+            className="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/50 rounded-lg text-xs font-medium text-purple-200 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4 text-purple-400" />
+            <span className="hidden sm:inline">VIP Yönetici Girişi</span>
+            <span className="sm:hidden">VIP Giriş</span>
+          </button>
+        </div>
+      )}
+
       {/* Presentation Container */}
       {slide < slides.length ? (
         <AnimatePresence mode="wait">

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet } from 'lucide-react';
+import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet, Users } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -153,6 +153,56 @@ export default function SettingsPage() {
                         </form>
                     </div>
 
+                </div>
+
+                {/* Departman Özel Eğitim & Veri Setleri */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                    <div className="flex items-center gap-4 mb-8">
+                        <Users className="w-7 h-7 text-blue-400" />
+                        <div>
+                            <h2 className="text-2xl font-extrabold uppercase tracking-wide">Departman Özel Veri Setleri</h2>
+                            <p className="text-slate-400 text-sm mt-1">Sistemin departmanlardan gelen görev ve sorulara nasıl davranması gerektiğini belirleyen kural ve raporlama dosyaları.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {/* Resepsiyon */}
+                        <div className="flex flex-col justify-between border border-slate-700 bg-slate-950/50 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
+                            <div>
+                                <h3 className="font-bold text-lg mb-2 text-white">Resepsiyon</h3>
+                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">Giriş/Çıkış işlemleri, upgrade politikaları, vize bilgileri ve resepsiyon standart kuralları.</p>
+                            </div>
+                            <label className="flex items-center justify-center w-full py-3 border border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors group/btn">
+                                <UploadCloud className="w-5 h-5 text-slate-500 mr-2 group-hover/btn:text-blue-400" />
+                                <span className="text-sm text-slate-400 group-hover/btn:text-blue-400 font-bold">Resepsiyon Belgesi Yükle</span>
+                                <input type="file" className="hidden" />
+                            </label>
+                        </div>
+                        {/* Guest Relation */}
+                        <div className="flex flex-col justify-between border border-slate-700 bg-slate-950/50 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
+                            <div>
+                                <h3 className="font-bold text-lg mb-2 text-white">Guest Relation</h3>
+                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">Misafir şikayet çözümleri, balayı paketleri, doğum günü ikram setleri ve sadakat programı kuralları.</p>
+                            </div>
+                            <label className="flex items-center justify-center w-full py-3 border border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors group/btn">
+                                <UploadCloud className="w-5 h-5 text-slate-500 mr-2 group-hover/btn:text-blue-400" />
+                                <span className="text-sm text-slate-400 group-hover/btn:text-blue-400 font-bold">GR Belgesi Yükle</span>
+                                <input type="file" className="hidden" />
+                            </label>
+                        </div>
+                        {/* Üst Yöneticiler */}
+                        <div className="flex flex-col justify-between border border-slate-700 bg-slate-950/50 rounded-2xl p-6 hover:border-purple-500/30 transition-colors">
+                            <div>
+                                <h3 className="font-bold text-lg mb-2 pl-1 border-l-4 border-purple-500 text-white">Üst Yöneticiler (VIP)</h3>
+                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">Gizli mali veriler, personel raporlama şablonları, kriz yönetimi ve VIP misafir protokolleri.</p>
+                            </div>
+                            <label className="flex items-center justify-center w-full py-3 border border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors group/btn">
+                                <UploadCloud className="w-5 h-5 text-slate-500 mr-2 group-hover/btn:text-purple-400" />
+                                <span className="text-sm text-slate-400 group-hover/btn:text-purple-400 font-bold">VIP Belge Yükle</span>
+                                <input type="file" className="hidden" />
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

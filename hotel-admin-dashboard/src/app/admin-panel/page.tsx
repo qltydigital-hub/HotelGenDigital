@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings } from 'lucide-react';
+import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 type Department = {
@@ -8,6 +8,8 @@ type Department = {
   name: string;
   telegramId: string;
   whatsappId: string;
+  startTime: string;
+  endTime: string;
 };
 
 export default function AdminPanel() {
@@ -15,11 +17,11 @@ export default function AdminPanel() {
   const [newDept, setNewDept] = useState('');
   
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567' },
-    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543' },
-    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '' },
-    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '' },
-    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '' },
+    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', startTime: '00:00', endTime: '23:59' },
+    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', startTime: '08:00', endTime: '24:00' },
+    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', startTime: '08:00', endTime: '22:00' },
+    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', startTime: '07:00', endTime: '23:00' },
+    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', startTime: '08:00', endTime: '18:00' },
   ]);
 
   const handleSave = () => {
@@ -27,7 +29,7 @@ export default function AdminPanel() {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const updateDept = (id: number, field: 'telegramId' | 'whatsappId', value: string) => {
+  const updateDept = (id: number, field: keyof Department, value: string) => {
     setDepartments(departments.map(d => d.id === id ? { ...d, [field]: value } : d));
   };
 
@@ -38,7 +40,9 @@ export default function AdminPanel() {
       id: Date.now(),
       name: newDept,
       telegramId: '',
-      whatsappId: ''
+      whatsappId: '',
+      startTime: '08:00',
+      endTime: '17:00'
     }]);
     setNewDept('');
   };
@@ -142,6 +146,27 @@ export default function AdminPanel() {
                   ) : (
                     <div className="w-11 h-11" /> // Spacer
                   )}
+                </div>
+
+                {/* Çalışma Saatleri */}
+                <div className="md:col-span-12 flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-900/80 rounded-xl p-3 border border-slate-800 mt-2">
+                   <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
+                      <Clock className="w-4 h-4 text-purple-400" />
+                      <span className="font-bold">Çalışma Saatleri (TR):</span>
+                   </div>
+                   <div className="flex items-center gap-3">
+                     <input type="time" value={dept.startTime} onChange={(e) => updateDept(dept.id, 'startTime', e.target.value)} className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 text-center w-[110px]" />
+                     <span className="text-slate-500 font-bold">-</span>
+                     <input type="time" value={dept.endTime} onChange={(e) => updateDept(dept.id, 'endTime', e.target.value)} className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 text-center w-[110px]" />
+                   </div>
+                   {dept.id !== 1 && (
+                     <div className="ml-auto text-xs font-bold text-amber-500/80 bg-amber-500/10 px-4 py-2 rounded-lg border border-amber-500/20">
+                       <span className="flex items-center gap-2">
+                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                         Mesai dışı otomatik yönlendirme: Resepsiyon
+                       </span>
+                     </div>
+                   )}
                 </div>
               </div>
             ))}

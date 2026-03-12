@@ -232,7 +232,7 @@ export default function PresentationFunnel() {
                 {showModals !== 'settings' ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-12">
                     <Settings className="w-16 h-16 text-blue-500 mb-6 group-hover:rotate-90 transition-transform duration-700" />
-                    <h3 className="text-2xl font-bold mb-2">Sistem Ayarları</h3>
+                    <h3 className="text-2xl font-bold mb-2">Hotel Sistem Ayarları</h3>
                     <p className="text-slate-400">Konsept bilgi ve belgelerini yüklemek için giriş yapın.</p>
                   </div>
                 ) : (
@@ -244,7 +244,7 @@ export default function PresentationFunnel() {
                     <div className="flex items-center gap-4 mb-8">
                       <div className="p-3 bg-blue-500/20 rounded-xl"><Settings className="w-8 h-8 text-blue-500" /></div>
                       <div>
-                        <h3 className="text-xl font-bold">Sistem Ayarları</h3>
+                        <h3 className="text-xl font-bold">Hotel Sistem Ayarları</h3>
                         <p className="text-sm text-blue-400">Veri Ekip Paneli</p>
                       </div>
                     </div>

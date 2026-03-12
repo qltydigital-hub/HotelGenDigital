@@ -68,7 +68,7 @@ export default function AdminPanel() {
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <Link href="/settings" className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
-              <Settings className="w-4 h-4" /> Sistem Ayarları
+              <Settings className="w-4 h-4" /> Hotel Sistem Ayarları
             </Link>
             <Link href="/" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center justify-center gap-2">
               ← Sunum Ekranına Dön

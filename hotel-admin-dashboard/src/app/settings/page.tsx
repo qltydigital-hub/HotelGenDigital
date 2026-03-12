@@ -31,7 +31,7 @@ export default function SettingsPage() {
                             <Settings className="w-8 h-8 text-blue-400" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight">Sistem Panel Ayarları</h1>
+                            <h1 className="text-3xl font-extrabold tracking-tight">Hotel Sistem Ayarları</h1>
                             <p className="text-slate-400 font-medium mt-1">Otel konsepti, Fact Sheet ve genel bilgilerin yönetimi.</p>
                         </div>
                     </div>

@@ -29,8 +29,8 @@ export default function PresentationFunnel() {
   const [error, setError] = useState('');
 
   const nextSlide = () => {
-    if (slide < slides.length - 1) {
-      setSlide(slide + 1);
+    if (slide < slides.length) {
+      setSlide((prev) => prev + 1);
     }
   };
 
@@ -155,7 +155,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-lg md:text-2xl text-slate-300 leading-relaxed font-light max-w-3xl mb-12"
+              className="text-lg md:text-2xl text-slate-300 leading-[1.8] md:leading-[2.2] font-light max-w-3xl mb-12"
             >
               {slides[slide].content}
             </motion.p>

@@ -132,7 +132,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent"
+              className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-white pb-2 leading-tight md:leading-tight drop-shadow-lg"
             >
               {slides[slide].title}
             </motion.h1>

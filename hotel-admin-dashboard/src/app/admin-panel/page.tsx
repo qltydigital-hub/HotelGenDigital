@@ -3,13 +3,16 @@ import React, { useState } from 'react';
 import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+export const ALL_DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts', 'Paz'];
+export const SHIFTS = ['08:00 - 16:00', '16:00 - 00:00', '00:00 - 08:00', '08:00 - 18:00', '09:00 - 17:00', '7/24'];
+
 type Department = {
   id: number;
   name: string;
   telegramId: string;
   whatsappId: string;
-  startTime: string;
-  endTime: string;
+  shift: string;
+  workingDays: string[];
 };
 
 export default function AdminPanel() {
@@ -17,11 +20,11 @@ export default function AdminPanel() {
   const [newDept, setNewDept] = useState('');
   
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', startTime: '00:00', endTime: '23:59' },
-    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', startTime: '08:00', endTime: '24:00' },
-    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', startTime: '08:00', endTime: '22:00' },
-    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', startTime: '07:00', endTime: '23:00' },
-    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', startTime: '08:00', endTime: '18:00' },
+    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', shift: '7/24', workingDays: [...ALL_DAYS] },
+    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS] },
+    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS] },
+    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', shift: '16:00 - 00:00', workingDays: [...ALL_DAYS] },
+    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', shift: '08:00 - 18:00', workingDays: [...ALL_DAYS] },
   ]);
 
   const handleSave = () => {
@@ -29,8 +32,20 @@ export default function AdminPanel() {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const updateDept = (id: number, field: keyof Department, value: string) => {
+  const updateDept = (id: number, field: keyof Department, value: any) => {
     setDepartments(departments.map(d => d.id === id ? { ...d, [field]: value } : d));
+  };
+
+  const toggleDay = (deptId: number, day: string) => {
+    setDepartments(departments.map(d => {
+      if (d.id === deptId) {
+        const days = d.workingDays.includes(day) 
+          ? d.workingDays.filter(dayName => dayName !== day)
+          : [...d.workingDays, day];
+        return { ...d, workingDays: days };
+      }
+      return d;
+    }));
   };
 
   const addDept = (e: React.FormEvent) => {
@@ -41,8 +56,8 @@ export default function AdminPanel() {
       name: newDept,
       telegramId: '',
       whatsappId: '',
-      startTime: '08:00',
-      endTime: '17:00'
+      shift: '08:00 - 16:00',
+      workingDays: [...ALL_DAYS]
     }]);
     setNewDept('');
   };
@@ -148,17 +163,46 @@ export default function AdminPanel() {
                   )}
                 </div>
 
-                {/* Çalışma Saatleri */}
-                <div className="md:col-span-12 flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-900/80 rounded-xl p-3 border border-slate-800 mt-2">
+                {/* Çalışma Saatleri ve Günleri */}
+                <div className="md:col-span-12 flex flex-col md:flex-row gap-4 items-start md:items-center bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-2">
                    <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
                       <Clock className="w-4 h-4 text-purple-400" />
-                      <span className="font-bold">Çalışma Saatleri (TR):</span>
+                      <span className="font-bold">Çalışma Düzeni:</span>
                    </div>
-                   <div className="flex items-center gap-3">
-                     <input type="time" value={dept.startTime} onChange={(e) => updateDept(dept.id, 'startTime', e.target.value)} className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 text-center w-[110px]" />
-                     <span className="text-slate-500 font-bold">-</span>
-                     <input type="time" value={dept.endTime} onChange={(e) => updateDept(dept.id, 'endTime', e.target.value)} className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 text-center w-[110px]" />
+                   
+                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full">
+                     {/* Vardiya Seçimi */}
+                     <select 
+                        value={dept.shift} 
+                        onChange={(e) => updateDept(dept.id, 'shift', e.target.value)} 
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-[140px] cursor-pointer"
+                     >
+                       {SHIFTS.map(shift => (
+                         <option key={shift} value={shift}>{shift}</option>
+                       ))}
+                     </select>
+
+                     {/* Gün Seçimi */}
+                     <div className="flex flex-wrap gap-2">
+                       {ALL_DAYS.map(day => {
+                         const isActive = dept.workingDays.includes(day);
+                         return (
+                           <button
+                             key={day}
+                             onClick={() => toggleDay(dept.id, day)}
+                             className={`text-xs px-2.5 py-1.5 rounded-md font-bold transition-all border ${
+                               isActive 
+                                ? 'bg-purple-600/30 text-purple-300 border-purple-500/50' 
+                                : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
+                             }`}
+                           >
+                             {day}
+                           </button>
+                         )
+                       })}
+                     </div>
                    </div>
+
                    {dept.id !== 1 && (
                      <div className="ml-auto text-xs font-bold text-amber-500/80 bg-amber-500/10 px-4 py-2 rounded-lg border border-amber-500/20">
                        <span className="flex items-center gap-2">

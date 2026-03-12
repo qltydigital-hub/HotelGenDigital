@@ -132,10 +132,10 @@ export default function PresentationFunnel() {
       )}
 
       {/* Presentation Container */}
-      {slide < slides.length ? (
-        <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait">
+        {slide < slides.length ? (
           <motion.div
-            key={slide}
+            key={`slide-${slide}`}
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 1.05 }}
@@ -206,13 +206,13 @@ export default function PresentationFunnel() {
               ))}
             </div>
           </motion.div>
-        </AnimatePresence>
-      ) : (
-        /* Final Action State (Login Modules) */
-        <AnimatePresence>
+        ) : (
+          /* Final Action State (Login Modules) */
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            key="login-panels"
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
             className="max-w-5xl w-full px-6 flex flex-col items-center z-10"
           >
             <div className="text-center mb-16">
@@ -329,8 +329,8 @@ export default function PresentationFunnel() {
               </div>
             </div>
           </motion.div>
-        </AnimatePresence>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }

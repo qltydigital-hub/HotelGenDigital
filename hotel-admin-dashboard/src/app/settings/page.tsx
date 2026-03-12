@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet, Users } from 'lucide-react';
+import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet, Users, Banknote, ListPlus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -76,6 +76,42 @@ export default function SettingsPage() {
                                     <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-cyan-400 transition-colors" />
                                     <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-cyan-400">Tıklayın</span> veya sürükleyip bırakın</p>
                                     <p className="text-xs text-slate-500">XLSX, PDF veya DOCX (Max 15MB)</p>
+                                </div>
+                                <input type="file" className="hidden" />
+                            </label>
+                        </div>
+
+                        {/* Fiyat Listesi Yükleme */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <Banknote className="w-6 h-6 text-emerald-400" />
+                                <h2 className="text-xl font-bold">Fiyat Listesi Ekle</h2>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-6">A la carte restoranlar, SPA, transfer veya ekstra servislerin güncel fiyatlandırmalarını sisteme yükleyin.</p>
+                            
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-emerald-400 transition-colors" />
+                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-emerald-400">Tıklayın</span> veya sürükleyip bırakın</p>
+                                    <p className="text-xs text-slate-500">PDF, XLSX, DOCX (Max 10MB)</p>
+                                </div>
+                                <input type="file" className="hidden" />
+                            </label>
+                        </div>
+
+                        {/* In-house Yükleme */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <ListPlus className="w-6 h-6 text-orange-400" />
+                                <h2 className="text-xl font-bold">In-house Liste Ekle</h2>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-6">İçeride konaklayan anlık misafir listesini yükleyerek yapay zekanın misafirleri ve odalarını tanımasını sağlayın.</p>
+                            
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-orange-400 transition-colors" />
+                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-orange-400">Tıklayın</span> veya sürükleyip bırakın</p>
+                                    <p className="text-xs text-slate-500">XLSX, XLS (Sadece Excel - Max 15MB)</p>
                                 </div>
                                 <input type="file" className="hidden" />
                             </label>

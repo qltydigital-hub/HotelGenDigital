@@ -1,112 +1,158 @@
-'use client';
-import React from 'react';
-import { Settings, UserCircle, Key, Shield, MessageSquare, Ticket, Users, BarChart } from 'lucide-react';
+"use client";
+import React, { useState } from 'react';
+import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 
-export default function OldSettingsPage() {
+export default function SettingsPage() {
+    const [saved, setSaved] = useState(false);
+    
+    // Form States
+    const [hotelInfo, setHotelInfo] = useState({
+        name: 'HotelGen Digital Resort',
+        address: 'Antalya, Türkiye',
+        phone: '+90 242 123 4567',
+        generalRules: 'Check-in: 14:00, Check-out: 12:00. Evcil hayvan kabul edilmemektedir.',
+    });
+
+    const handleSave = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+    };
+
     return (
-        <div className="min-h-screen bg-[#0f172a] text-white p-8">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex items-center justify-between mb-12">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-blue-600 p-4 rounded-2xl shadow-xl shadow-blue-500/20">
-                            <Settings className="w-8 h-8 text-white" />
+        <div className="min-h-screen bg-[#0a0f1c] text-white p-6 md:p-10 font-sans">
+            <div className="max-w-6xl mx-auto space-y-8">
+                
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+                    <div className="flex items-center gap-5">
+                        <div className="bg-blue-600/20 p-4 rounded-2xl border border-blue-500/30">
+                            <Settings className="w-8 h-8 text-blue-400" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black tracking-tight">HOTEL & <span className="text-blue-500">ADMIN AYARLARI</span></h1>
-                            <p className="text-slate-400 font-medium">Sistem konfigürasyonu ve yönetim paneli</p>
+                            <h1 className="text-3xl font-extrabold tracking-tight">Sistem Panel Ayarları</h1>
+                            <p className="text-slate-400 font-medium mt-1">Otel konsepti, Fact Sheet ve genel bilgilerin yönetimi.</p>
                         </div>
                     </div>
-                    <Link href="/" className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm">
-                        Dashboard'a Dön
+                    <Link href="/" className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center gap-2">
+                        ← Sunum Ekranına Dön
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {/* DEPARTMAN YETKİLERİ */}
-                    <Link href="/settings-panel?tab=access" className="group">
-                        <div className="h-full bg-slate-900 border border-blue-500/30 hover:border-blue-500 rounded-[32px] p-8 transition-all hover:bg-blue-500/5 shadow-lg hover:shadow-blue-500/10 relative overflow-hidden">
-                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
-                            <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/50">
-                                <Shield className="w-8 h-8 text-white" />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* Left Column: Uploads */}
+                    <div className="lg:col-span-5 space-y-6">
+                        
+                        {/* Konsept Yükleme */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <FileText className="w-6 h-6 text-blue-400" />
+                                <h2 className="text-xl font-bold">Konsept Dosyası Ekle</h2>
                             </div>
-                            <h2 className="text-2xl font-black mb-3">DEPARTMAN YETKİLERİ</h2>
-                            <p className="text-slate-400 font-medium text-sm leading-relaxed mb-6">Resepsiyon, Guest Relation ve Admin şifrelerini, panellere olan erişim yetkilerini buradan tanımlayın.</p>
-                            <div className="flex items-center text-blue-400 font-black text-xs tracking-widest gap-2 uppercase">
-                                Kontrol Et →
-                            </div>
+                            <p className="text-slate-400 text-sm mb-6">Yaz sezonu, kış sezonu veya özel etkinlik konseptlerini içeren belgeleri yükleyin (Word/PDF).</p>
+                            
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-blue-400 transition-colors" />
+                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-blue-400">Tıklayın</span> veya sürükleyip bırakın</p>
+                                    <p className="text-xs text-slate-500">PDF, DOCX, veya TXT (Max 10MB)</p>
+                                </div>
+                                <input type="file" className="hidden" />
+                            </label>
                         </div>
-                    </Link>
 
-                    {/* API ANAHTARLARI */}
-                    <Link href="/settings-panel?tab=api" className="group">
-                        <div className="h-full bg-slate-900 border border-slate-800 hover:border-blue-500/30 rounded-[32px] p-8 transition-all hover:bg-slate-800/50 shadow-lg relative overflow-hidden">
-                            <div className="bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border border-slate-700">
-                                <Key className="w-8 h-8 text-blue-400" />
+                        {/* Fact Sheet Yükleme */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <FileSpreadsheet className="w-6 h-6 text-cyan-400" />
+                                <h2 className="text-xl font-bold">Hotel Fact Sheet Ekle</h2>
                             </div>
-                            <h2 className="text-2xl font-black mb-3">API ANAHTARLARI</h2>
-                            <p className="text-slate-400 font-medium text-sm leading-relaxed mb-6">OpenAI, Perplexity ve ManyChat API entegrasyonlarını, token yapılandırmasını yönetin.</p>
-                            <div className="flex items-center text-slate-500 font-black text-xs tracking-widest gap-2 uppercase group-hover:text-blue-400 transition-colors">
-                                Yapılandır →
-                            </div>
+                            <p className="text-slate-400 text-sm mb-6">Otelin tüm fiziki özelliklerinin yer aldığı detaylı Excel, Word veya PDF dokümanını sisteme yükleyin.</p>
+                            
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-cyan-400 transition-colors" />
+                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-cyan-400">Tıklayın</span> veya sürükleyip bırakın</p>
+                                    <p className="text-xs text-slate-500">XLSX, PDF veya DOCX (Max 15MB)</p>
+                                </div>
+                                <input type="file" className="hidden" />
+                            </label>
                         </div>
-                    </Link>
 
-                    {/* KULLANICI YÖNETİMİ */}
-                    <Link href="/settings-panel?tab=users" className="group">
-                        <div className="h-full bg-slate-900 border border-slate-800 hover:border-blue-500/30 rounded-[32px] p-8 transition-all hover:bg-slate-800/50 shadow-lg relative overflow-hidden">
-                            <div className="bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border border-slate-700">
-                                <UserCircle className="w-8 h-8 text-blue-400" />
-                            </div>
-                            <h2 className="text-2xl font-black mb-3">KULLANICI YÖNETİMİ</h2>
-                            <p className="text-slate-400 font-medium text-sm leading-relaxed mb-6">Sistem kullanıcılarını, rollerini ve erişim seviyelerini yetkilendirme tablosundan düzenleyin.</p>
-                            <div className="flex items-center text-slate-500 font-black text-xs tracking-widest gap-2 uppercase group-hover:text-blue-400 transition-colors">
-                                Yönet →
-                            </div>
-                        </div>
-                    </Link>
-
-                    {/* TELEGRAM & WHATSAPP AYARLARI */}
-                    <Link href="/settings-panel?tab=channels" className="group">
-                        <div className="h-full bg-slate-900 border border-slate-800 hover:border-blue-500/30 rounded-[32px] p-8 transition-all hover:bg-slate-800/50 shadow-lg relative overflow-hidden">
-                            <div className="bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border border-slate-700">
-                                <MessageSquare className="w-8 h-8 text-blue-400" />
-                            </div>
-                            <h2 className="text-2xl font-black mb-3">TELEGRAM - WHATSAPP</h2>
-                            <p className="text-slate-400 font-medium text-sm leading-relaxed mb-6">Mesajlaşma kanallarının Chat ID, Bot ID ve Webhook bağlantılarını dinamik olarak kurun.</p>
-                            <div className="flex items-center text-slate-500 font-black text-xs tracking-widest gap-2 uppercase group-hover:text-blue-400 transition-colors">
-                                Kanal Ayarları →
-                            </div>
-                        </div>
-                    </Link>
-
-                    {/* DİĞER MODÜLLER - LOGLAR */}
-                    <Link href="/settings-panel?tab=logs" className="group">
-                        <div className="h-full bg-slate-900 border border-slate-800 hover:border-blue-500/30 rounded-[32px] p-8 transition-all hover:bg-slate-800/50 shadow-lg relative overflow-hidden">
-                            <div className="bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border border-slate-700">
-                                <BarChart className="w-8 h-8 text-blue-400" />
-                            </div>
-                            <h2 className="text-2xl font-black mb-3">SİSTEM LOGLARI</h2>
-                            <p className="text-slate-400 font-medium text-sm leading-relaxed mb-6">Sistem çalışma hatalarını, API çağrılarını ve veritabanı işlemlerini anlık takip edin.</p>
-                            <div className="flex items-center text-slate-500 font-black text-xs tracking-widest gap-2 uppercase group-hover:text-blue-400 transition-colors">
-                                İzle →
-                            </div>
-                        </div>
-                    </Link>
-                </div>
-
-                {/* Info Box */}
-                <div className="mt-12 p-8 bg-blue-600/5 border border-blue-500/20 rounded-[32px] flex items-start gap-6">
-                    <div className="p-3 bg-blue-600/10 rounded-xl">
-                        <Shield className="w-6 h-6 text-blue-500" />
                     </div>
-                    <div>
-                        <h4 className="text-lg font-black text-blue-400 uppercase tracking-widest mb-1">BİLGİ BANKASI VE GÜVENLİK</h4>
-                        <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                            Buradaki ayarlar sistemin kalbini oluşturur. API anahtarlarının ve kullanıcı yetkilerinin değiştirilmesi tüm otel otomasyonunu etkiler.
-                            Şifre değişikliklerinden sonra tüm aktif oturumların sonlandırılacağını unutmayın.
-                        </p>
+
+                    {/* Right Column: Hotel Detail Info */}
+                    <div className="lg:col-span-7">
+                        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4">
+                                    <Hotel className="w-7 h-7 text-white" />
+                                    <h2 className="text-2xl font-extrabold uppercase tracking-wide">Hotel Genel Bilgileri</h2>
+                                </div>
+                                {saved && (
+                                    <span className="flex items-center gap-2 text-sm font-bold text-green-400 bg-green-900/20 px-4 py-2 rounded-xl border border-green-500/30">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Kaydedildi
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <Building className="w-4 h-4 text-blue-500" /> Hotel Adı
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={hotelInfo.name}
+                                        onChange={e => setHotelInfo({...hotelInfo, name: e.target.value})}
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-blue-500" /> İletişim / Rezervasyon
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={hotelInfo.phone}
+                                        onChange={e => setHotelInfo({...hotelInfo, phone: e.target.value})}
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors" 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Tam Adres</label>
+                                <input 
+                                    type="text" 
+                                    value={hotelInfo.address}
+                                    onChange={e => setHotelInfo({...hotelInfo, address: e.target.value})}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors" 
+                                />
+                            </div>
+
+                            <div className="mb-10">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Genel Kurallar ve Ekstra Bilgiler</label>
+                                <textarea 
+                                    rows={5}
+                                    value={hotelInfo.generalRules}
+                                    onChange={e => setHotelInfo({...hotelInfo, generalRules: e.target.value})}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors resize-none" 
+                                    placeholder="Check-in kuralları, restoran saatleri, havuz kuralları vb..."
+                                />
+                                <p className="text-xs text-slate-500 mt-2">Bu bilgiler yapay zeka tarafından standart misafir sorularını yanıtlarken ana referans kaynağı olarak kullanılacaktır.</p>
+                            </div>
+
+                            <button type="submit" className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold transition-all shadow-lg flex items-center justify-center gap-3">
+                                <Save className="w-5 h-5" />
+                                TÜM BİLGİLERİ KAYDET
+                            </button>
+                        </form>
                     </div>
+
                 </div>
             </div>
         </div>

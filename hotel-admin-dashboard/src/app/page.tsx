@@ -64,7 +64,7 @@ export default function PresentationFunnel() {
     {
       id: "intro",
       icon: <Target className="w-16 h-16 text-blue-500 mb-6" />,
-      title: "Bu sunum sizin için neden önemli?",
+      title: "Bu değişim hotelinize ne katacak ve neden önemli?",
       subtitle: "HotelGenDigital ile tanışma zamanı.",
       content: "Hem şahsınız hem de otel işletmeniz için oyunun kurallarını nasıl değiştirebileceğimizi keşfedin.",
       actionText: "Sunuma Başla"

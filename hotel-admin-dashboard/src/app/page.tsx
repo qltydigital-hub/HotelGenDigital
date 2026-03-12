@@ -14,7 +14,8 @@ import {
   ArrowRight,
   Lock,
   User,
-  KeyRound
+  KeyRound,
+  Hotel
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -63,7 +64,7 @@ export default function PresentationFunnel() {
   const slides = [
     {
       id: "intro",
-      icon: <Target className="w-16 h-16 text-blue-500 mb-6" />,
+      icon: <Hotel className="w-16 h-16 text-blue-500 mb-6" />,
       title: "Bu değişim hotelinize ne katacak ve neden önemli?",
       subtitle: "HotelGenDigital ile tanışma zamanı.",
       content: "Hem şahsınız hem de otel işletmeniz için oyunun kurallarını nasıl değiştirebileceğimizi keşfedin.",

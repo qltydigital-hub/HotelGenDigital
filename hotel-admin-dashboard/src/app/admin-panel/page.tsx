@@ -13,6 +13,7 @@ type Department = {
   whatsappId: string;
   shift: string;
   workingDays: string[];
+  is24_7: boolean;
 };
 
 export default function AdminPanel() {
@@ -20,11 +21,11 @@ export default function AdminPanel() {
   const [newDept, setNewDept] = useState('');
   
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', shift: '7/24', workingDays: [...ALL_DAYS] },
-    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS] },
-    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS] },
-    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', shift: '16:00 - 00:00', workingDays: [...ALL_DAYS] },
-    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', shift: '08:00 - 18:00', workingDays: [...ALL_DAYS] },
+    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS], is24_7: true },
+    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS], is24_7: false },
+    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS], is24_7: false },
+    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', shift: '16:00 - 00:00', workingDays: [...ALL_DAYS], is24_7: false },
+    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', shift: '08:00 - 18:00', workingDays: [...ALL_DAYS], is24_7: false },
   ]);
 
   const handleSave = () => {
@@ -57,7 +58,8 @@ export default function AdminPanel() {
       telegramId: '',
       whatsappId: '',
       shift: '08:00 - 16:00',
-      workingDays: [...ALL_DAYS]
+      workingDays: [...ALL_DAYS],
+      is24_7: false
     }]);
     setNewDept('');
   };
@@ -164,44 +166,72 @@ export default function AdminPanel() {
                 </div>
 
                 {/* Çalışma Saatleri ve Günleri */}
-                <div className="md:col-span-12 flex flex-col md:flex-row gap-4 items-start md:items-center bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-2">
-                   <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
-                      <Clock className="w-4 h-4 text-purple-400" />
-                      <span className="font-bold">Çalışma Düzeni:</span>
-                   </div>
-                   
-                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full">
-                     {/* Vardiya Seçimi */}
-                     <select 
-                        value={dept.shift} 
-                        onChange={(e) => updateDept(dept.id, 'shift', e.target.value)} 
-                        className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-[140px] cursor-pointer"
-                     >
-                       {SHIFTS.map(shift => (
-                         <option key={shift} value={shift}>{shift}</option>
-                       ))}
-                     </select>
-
-                     {/* Gün Seçimi */}
+                <div className="md:col-span-12 flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-2">
+                   <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                     <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
+                        <Clock className="w-4 h-4 text-purple-400" />
+                        <span className="font-bold">Çalışma Düzeni:</span>
+                     </div>
+                     
+                     {/* Toggle Buttons */}
                      <div className="flex flex-wrap gap-2">
-                       {ALL_DAYS.map(day => {
-                         const isActive = dept.workingDays.includes(day);
-                         return (
-                           <button
-                             key={day}
-                             onClick={() => toggleDay(dept.id, day)}
-                             className={`text-xs px-2.5 py-1.5 rounded-md font-bold transition-all border ${
-                               isActive 
-                                ? 'bg-purple-600/30 text-purple-300 border-purple-500/50' 
-                                : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
-                             }`}
-                           >
-                             {day}
-                           </button>
-                         )
-                       })}
+                       <button
+                         onClick={() => updateDept(dept.id, 'is24_7', true)}
+                         className={`text-xs px-4 py-2 rounded-lg font-bold transition-all border ${
+                           dept.is24_7 
+                            ? 'bg-purple-600/30 text-purple-300 border-purple-500/50' 
+                            : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
+                         }`}
+                       >
+                         Departmanda 7/24 çalışan var
+                       </button>
+                       <button
+                         onClick={() => updateDept(dept.id, 'is24_7', false)}
+                         className={`text-xs px-4 py-2 rounded-lg font-bold transition-all border ${
+                           !dept.is24_7 
+                            ? 'bg-blue-600/30 text-blue-300 border-blue-500/50' 
+                            : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
+                         }`}
+                       >
+                         Belirli saatler arası çalışma var
+                       </button>
                      </div>
                    </div>
+                   
+                   {!dept.is24_7 && (
+                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full pl-0 sm:pl-[166px] pt-2 border-t border-slate-800/50">
+                       {/* Vardiya Seçimi */}
+                       <select 
+                          value={dept.shift} 
+                          onChange={(e) => updateDept(dept.id, 'shift', e.target.value)} 
+                          className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-[140px] cursor-pointer"
+                       >
+                         {SHIFTS.filter(s => s !== '7/24').map(shift => (
+                           <option key={shift} value={shift}>{shift}</option>
+                         ))}
+                       </select>
+
+                       {/* Gün Seçimi */}
+                       <div className="flex flex-wrap gap-2">
+                         {ALL_DAYS.map(day => {
+                           const isActive = dept.workingDays.includes(day);
+                           return (
+                             <button
+                               key={day}
+                               onClick={() => toggleDay(dept.id, day)}
+                               className={`text-xs px-2.5 py-1.5 rounded-md font-bold transition-all border ${
+                                 isActive 
+                                  ? 'bg-blue-600/30 text-blue-300 border-blue-500/50' 
+                                  : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
+                               }`}
+                             >
+                               {day}
+                             </button>
+                           )
+                         })}
+                       </div>
+                     </div>
+                   )}
 
                    {dept.id !== 1 && (
                      <div className="ml-auto text-xs font-bold text-amber-500/80 bg-amber-500/10 px-4 py-2 rounded-lg border border-amber-500/20">

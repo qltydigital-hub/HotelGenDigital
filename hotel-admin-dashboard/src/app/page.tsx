@@ -46,14 +46,10 @@ export default function PresentationFunnel() {
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Kabul edilecek kullanıcılar: OzgurOZEN veya KemalKUYUCU, şifre: ?=
-    // Veya direkt o metinlerin girilmesi durumu için esnek yapı
-    const validUsers = ['OzgurOZEN', 'KemalKUYUCU', 'OzgurOZEN?=', 'KemalKUYUCU?='];
+
     if (
-      (validUsers.includes(username) && password === '?=') || 
-      (validUsers.includes(username) && password === '') ||
-      (username === 'OzgurOZEN' && password === '?=') ||
-      (username === 'KemalKUYUCU' && password === '?=')
+      (username === 'Ozgur OZEN' && password === 'OzgurOZEN?=') ||
+      (username === 'Kemal KUYUCU' && password === 'KemalKUYUCU?=')
     ) {
       router.push('/admin-panel'); // Yöneticileri yetki paneline alıyoruz
     } else {
@@ -289,14 +285,14 @@ export default function PresentationFunnel() {
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Yönetici Kullanıcı Adı</label>
                         <div className="relative">
                           <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500" placeholder="Örn: OzgurOZEN veya KemalKUYUCU" />
+                          <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500" placeholder="Örn: Ozgur OZEN" />
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Parola / Özel Karakter</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Yönetici Parolası</label>
                         <div className="relative">
                           <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500" placeholder="?=" />
+                          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500" placeholder="••••••••" />
                         </div>
                       </div>
                     </div>

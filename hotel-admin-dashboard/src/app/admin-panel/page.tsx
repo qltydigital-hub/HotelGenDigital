@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock } from 'lucide-react';
+import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export const ALL_DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts', 'Paz'];
@@ -11,8 +11,8 @@ type Department = {
   name: string;
   telegramId: string;
   whatsappId: string;
-  shift: string;
-  workingDays: string[];
+  offlineShifts: string[];
+  offlineDays: string[];
   is24_7: boolean;
 };
 
@@ -21,11 +21,11 @@ export default function AdminPanel() {
   const [newDept, setNewDept] = useState('');
   
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS], is24_7: true },
-    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS], is24_7: false },
-    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', shift: '08:00 - 16:00', workingDays: [...ALL_DAYS], is24_7: false },
-    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', shift: '16:00 - 00:00', workingDays: [...ALL_DAYS], is24_7: false },
-    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', shift: '08:00 - 18:00', workingDays: [...ALL_DAYS], is24_7: false },
+    { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', offlineShifts: [], offlineDays: [], is24_7: true },
+    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', offlineShifts: ['00:00 - 08:00'], offlineDays: [], is24_7: false },
+    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: [], is24_7: false },
+    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', offlineShifts: ['00:00 - 08:00'], offlineDays: [], is24_7: false },
+    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: ['Paz'], is24_7: false },
   ]);
 
   const handleSave = () => {
@@ -37,13 +37,25 @@ export default function AdminPanel() {
     setDepartments(departments.map(d => d.id === id ? { ...d, [field]: value } : d));
   };
 
-  const toggleDay = (deptId: number, day: string) => {
+  const toggleOfflineShift = (deptId: number, shift: string) => {
     setDepartments(departments.map(d => {
       if (d.id === deptId) {
-        const days = d.workingDays.includes(day) 
-          ? d.workingDays.filter(dayName => dayName !== day)
-          : [...d.workingDays, day];
-        return { ...d, workingDays: days };
+        const shifts = d.offlineShifts.includes(shift) 
+          ? d.offlineShifts.filter(s => s !== shift)
+          : [...d.offlineShifts, shift];
+        return { ...d, offlineShifts: shifts };
+      }
+      return d;
+    }));
+  };
+
+  const toggleOfflineDay = (deptId: number, day: string) => {
+    setDepartments(departments.map(d => {
+      if (d.id === deptId) {
+        const days = d.offlineDays.includes(day) 
+          ? d.offlineDays.filter(dayName => dayName !== day)
+          : [...d.offlineDays, day];
+        return { ...d, offlineDays: days };
       }
       return d;
     }));
@@ -57,8 +69,8 @@ export default function AdminPanel() {
       name: newDept,
       telegramId: '',
       whatsappId: '',
-      shift: '08:00 - 16:00',
-      workingDays: [...ALL_DAYS],
+      offlineShifts: [],
+      offlineDays: [],
       is24_7: false
     }]);
     setNewDept('');
@@ -193,43 +205,66 @@ export default function AdminPanel() {
                             : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
                          }`}
                        >
-                         Belirli saatler arası çalışma var
+                         Belirli saat / günlerde OLMAMA durumu var
                        </button>
                      </div>
                    </div>
                    
                    {!dept.is24_7 && (
-                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full pl-0 sm:pl-[166px] pt-2 border-t border-slate-800/50">
-                       {/* Vardiya Seçimi */}
-                       <select 
-                          value={dept.shift} 
-                          onChange={(e) => updateDept(dept.id, 'shift', e.target.value)} 
-                          className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-[140px] cursor-pointer"
-                       >
-                         {SHIFTS.filter(s => s !== '7/24').map(shift => (
-                           <option key={shift} value={shift}>{shift}</option>
-                         ))}
-                       </select>
-
-                       {/* Gün Seçimi */}
-                       <div className="flex flex-wrap gap-2">
-                         {ALL_DAYS.map(day => {
-                           const isActive = dept.workingDays.includes(day);
-                           return (
-                             <button
-                               key={day}
-                               onClick={() => toggleDay(dept.id, day)}
-                               className={`text-xs px-2.5 py-1.5 rounded-md font-bold transition-all border ${
-                                 isActive 
-                                  ? 'bg-blue-600/30 text-blue-300 border-blue-500/50' 
-                                  : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
-                               }`}
-                             >
-                               {day}
-                             </button>
-                           )
-                         })}
+                     <div className="flex flex-col gap-6 w-full pl-0 sm:pl-[148px] pt-4 border-t border-slate-800/50 mt-2">
+                       
+                       {/* Hangi Saatler / Vardiyalar Kapalı */}
+                       <div className="flex flex-col gap-3">
+                         <div className="flex items-center gap-2 text-xs font-bold text-red-400 uppercase tracking-widest">
+                           <AlertTriangle className="w-4 h-4" /> 
+                           Yetkilinin OLMADIĞI (Kapalı) Vardiyalar:
+                         </div>
+                         <div className="flex flex-wrap gap-2">
+                           {SHIFTS.filter(s => s !== '7/24').map(shift => {
+                             const isActive = dept.offlineShifts.includes(shift);
+                             return (
+                               <button
+                                 key={shift}
+                                 onClick={() => toggleOfflineShift(dept.id, shift)}
+                                 className={`text-xs px-3 py-1.5 rounded-md font-bold transition-all border ${
+                                   isActive 
+                                    ? 'bg-red-600/30 text-red-300 border-red-500/50' 
+                                    : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
+                                 }`}
+                               >
+                                 {shift}
+                               </button>
+                             )
+                           })}
+                         </div>
                        </div>
+
+                       {/* Hangi Günler Kapalı */}
+                       <div className="flex flex-col gap-3">
+                         <div className="flex items-center gap-2 text-xs font-bold text-red-400 uppercase tracking-widest">
+                           <AlertTriangle className="w-4 h-4" /> 
+                           Yetkilinin OLMADIĞI (Tatil) Günler:
+                         </div>
+                         <div className="flex flex-wrap gap-2">
+                           {ALL_DAYS.map(day => {
+                             const isActive = dept.offlineDays.includes(day);
+                             return (
+                               <button
+                                 key={day}
+                                 onClick={() => toggleOfflineDay(dept.id, day)}
+                                 className={`text-xs px-3 py-1.5 rounded-md font-bold transition-all border ${
+                                   isActive 
+                                    ? 'bg-red-600/30 text-red-300 border-red-500/50' 
+                                    : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-600'
+                                 }`}
+                               >
+                                 {day}
+                               </button>
+                             )
+                           })}
+                         </div>
+                       </div>
+
                      </div>
                    )}
 

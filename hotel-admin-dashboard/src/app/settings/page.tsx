@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet, Users, Banknote, ListPlus } from 'lucide-react';
+import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet, Users, Banknote, ListPlus, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -35,9 +35,14 @@ export default function SettingsPage() {
                             <p className="text-slate-400 font-medium mt-1">Otel konsepti, Fact Sheet ve genel bilgilerin yönetimi.</p>
                         </div>
                     </div>
-                    <Link href="/" className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center gap-2">
-                        ← Sunum Ekranına Dön
-                    </Link>
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <Link href="/admin-panel" className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center gap-2 text-sm text-white">
+                            <ShieldCheck className="w-4 h-4" /> VIP Yönetici Paneli
+                        </Link>
+                        <Link href="/" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center justify-center gap-2">
+                            ← Sunum Ekranına Dön
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

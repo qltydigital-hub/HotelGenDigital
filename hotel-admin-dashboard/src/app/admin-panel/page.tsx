@@ -22,10 +22,10 @@ export default function AdminPanel() {
   
   const [departments, setDepartments] = useState<Department[]>([
     { id: 1, name: 'Resepsiyon (Ön Büro)', telegramId: '-419082348', whatsappId: '+905551234567', offlineShifts: [], offlineDays: [], is24_7: true },
-    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', offlineShifts: ['00:00 - 08:00'], offlineDays: [], is24_7: false },
-    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: [], is24_7: false },
-    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', offlineShifts: ['00:00 - 08:00'], offlineDays: [], is24_7: false },
-    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: ['Paz'], is24_7: false },
+    { id: 2, name: 'Misafir İlişkileri (Guest Relation)', telegramId: '-412345678', whatsappId: '+905559876543', offlineShifts: ['00:00 - 08:00'], offlineDays: [], is24_7: true },
+    { id: 3, name: 'Kat Hizmetleri (Housekeeping)', telegramId: '', whatsappId: '', offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: [], is24_7: true },
+    { id: 4, name: 'Yiyecek & İçecek (F&B)', telegramId: '', whatsappId: '', offlineShifts: ['00:00 - 08:00'], offlineDays: [], is24_7: true },
+    { id: 5, name: 'Teknik Servis', telegramId: '', whatsappId: '', offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: ['Paz'], is24_7: true },
   ]);
 
   const handleSave = () => {
@@ -71,7 +71,7 @@ export default function AdminPanel() {
       whatsappId: '',
       offlineShifts: [],
       offlineDays: [],
-      is24_7: false
+      is24_7: true
     }]);
     setNewDept('');
   };

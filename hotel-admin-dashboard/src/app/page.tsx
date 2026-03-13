@@ -279,29 +279,29 @@ export default function PresentationFunnel() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="max-w-5xl w-full px-6 flex flex-col items-center z-10"
+            className="max-w-5xl w-full px-4 md:px-6 flex flex-col items-center z-10"
           >
-            <div className="text-center mb-16">
-              <CheckCircle2 className="w-20 h-20 text-teal-400 mx-auto mb-6" />
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Sisteme Giriş Yapın</h2>
-              <p className="text-xl text-slate-400 font-light">Lütfen yetkili olduğunuz alanı seçerek devam edin.</p>
+            <div className="text-center mb-8 md:mb-16">
+              <CheckCircle2 className="w-16 h-16 md:w-20 md:h-20 text-teal-400 mx-auto mb-4 md:mb-6" />
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 md:mb-4">Sisteme Giriş Yapın</h2>
+              <p className="text-[15px] sm:text-xl text-slate-400 font-light">Lütfen yetkili olduğunuz alanı seçerek devam edin.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 w-full">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-8 w-full">
               {/* Sistem Ayarları Button/Modal */}
               <motion.div 
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setShowModals('settings')}
                 onClick={() => setShowModals('settings')}
-                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'settings' ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
+                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-5 sm:p-8 overflow-hidden cursor-pointer ${showModals === 'settings' ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
               >
                 <div className={`absolute inset-0 bg-blue-500/5 transition-opacity duration-500 ${showModals === 'settings' ? 'opacity-100' : 'opacity-0'}`} />
                 
                 {showModals !== 'settings' ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                    <Settings className="w-16 h-16 text-blue-500 mb-6 group-hover:rotate-90 transition-transform duration-700" />
-                    <h3 className="text-2xl font-bold mb-2">Hotel Sistem Ayarları</h3>
-                    <p className="text-slate-400">Konsept bilgi ve belgelerini yüklemek için giriş yapın.</p>
+                  <div className="flex flex-col items-center justify-center h-full text-center py-6 sm:py-12">
+                    <Settings className="w-12 h-12 md:w-16 md:h-16 text-blue-500 mb-4 md:mb-6 group-hover:rotate-90 transition-transform duration-700" />
+                    <h3 className="text-xl sm:text-2xl font-bold mb-2">Hotel Sistem Ayarları</h3>
+                    <p className="text-sm sm:text-base text-slate-400">Konsept bilgi ve belgelerini yüklemek için giriş yapın.</p>
                   </div>
                 ) : (
                   <motion.form 
@@ -309,15 +309,15 @@ export default function PresentationFunnel() {
                     onSubmit={handleSettingsLogin} 
                     className="flex flex-col h-full relative z-10"
                   >
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="p-3 bg-blue-500/20 rounded-xl"><Settings className="w-8 h-8 text-blue-500" /></div>
+                    <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                      <div className="p-2 md:p-3 bg-blue-500/20 rounded-xl"><Settings className="w-6 h-6 md:w-8 md:h-8 text-blue-500" /></div>
                       <div>
-                        <h3 className="text-xl font-bold">Hotel Sistem Ayarları</h3>
-                        <p className="text-sm text-blue-400">Veri Ekip Paneli</p>
+                        <h3 className="text-lg md:text-xl font-bold">Hotel Sistem Ayarları</h3>
+                        <p className="text-xs md:text-sm text-blue-400">Veri Ekip Paneli</p>
                       </div>
                     </div>
 
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-4 mb-4 md:mb-6">
                       <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Kullanıcı Adı</label>
                         <div className="relative">
@@ -348,15 +348,15 @@ export default function PresentationFunnel() {
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setShowModals('admin')}
                 onClick={() => setShowModals('admin')}
-                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'admin' ? 'border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
+                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-5 sm:p-8 overflow-hidden cursor-pointer ${showModals === 'admin' ? 'border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
               >
                 <div className={`absolute inset-0 bg-purple-500/5 transition-opacity duration-500 ${showModals === 'admin' ? 'opacity-100' : 'opacity-0'}`} />
                 
                 {showModals !== 'admin' ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                    <ShieldCheck className="w-16 h-16 text-purple-500 mb-6 group-hover:scale-110 transition-transform duration-500" />
-                    <h3 className="text-2xl font-bold mb-2">Yönetici Paneli</h3>
-                    <p className="text-slate-400">Üst Düzey Yönetici ve İletişim yetkileri.</p>
+                  <div className="flex flex-col items-center justify-center h-full text-center py-6 sm:py-12">
+                    <ShieldCheck className="w-12 h-12 md:w-16 md:h-16 text-purple-500 mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-500" />
+                    <h3 className="text-xl sm:text-2xl font-bold mb-2">Yönetici Paneli</h3>
+                    <p className="text-sm sm:text-base text-slate-400">Üst Düzey Yönetici ve İletişim yetkileri.</p>
                   </div>
                 ) : (
                   <motion.form 
@@ -364,15 +364,15 @@ export default function PresentationFunnel() {
                     onSubmit={handleAdminLogin} 
                     className="flex flex-col h-full relative z-10"
                   >
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="p-3 bg-purple-500/20 rounded-xl"><ShieldCheck className="w-8 h-8 text-purple-500" /></div>
+                    <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                      <div className="p-2 md:p-3 bg-purple-500/20 rounded-xl"><ShieldCheck className="w-6 h-6 md:w-8 md:h-8 text-purple-500" /></div>
                       <div>
-                        <h3 className="text-xl font-bold">VIP Yönetici Girişi</h3>
-                        <p className="text-sm text-purple-400">Sadece Yetkili Yöneticiler</p>
+                        <h3 className="text-lg md:text-xl font-bold">VIP Yönetici Girişi</h3>
+                        <p className="text-xs md:text-sm text-purple-400">Sadece Yetkili Yöneticiler</p>
                       </div>
                     </div>
 
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-4 mb-4 md:mb-6">
                       <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Yönetici Kullanıcı Adı</label>
                         <div className="relative">

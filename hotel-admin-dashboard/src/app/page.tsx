@@ -207,7 +207,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 md:mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-2 leading-tight drop-shadow-2xl w-full"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-[3.25rem] font-extrabold tracking-tight mb-4 md:mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-2 leading-[1.15] drop-shadow-2xl w-full max-w-6xl mx-auto px-2"
             >
               {slides[slide].title}
             </motion.h1>

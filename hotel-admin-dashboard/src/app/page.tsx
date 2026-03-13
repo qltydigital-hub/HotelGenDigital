@@ -60,7 +60,7 @@ export default function PresentationFunnel() {
   const slides = [
     {
       id: "intro",
-      icon: <Hotel className="w-16 h-16 text-blue-500 mb-6" />,
+      icon: <Hotel className="w-10 h-10 md:w-16 md:h-16 text-blue-500 mb-2 md:mb-6" />,
       title: "7/24 Full Performanslı Birini İşe Almak Size ve Otelinize Ne Sağlayabilir?",
       subtitle: "HotelGenDigital ile tanışma zamanı.",
       content: "Hiç yorulmayan, asla hata yapmayan ve misafirinizin ne istediğini o daha söylemeden bilen bir ekip arkadaşı hayal edin. HotelGenDigital, operasyonun en karmaşık anlarında bile arka planda sessizce mükemmelliği yönetir. Siz kahvenizi yudumlarken, o her şeyi kontrol altında tutar. Oyunun kuralları artık değişiyor; sadece bir yazılım değil, otelinizin en sadık ve en zeki çalışanını işe alıyorsunuz.",
@@ -68,7 +68,7 @@ export default function PresentationFunnel() {
     },
     {
       id: "multi-language",
-      icon: <Globe2 className="w-16 h-16 text-cyan-400 mb-6" />,
+      icon: <Globe2 className="w-10 h-10 md:w-16 md:h-16 text-cyan-400 mb-2 md:mb-6" />,
       title: "Sınırsız Dil, Sıfır Hata: Dünyanın Tüm Dillerini Konuşan Bir Resepsiyonist",
       content: (
         <span>
@@ -79,7 +79,7 @@ export default function PresentationFunnel() {
     },
     {
       id: "perfect-employee",
-      icon: <Clock className="w-16 h-16 text-green-400 mb-6" />,
+      icon: <Clock className="w-10 h-10 md:w-16 md:h-16 text-green-400 mb-2 md:mb-6" />,
       title: "7/24 Kusursuz Mesai: Mazeretlerin Bittiği, Performansın Başladığı Nokta",
       content: (
         <span>
@@ -90,7 +90,7 @@ export default function PresentationFunnel() {
     },
     {
       id: "smart-routing",
-      icon: <BellRing className="w-16 h-16 text-orange-400 mb-6" />,
+      icon: <BellRing className="w-10 h-10 md:w-16 md:h-16 text-orange-400 mb-2 md:mb-6" />,
       title: "Anında Doğru Departman: Hata Payı Olmayan Bir Yönlendirme Sistemi",
       content: (
         <span>
@@ -101,7 +101,7 @@ export default function PresentationFunnel() {
     },
     {
       id: "reporting",
-      icon: <BarChart4 className="w-16 h-16 text-purple-400 mb-6" />,
+      icon: <BarChart4 className="w-10 h-10 md:w-16 md:h-16 text-purple-400 mb-2 md:mb-6" />,
       title: "Anlık Raporlama Gücü: Otelinizin Nabzı Bir Cümle Uzağınızda",
       content: (
         <span>
@@ -112,7 +112,7 @@ export default function PresentationFunnel() {
     },
     {
       id: "closing",
-      icon: <CheckCircle2 className="w-16 h-16 text-teal-400 mb-6" />,
+      icon: <CheckCircle2 className="w-10 h-10 md:w-16 md:h-16 text-teal-400 mb-2 md:mb-6" />,
       title: "Tek Bir Amaç: Kusursuz Misafir Deneyimi ve Memnuniyeti, Sürdürülebilir Başarı",
       content: (
         <span>
@@ -166,10 +166,10 @@ export default function PresentationFunnel() {
 
       {/* Top Navigation Options */}
       {slide < slides.length && (
-        <div className="absolute top-6 right-6 md:top-10 md:right-10 flex flex-col sm:flex-row gap-2 sm:gap-3 z-50">
+        <div className="absolute top-4 right-4 md:top-10 md:right-10 flex flex-col sm:flex-row gap-2 sm:gap-3 z-50">
           <button 
             onClick={() => { setSlide(slides.length); setShowModals('settings'); }} 
-            className="px-4 py-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-700/50 rounded-lg text-xs font-medium text-slate-300 backdrop-blur-md shadow-lg transition-all flex items-center justify-center gap-2"
+            className="px-3 py-1.5 md:px-4 md:py-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-700/50 rounded-lg text-[10px] md:text-xs font-medium text-slate-300 backdrop-blur-md shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <Settings className="w-4 h-4" />
             <span className="hidden sm:inline">Sisteme Giriş Yapın</span>
@@ -177,7 +177,7 @@ export default function PresentationFunnel() {
           </button>
           <button 
             onClick={() => { setSlide(slides.length); setShowModals('admin'); }} 
-            className="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/50 rounded-lg text-xs font-medium text-purple-200 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all flex items-center justify-center gap-2"
+            className="px-3 py-1.5 md:px-4 md:py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/50 rounded-lg text-[10px] md:text-xs font-medium text-purple-200 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all flex items-center justify-center gap-2"
           >
             <ShieldCheck className="w-4 h-4 text-purple-400" />
             <span className="hidden sm:inline">VIP Yönetici Girişi</span>
@@ -217,7 +217,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-[3.25rem] font-extrabold tracking-tight mb-4 md:mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-2 leading-[1.15] drop-shadow-2xl w-full max-w-6xl mx-auto px-2"
+              className="text-[1.3rem] xs:text-2xl sm:text-3xl md:text-5xl lg:text-5xl xl:text-[3.25rem] font-extrabold tracking-tight mb-2 md:mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-1 md:pb-2 leading-[1.15] drop-shadow-2xl w-full max-w-6xl mx-auto px-2"
             >
               {slides[slide].title}
             </motion.h1>
@@ -227,7 +227,7 @@ export default function PresentationFunnel() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-lg sm:text-xl md:text-2xl text-blue-400 font-medium mb-4"
+                className="text-[12px] xs:text-[13px] sm:text-lg md:text-2xl text-blue-400 font-medium mb-2 md:mb-4"
               >
                 {slides[slide].subtitle}
               </motion.p>
@@ -237,7 +237,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-300 leading-[1.7] md:leading-[2] font-light w-full max-w-full lg:max-w-6xl mb-8 md:mb-12 px-2 md:px-0"
+              className="text-[12px] xs:text-[13px] sm:text-sm md:text-xl lg:text-2xl text-slate-300 leading-[1.4] md:leading-[2] font-light w-full max-w-full lg:max-w-6xl mb-4 md:mb-12 px-1 md:px-0"
             >
               {slides[slide].content}
             </motion.p>
@@ -249,7 +249,7 @@ export default function PresentationFunnel() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
               onClick={nextSlide}
-              className={`group relative overflow-hidden flex items-center gap-3 px-8 py-4 rounded-full font-bold text-lg shadow-2xl transition-all ${
+              className={`group relative overflow-hidden flex items-center gap-2 md:gap-3 px-5 py-2.5 md:px-8 md:py-4 rounded-full font-bold text-[13px] md:text-lg shadow-2xl transition-all ${
                 slide === slides.length - 1 
                   ? 'bg-teal-500 hover:bg-teal-400 text-white shadow-[0_0_20px_rgba(20,184,166,0.5)]' 
                   : 'bg-white text-slate-900 border-2 border-transparent hover:border-blue-300 hover:bg-blue-50 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
@@ -258,16 +258,16 @@ export default function PresentationFunnel() {
               <div className="absolute inset-0 bg-white/40 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out skew-x-12" />
               <span className="relative z-10 flex items-center gap-3">
                 {slides[slide].actionText}
-                {slide !== slides.length - 1 && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                {slide !== slides.length - 1 && <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />}
               </span>
             </motion.button>
 
             {/* Pagination Dots */}
-            <div className="flex gap-2 mt-16">
+            <div className="flex gap-2 mt-5 md:mt-16">
               {slides.map((_, i) => (
                 <div 
                   key={i} 
-                  className={`h-1.5 rounded-full transition-all duration-300 ${i === slide ? 'w-8 bg-blue-500' : 'w-2 bg-slate-700'}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${i === slide ? 'w-6 md:w-8 bg-blue-500' : 'w-1.5 md:w-2 bg-slate-700'}`}
                 />
               ))}
             </div>

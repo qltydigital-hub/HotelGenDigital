@@ -268,8 +268,8 @@ export default function AdminPanel() {
                      </div>
                    )}
 
-                   {dept.id !== 1 && (
-                     <div className="ml-auto text-xs font-bold text-amber-500/80 bg-amber-500/10 px-4 py-2 rounded-lg border border-amber-500/20">
+                   {!dept.is24_7 && dept.id !== 1 && (
+                     <div className="ml-auto text-xs font-bold text-amber-500/80 bg-amber-500/10 px-4 py-2 rounded-lg border border-amber-500/20 mt-4">
                        <span className="flex items-center gap-2">
                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                          Mesai dışı otomatik yönlendirme: Resepsiyon

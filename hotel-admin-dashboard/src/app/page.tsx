@@ -64,7 +64,7 @@ export default function PresentationFunnel() {
       title: "Bu değişim hotelinize ne katacak ve neden önemli?",
       subtitle: "HotelGenDigital ile tanışma zamanı.",
       content: "Hem şahsınız hem de otel işletmeniz için oyunun kurallarını nasıl değiştirebileceğimizi keşfedin.",
-      actionText: "Sunuma Başla"
+      actionText: "Devam Et"
     },
     {
       id: "multi-language",
@@ -225,6 +225,7 @@ export default function PresentationFunnel() {
               {/* Sistem Ayarları Button/Modal */}
               <div 
                 onMouseEnter={() => setShowModals('settings')}
+                onClick={() => setShowModals('settings')}
                 className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'settings' ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : 'border-slate-800'}`}
               >
                 <div className={`absolute inset-0 bg-blue-500/5 transition-opacity duration-500 ${showModals === 'settings' ? 'opacity-100' : 'opacity-0'}`} />
@@ -278,6 +279,7 @@ export default function PresentationFunnel() {
               {/* Yönetici Paneli Button/Modal */}
               <div 
                 onMouseEnter={() => setShowModals('admin')}
+                onClick={() => setShowModals('admin')}
                 className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'admin' ? 'border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]' : 'border-slate-800'}`}
               >
                 <div className={`absolute inset-0 bg-purple-500/5 transition-opacity duration-500 ${showModals === 'admin' ? 'opacity-100' : 'opacity-0'}`} />

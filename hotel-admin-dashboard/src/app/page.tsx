@@ -185,7 +185,7 @@ export default function PresentationFunnel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 1.05 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-4xl w-full px-6 flex flex-col items-center text-center z-10"
+            className="max-w-[95%] md:max-w-5xl lg:max-w-7xl w-full px-4 sm:px-6 md:px-8 flex flex-col items-center text-center z-10"
           >
             <motion.div 
               initial={{ scale: 0, opacity: 0 }}
@@ -207,7 +207,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-2 leading-tight md:leading-tight drop-shadow-2xl"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 md:mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-2 leading-tight drop-shadow-2xl w-full"
             >
               {slides[slide].title}
             </motion.h1>
@@ -217,7 +217,7 @@ export default function PresentationFunnel() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-xl md:text-2xl text-blue-400 font-medium mb-4"
+                className="text-lg sm:text-xl md:text-2xl text-blue-400 font-medium mb-4"
               >
                 {slides[slide].subtitle}
               </motion.p>
@@ -227,7 +227,7 @@ export default function PresentationFunnel() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-lg md:text-2xl text-slate-300 leading-[1.8] md:leading-[2.2] font-light max-w-3xl mb-12"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-300 leading-[1.7] md:leading-[2] font-light w-full max-w-full lg:max-w-6xl mb-8 md:mb-12 px-2 md:px-0"
             >
               {slides[slide].content}
             </motion.p>

@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase, writeLog } from '@/lib/supabase-client';
 
-const TABLES = ['telegram_messages', 'live_tickets', 'system_logs'] as const;
+const TABLES = ['telegram_messages', 'live_tickets', 'system_logs', 'hotel_settings'] as const;
 
 // ─── GET: Tablo durumu kontrol ──────────────────────────────────
 export async function GET() {
@@ -74,10 +74,19 @@ CREATE TABLE IF NOT EXISTS system_logs (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- hotel_settings
+CREATE TABLE IF NOT EXISTS hotel_settings (
+    id          BIGSERIAL PRIMARY KEY,
+    key         TEXT UNIQUE NOT NULL,
+    value       JSONB NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Realtime
 ALTER TABLE telegram_messages REPLICA IDENTITY FULL;
 ALTER TABLE live_tickets REPLICA IDENTITY FULL;
 ALTER TABLE system_logs REPLICA IDENTITY FULL;
+ALTER TABLE hotel_settings REPLICA IDENTITY FULL;
 
 -- RLS
 ALTER TABLE telegram_messages ENABLE ROW LEVEL SECURITY;
@@ -98,6 +107,13 @@ ALTER TABLE system_logs ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'system_logs' AND policyname = 'Allow all for now') THEN
     CREATE POLICY "Allow all for now" ON system_logs FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+ALTER TABLE hotel_settings ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'hotel_settings' AND policyname = 'Allow all for now') THEN
+    CREATE POLICY "Allow all for now" ON hotel_settings FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 `;

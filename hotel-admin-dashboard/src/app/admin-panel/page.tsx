@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock, AlertTriangle, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
@@ -33,6 +33,7 @@ export default function AdminPanel() {
   const [saved, setSaved] = useState(false);
   const [newDept, setNewDept] = useState('');
 
+  const [isLoading, setIsLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([
     {
       id: 1, name: 'Resepsiyon (Ön Büro)', is24_7: true, offlineShifts: [], offlineDays: [],
@@ -56,9 +57,45 @@ export default function AdminPanel() {
     },
   ]);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/departments?_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.departments) {
+          const loadedDeps = data.departments.map((d: any) => ({
+            ...d,
+            is24_7: d.is24_7 !== undefined ? d.is24_7 : true,
+            offlineShifts: d.offlineShifts || [],
+            offlineDays: d.offlineDays || [],
+            contacts: d.contacts || []
+          }));
+          setDepartments(loadedDeps);
+        }
+      } catch (err) {
+        console.error('Failed to load config:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadConfig();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await fetch('/api/departments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ departments }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save config:', err);
+      alert('Kaydetme hatası oluştu!');
+    }
   };
 
   const updateDept = (id: number, field: keyof Department, value: any) => {
@@ -128,6 +165,10 @@ export default function AdminPanel() {
   const removeDept = (id: number) => {
     setDepartments(departments.filter(d => d.id !== id));
   };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-[#0a0f1c] text-white flex items-center justify-center">Yükleniyor...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white p-6 md:p-10 font-sans">

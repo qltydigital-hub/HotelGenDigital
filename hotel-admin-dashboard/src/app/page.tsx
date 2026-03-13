@@ -106,8 +106,33 @@ export default function PresentationFunnel() {
   return (
     <div className="min-h-screen bg-[#0a0f1c] flex items-center justify-center relative overflow-hidden font-sans text-white">
       {/* Background Effects */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/20 rounded-full blur-[120px] pointer-events-none" />
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.2, 0.4, 0.2],
+          x: [0, 60, 0]
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/30 rounded-full blur-[150px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.2, 0.5, 0.2],
+          x: [0, -60, 0]
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-500/30 rounded-full blur-[150px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.5, 1],
+          opacity: [0.1, 0.3, 0.1],
+          y: [0, 50, 0]
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-[40%] left-[40%] w-[30%] h-[30%] bg-purple-500/20 rounded-full blur-[120px] pointer-events-none" 
+      />
 
       {/* Top Navigation Options */}
       {slide < slides.length && (
@@ -143,18 +168,26 @@ export default function PresentationFunnel() {
             className="max-w-4xl w-full px-6 flex flex-col items-center text-center z-10"
           >
             <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1, y: [0, -12, 0] }}
+              transition={{ 
+                scale: { type: 'spring', stiffness: 200, damping: 12, delay: 0.2 },
+                opacity: { delay: 0.2 },
+                y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }
+              }}
+              className="relative"
             >
-              {slides[slide].icon}
+              <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full scale-150" />
+              <div className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                {slides[slide].icon}
+              </div>
             </motion.div>
 
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-white pb-2 leading-tight md:leading-tight drop-shadow-lg"
+              className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-300 pb-2 leading-tight md:leading-tight drop-shadow-2xl"
             >
               {slides[slide].title}
             </motion.h1>
@@ -180,20 +213,23 @@ export default function PresentationFunnel() {
             </motion.p>
 
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, boxShadow: "0px 0px 25px rgba(255, 255, 255, 0.4)" }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
               onClick={nextSlide}
-              className={`group flex items-center gap-3 px-8 py-4 rounded-full font-bold text-lg shadow-2xl transition-all ${
+              className={`group relative overflow-hidden flex items-center gap-3 px-8 py-4 rounded-full font-bold text-lg shadow-2xl transition-all ${
                 slide === slides.length - 1 
-                  ? 'bg-teal-500 hover:bg-teal-400 text-white shadow-teal-500/30' 
-                  : 'bg-white text-slate-900 border-2 border-transparent hover:border-blue-300 hover:bg-blue-50'
+                  ? 'bg-teal-500 hover:bg-teal-400 text-white shadow-[0_0_20px_rgba(20,184,166,0.5)]' 
+                  : 'bg-white text-slate-900 border-2 border-transparent hover:border-blue-300 hover:bg-blue-50 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
               }`}
             >
-              {slides[slide].actionText}
-              {slide !== slides.length - 1 && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              <div className="absolute inset-0 bg-white/40 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out skew-x-12" />
+              <span className="relative z-10 flex items-center gap-3">
+                {slides[slide].actionText}
+                {slide !== slides.length - 1 && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              </span>
             </motion.button>
 
             {/* Pagination Dots */}
@@ -223,10 +259,11 @@ export default function PresentationFunnel() {
 
             <div className="grid md:grid-cols-2 gap-8 w-full">
               {/* Sistem Ayarları Button/Modal */}
-              <div 
+              <motion.div 
+                whileHover={{ y: -5 }}
                 onMouseEnter={() => setShowModals('settings')}
                 onClick={() => setShowModals('settings')}
-                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'settings' ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : 'border-slate-800'}`}
+                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'settings' ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
               >
                 <div className={`absolute inset-0 bg-blue-500/5 transition-opacity duration-500 ${showModals === 'settings' ? 'opacity-100' : 'opacity-0'}`} />
                 
@@ -274,13 +311,14 @@ export default function PresentationFunnel() {
                     </button>
                   </motion.form>
                 )}
-              </div>
+              </motion.div>
 
               {/* Yönetici Paneli Button/Modal */}
-              <div 
+              <motion.div 
+                whileHover={{ y: -5 }}
                 onMouseEnter={() => setShowModals('admin')}
                 onClick={() => setShowModals('admin')}
-                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'admin' ? 'border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]' : 'border-slate-800'}`}
+                className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-8 overflow-hidden cursor-pointer ${showModals === 'admin' ? 'border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
               >
                 <div className={`absolute inset-0 bg-purple-500/5 transition-opacity duration-500 ${showModals === 'admin' ? 'opacity-100' : 'opacity-0'}`} />
                 
@@ -328,7 +366,7 @@ export default function PresentationFunnel() {
                     </button>
                   </motion.form>
                 )}
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         )}

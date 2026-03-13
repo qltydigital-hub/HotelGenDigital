@@ -127,7 +127,7 @@ export default function PresentationFunnel() {
     <div className="min-h-screen bg-[#0a0f1c] flex items-center justify-center relative overflow-hidden font-sans text-white">
       {/* Test Hotel Background Image */}
       <div 
-        className="absolute inset-0 z-0 opacity-[0.08] mix-blend-luminosity pointer-events-none"
+        className="absolute inset-0 z-0 opacity-20 pointer-events-none"
         style={{
           backgroundImage: 'url("https://images.unsplash.com/photo-1542314831-c6a4d14d837e?q=80&w=2070&auto=format&fit=crop")',
           backgroundSize: 'cover',

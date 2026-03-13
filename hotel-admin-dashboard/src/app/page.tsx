@@ -125,6 +125,16 @@ export default function PresentationFunnel() {
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] flex items-center justify-center relative overflow-hidden font-sans text-white">
+      {/* Test Hotel Background Image */}
+      <div 
+        className="absolute inset-0 z-0 opacity-[0.15] mix-blend-luminosity pointer-events-none"
+        style={{
+          backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
       {/* Background Effects */}
       <motion.div 
         animate={{ 

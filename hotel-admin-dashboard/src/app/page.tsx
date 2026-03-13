@@ -61,44 +61,64 @@ export default function PresentationFunnel() {
     {
       id: "intro",
       icon: <Hotel className="w-16 h-16 text-blue-500 mb-6" />,
-      title: "Bu değişim hotelinize ne katacak ve neden önemli?",
+      title: "7/24 Full Performanslı Birini İşe Almak Size ve Otelinize Ne Sağlayabilir?",
       subtitle: "HotelGenDigital ile tanışma zamanı.",
-      content: "Hem şahsınız hem de otel işletmeniz için oyunun kurallarını nasıl değiştirebileceğimizi keşfedin.",
+      content: "Hiç yorulmayan, asla hata yapmayan ve misafirinizin ne istediğini o daha söylemeden bilen bir ekip arkadaşı hayal edin. HotelGenDigital, operasyonun en karmaşık anlarında bile arka planda sessizce mükemmelliği yönetir. Siz kahvenizi yudumlarken, o her şeyi kontrol altında tutar. Oyunun kuralları artık değişiyor; sadece bir yazılım değil, otelinizin en sadık ve en zeki çalışanını işe alıyorsunuz.",
       actionText: "Devam Et"
     },
     {
       id: "multi-language",
       icon: <Globe2 className="w-16 h-16 text-cyan-400 mb-6" />,
-      title: "Sınırsız Dil, Sıfır Hata",
-      content: "Size gelen bütün sorulara, hangi dilde yazılırsa yazılsın sistem anında kendi dilinde cevap verir. Oteliniz hakkında A’dan Z’ye hangi soru gelirse gelsin, belirlediğiniz sınırların ve kuralların asla dışına çıkmaz.",
+      title: "Sınırsız Dil, Sıfır Hata: Dünyanın Tüm Dillerini Konuşan Bir Resepsiyonist",
+      content: (
+        <span>
+          Bilgi kirliliği ve yanlış yönlendirme, otelcilikte prestij kaybının en kısa yoludur. Bizim sistemimiz ise verdiğiniz bilgileri bir <strong className="font-bold text-white">&quot;anayasa&quot; gibi benimser</strong>. Hangi dilde sorulursa sorulsun; kahvaltı saatinden iptal politikasına kadar her şeyi <strong className="font-bold text-white">tam da sizin öğrettiğiniz gibi, sıfır hata payıyla yanıtlar</strong>. Personel yorulur veya unutur, ancak bu sistem sizin <strong className="font-bold text-white">belirlediğiniz sınırların dışına asla çıkmadan</strong>, dünya dillerinde kusursuz bir hizmet sunar.
+        </span>
+      ),
       actionText: "Devam Et"
     },
     {
       id: "perfect-employee",
       icon: <Clock className="w-16 h-16 text-green-400 mb-6" />,
-      title: "7/24 Kusursuz Mesai",
-      content: "En büyük farkımız; asla durmamasıdır. Motivasyon kaybı, moral bozukluğu, alınma, darılma, yanlış anlama, hastalanma, mazeret bulma veya gecikme ihtimali %0'dır.",
+      title: "7/24 Kusursuz Mesai: Mazeretlerin Bittiği, Performansın Başladığı Nokta",
+      content: (
+        <span>
+           &quot;Bugün hastayım,&quot; &quot;Geç kaldım&quot; veya &quot;Yanlış anladım&quot; cümlelerini <strong className="font-bold text-white">otelinizin lügatinden siliyoruz.</strong> Operasyonun sürekliliği artık tesadüflere veya bireysel ruh hallerine bağlı değil. HotelGenDigital, <strong className="font-bold text-white">365 gün boyunca aynı enerji ve titizlikle</strong> görevini yerine getirir. Siz uyurken veya başka bir krizle uğraşırken, o nöbet yerini bir saniye bile terk etmeden otelinizi en iyi şekilde temsil etmeye devam eder. <strong className="font-bold text-white">Denetlemeye gerek duymadığınız bir profesyonellik hayal edin.</strong>
+        </span>
+      ),
       actionText: "Devam Et"
     },
     {
       id: "smart-routing",
       icon: <BellRing className="w-16 h-16 text-orange-400 mb-6" />,
-      title: "Anında Doğru Departman",
-      content: "Misafirlerin sorduğu standart sorular dışında özel bir istek, şikayet veya ekstra hizmet talebi gelirse; ilgili departmana (Resepsiyon, F&B, vb.) anında bildirim ve çağrı olarak düşer.",
+      title: "Anında Doğru Departman: Hata Payı Olmayan Bir Yönlendirme Sistemi",
+      content: (
+        <span>
+          <strong className="font-bold text-white">Otelcilikte hız, en büyük lükstür.</strong> Yanlış departmana iletilen bir şikayet, geri dönülemez bir kötü yoruma dönüşebilir. Sistemimiz, misafirin her kelimesini anlar ve <strong className="font-bold text-white">ilgili departmanı (F&B, Resepsiyon veya Teknik) anında ayağa kaldırır.</strong> Personeliniz sadece kendi görev alanına giren işlerin bildirimini alırken, yönetim olarak siz tüm bu trafiğin kusursuz bir saat gibi işleyişini izlersiniz. Kimse <strong className="font-bold text-white">&quot;bana haber gelmedi&quot; diyemez;</strong> çünkü <strong className="font-bold text-white">sistem asla unutmaz ve asla yanlış kapıyı çalmaz.</strong>
+        </span>
+      ),
       actionText: "Devam Et"
     },
     {
       id: "reporting",
       icon: <BarChart4 className="w-16 h-16 text-purple-400 mb-6" />,
-      title: "Anlık Raporlama Gücü",
-      content: "Dilediğiniz an, sadece sesli komut vererek veya metin yazarak performans durumunu sorun. Sistem o an bulunduğunuz tarih aralığındaki mükemmel raporu saniyeler içinde masanıza koysun.",
+      title: "Anlık Raporlama Gücü: Otelinizin Nabzı Bir Cümle Uzağınızda",
+      content: (
+        <span>
+          <strong className="font-bold text-white">Rapor beklemekle vakit kaybetmeyin.</strong> Sesli veya yazılı bir talimatınız yeterli; istediğiniz tarih aralığındaki tüm veriler <strong className="font-bold text-white">saniyeler içinde masanızda.</strong> Siz sadece sorun, <strong className="font-bold text-white">HotelGenDigital anında yanıtlasın.</strong>
+        </span>
+      ),
       actionText: "Devam Et"
     },
     {
       id: "closing",
       icon: <CheckCircle2 className="w-16 h-16 text-teal-400 mb-6" />,
-      title: "Bunun Asıl Amacı Nedir?",
-      content: "Tüm bu sistemin tek bir amacı var: İşinizi çok daha iyi geliştirmek, misafir memnuniyetini kusursuza taşımak ve bir sonraki vizyon adımını en doğru şekilde atabilmek.",
+      title: "Tek Bir Amaç: Kusursuz Misafir Deneyimi ve Memnuniyeti, Sürdürülebilir Başarı",
+      content: (
+        <span>
+          Bizim için başarı; <strong className="font-bold text-white">hatasız bir operasyon, mutlu bir misafir ve her geçen gün büyüyen bir işletmedir.</strong> Amacımız, otelinizi dijital çağın standartlarına taşıyarak size <strong className="font-bold text-white">rakiplerinizin ötesinde bir vizyon kazandırmak.</strong> İşinizi geliştirmek ve yarını bugünden inşa etmek için ihtiyacınız olan her şeyi <strong className="font-bold text-white">tek bir yapıda topladık.</strong> Şimdi, bu değişimin parçası olma zamanı.
+        </span>
+      ),
       actionText: "Evet, Kesinlikle Doğru."
     }
   ];

@@ -290,30 +290,30 @@ async function extractGuestInfo(text) {
     }
 }
 
-// ── Departmana yönlendir + SLA + Resepsiyon bilgilendirmesi ───────────
+// ── Departmana (Çok Kanallı: Telegram/WhatsApp) yönlendir + SLA ───────────
 async function routeToDepartment(ctx, department, turkishSummary, guestChatId, guestName, guestRoom, platform = 'Telegram') {
-    const deptIDs = {
-        "HOUSEKEEPING": process.env.DEPT_HOUSEKEEPING_ID || "",
-        "TEKNIK": process.env.DEPT_TEKNIK_ID || "",
-        "RESEPSIYON": process.env.DEPT_RESEPSIYON_ID || "",
-        "F&B": process.env.DEPT_FB_ID || ""
-    };
-
-    let targetChatId = deptIDs[department];
+    let targetPersonnel = [];
     let isMock = false;
 
-    if (!targetChatId || targetChatId.trim() === "") {
-        // Eğer test ediliyorsa ve platform Telegram ise misafir ID'ye yönlendir
-        // Instagram ise misafir ID bir Telegram ID'si olmadığı için ona atılamaz, hata verir.
-        // O yüzden Instagram'dan gelip gidecek bir departman atanmamışsa "Test Hesabınıza" gönderelim.
-        // (Sizin Telegram ID'niz: 758605940 olarak yakaladık)
-        targetChatId = (platform === 'Telegram' || !platform) ? guestChatId : "758605940";
-        isMock = true;
+    // 1. İlgili departmanın yetkililerini veritabanından çek (Örn: TEKNIK -> Ahmet(Telegram), Veli(WhatsApp))
+    if (supabase) {
+        const { data: personnel, error } = await supabase
+            .from('hotel_personnel')
+            .select('*')
+            .eq('department', department)
+            .eq('is_active', true);
+
+        if (!error && personnel && personnel.length > 0) {
+            targetPersonnel = personnel;
+        }
     }
 
-    if (!targetChatId || targetChatId.trim() === "") {
-        console.error(`❌ [SLA İPTAL] Yönlendirilecek DEPARTMAN ID veya YETKİLİ ID bulunamadı! (Misafir Platformu: ${platform})`);
-        return;
+    // Eğer veritabanında o departmana atanmış kimse yoksa Fallback (Yedek/Test) Modu
+    if (targetPersonnel.length === 0) {
+        console.warn(`⚠️ [SLA UYARI] ${department} için aktif yetkili bulunamadı! Yedek (Test) moduna geçiliyor.`);
+        const fallbackId = (platform === 'Telegram' || !platform) ? String(guestChatId) : "758605940";
+        targetPersonnel = [{ full_name: 'Test Yöneticisi', platform: 'TELEGRAM', contact_id: fallbackId }];
+        isMock = true;
     }
 
     const ticketId = `HTL-${Math.floor(Math.random() * 10000)}`;
@@ -323,20 +323,10 @@ async function routeToDepartment(ctx, department, turkishSummary, guestChatId, g
 🚪 *Oda No:* ${guestRoom}
 📝 *Talep:* ${turkishSummary}
 ⏰ *Yanıt süresi:* 1 Dakika
-${isMock ? '\n_(Test modu: Departman ID tanımlı olmadığı için size yönlendirildi.)_' : ''}`;
+${isMock ? '\n_(Test modu: Veritabanında atalı yetkili eksik olduğu için varsayılan adrese gönderildi.)_' : ''}`;
 
     try {
-        const sentMsg = await bot.telegram.sendMessage(targetChatId, taskMessage, {
-            parse_mode: 'Markdown',
-            ...Markup.inlineKeyboard([
-                Markup.button.callback('👍 İlgileniyorum', `ack_${ticketId}`),
-                Markup.button.callback('✅ Tamamlandı', `done_${ticketId}`)
-            ])
-        });
-
-        console.log(`🚀 [YÖNLENDİRİLDİ] -> ${department} | ${guestName} / Oda ${guestRoom} | ${turkishSummary} | Ticket: ${ticketId}`);
-
-        // ── Supabase: Ticket oluştur ───────────────────────────────────────
+        // 2. GÖREVİ (TICKET) SUPABASE'E KAYDET
         const createdAt = new Date().toISOString();
         await dbUpsertTicket({
             ticket_id: ticketId,
@@ -352,21 +342,53 @@ ${isMock ? '\n_(Test modu: Departman ID tanımlı olmadığı için size yönlen
         });
         await dbLogEvent(ticketId, 'CREATED', 'system', `${department} departmanına yönlendirildi. Misafir: ${guestName}, Oda: ${guestRoom}`);
 
-        // ── Resepsiyona BİLGİ KOPYASI gönder (SLA'dan bağımsız) ──────────
-        const receptionId = deptIDs["RESEPSIYON"];
-        if (receptionId && receptionId.trim() !== "" && department !== "RESEPSIYON") {
-            const infoMsg = `📋 *BİLGİ (Kopyası)* — [${ticketId}]
-👤 *Misafir:* ${guestName} | 🚪 *Oda:* ${guestRoom}
-➡️ *Yönlendirilen Departman:* ${department}
-📝 *Talep:* ${turkishSummary}`;
-            try {
-                await bot.telegram.sendMessage(receptionId, infoMsg, { parse_mode: 'Markdown' });
-            } catch (e) {
-                console.warn("Resepsiyon bilgi kopyası gönderilemedi:", e.message);
+        let firstMessageId = null;
+
+        // 3. HER BİR YETKİLİYE KENDİ KANALINDAN (TEL/WP/MANYCHAT) MESAJ GÖNDER
+        for (const person of targetPersonnel) {
+            if (person.platform.toUpperCase() === 'TELEGRAM') {
+                try {
+                    const sentMsg = await bot.telegram.sendMessage(person.contact_id, taskMessage, {
+                        parse_mode: 'Markdown',
+                        ...Markup.inlineKeyboard([
+                            Markup.button.callback('👍 İlgileniyorum', `ack_${ticketId}`),
+                            Markup.button.callback('✅ Tamamlandı', `done_${ticketId}`)
+                        ])
+                    });
+                    if (!firstMessageId) firstMessageId = sentMsg.message_id; // SLA paneli yakalaması için
+                } catch (e) {
+                    console.error(`❌ [TELEGRAM GÜZERGÂHI] ${person.full_name} için hata:`, e.message);
+                }
+            } else if (person.platform.toUpperCase() === 'WHATSAPP' || person.platform.toUpperCase() === 'MANYCHAT') {
+                // WhatsApp için Twilio / ManyChat entegrasyonu (2. fazda API atılacak)
+                console.log(`📱 [WHATSAPP GÜZERGÂHI] ${person.full_name} numarasına WhatsApp bildirimi için kuyruğa alındı -> ${person.contact_id}`);
+                // await axios.post('manychat_webhook_url', { phone: person.contact_id, text: taskMessage });
             }
         }
 
-        // ── SLA Geri Sayımı (1 Dakika) ────────────────────────────────────
+        console.log(`🚀 [YÖNLENDİRİLDİ] -> ${department} | ${guestName} / Oda ${guestRoom} | ${turkishSummary} | Ticket: ${ticketId}`);
+
+        // 4. RESEPSİYONA KOPYA BİLGİ VERME (SLA harici salt bilgi)
+        if (department !== "RESEPSIYON" && supabase) {
+            const { data: recPersonnel } = await supabase.from('hotel_personnel')
+                .select('*').eq('department', 'RESEPSIYON').eq('is_active', true);
+
+            if (recPersonnel && recPersonnel.length > 0) {
+                const infoMsg = `📋 *BİLGİ (Kopyası)* — [${ticketId}]
+👤 *Misafir:* ${guestName} | 🚪 *Oda:* ${guestRoom}
+➡️ *Yönlendirilen Departman:* ${department}
+📝 *Talep:* ${turkishSummary}`;
+
+                recPersonnel.forEach(async (rec) => {
+                    if (rec.platform.toUpperCase() === 'TELEGRAM') {
+                        try { await bot.telegram.sendMessage(rec.contact_id, infoMsg, { parse_mode: 'Markdown' }); } 
+                        catch (e) {}
+                    }
+                });
+            }
+        }
+
+        // 5. SLA ZAMANLAYICISINI (1 Dakika) BAŞLAT
         pendingTickets[ticketId] = {
             id: ticketId,
             department,
@@ -376,8 +398,8 @@ ${isMock ? '\n_(Test modu: Departman ID tanımlı olmadığı için size yönlen
             guestChatId,
             platform,
             status: 'pending',
-            targetChatId,
-            messageId: sentMsg.message_id,
+            targetChatId: targetPersonnel.length > 0 ? targetPersonnel[0].contact_id : guestChatId, 
+            messageId: firstMessageId,
             createdAt,
             timer: setTimeout(async () => {
                 const tk = pendingTickets[ticketId];
@@ -386,47 +408,59 @@ ${isMock ? '\n_(Test modu: Departman ID tanımlı olmadığı için size yönlen
                     const escalatedAt = new Date().toISOString();
                     console.log(`⚠️ SLA AŞIMI: ${ticketId} - Resepsiyona iletiliyor...`);
 
-                    // Supabase güncelle
+                    // SLA Aşıldı -> DB Güncellemesi
                     await dbUpsertTicket({ ticket_id: ticketId, status: 'ESCALATED', escalated_at: escalatedAt });
                     await dbLogEvent(ticketId, 'ESCALATED', 'system', `${department} 1 dk içinde yanıt vermedi.`);
 
-                    // ── RESEPSYİYON'a acil eskalasyon alert'i (her zaman) ────────
-                    const receptionId = deptIDs["RESEPSIYON"];
-                    // Eğer konfigüre edilmemişse test için misafirin chat'ine düşsün
-                    const escalateTarget = (receptionId && receptionId.trim() !== '')
-                        ? receptionId
-                        : guestChatId;
+                    // Acil Eskalasyon mesajını tüm RESEPSİYON yetkililerine at
+                    let escalationTargets = [];
+                    if (supabase) {
+                        const { data: recs } = await supabase.from('hotel_personnel')
+                            .select('*').eq('department', 'RESEPSIYON').eq('is_active', true);
+                        if (recs && recs.length > 0) escalationTargets = recs;
+                    }
+
+                    // Yedek (Fallback) olarak test chat'ine dönme durumu
+                    if (escalationTargets.length === 0) {
+                        const fallbackId = (platform === 'Telegram' || !platform) ? String(guestChatId) : "758605940";
+                        escalationTargets.push({ full_name: 'Test Res', platform: 'TELEGRAM', contact_id: fallbackId });
+                    }
 
                     const escalationMsg = `🚨 *ACİL ESKALASYON*
 🏢 *Yanıtsız Departman:* ${department}
 👤 *Misafir:* ${guestName} | 🚪 *Oda:* ${guestRoom}
 📝 *Talep:* ${turkishSummary}
 
-⏰ _${department} departmanı belirlenen süre içinde yanıt VERMEDI._
-Lütfen ilgili departman sorumlusuna ulaşın ve aşağıdaki butona notunuzu girin.`;
+⏰ _${department} departmanı belirlenen süre içinde yanıt VERMEDİ._
+Lütfen aşağıdan inceleme notu ekleyin.`;
 
-                    try {
-                        await bot.telegram.sendMessage(escalateTarget, escalationMsg, {
-                            parse_mode: 'Markdown',
-                            ...Markup.inlineKeyboard([
-                                Markup.button.callback('📝 İnceleme Notu Ekle', `note_${ticketId}`)
-                            ])
-                        });
-                        // Eskalasyon hedefini kaydet (not eklerken lazım)
-                        pendingTickets[ticketId].escalateTarget = escalateTarget;
-                    } catch (e) {
-                        console.warn('Eskalasyon mesajı gönderilemedi:', e.message);
+                    // İlk Resepsiyon ID'sini referans al
+                    pendingTickets[ticketId].escalateTarget = escalationTargets[0].contact_id;
+
+                    for (const rec of escalationTargets) {
+                        if (rec.platform.toUpperCase() === 'TELEGRAM') {
+                            try {
+                                await bot.telegram.sendMessage(rec.contact_id, escalationMsg, {
+                                    parse_mode: 'Markdown',
+                                    ...Markup.inlineKeyboard([
+                                        Markup.button.callback('📝 İnceleme Notu Ekle', `note_${ticketId}`)
+                                    ])
+                                });
+                            } catch (e) {
+                                console.warn('Eskalasyon mesajı gönderilemedi:', e.message);
+                            }
+                        }
                     }
 
                     await saveMessageToDashboard(guestChatId, 'system',
                         `SLA Eskalasyon: ${ticketId} - ${guestName} (Oda ${guestRoom}) talebi cevapsız kaldı, resepsiyona aktarıldı.`, 'SLA_BOT');
-                    // Misafire HİÇBİR ŞEY GİTMEZ. ←←←
+                    // Misafire panik mesajı GİTMEZ.
                 }
-            }, 60000)
+            }, 60000) // 1 Dakika
         };
 
     } catch (err) {
-        console.log("Departmana mesaj yollanırken hata:", err.message);
+        console.log("Departmana mesaj yollanırken veya SLA başlatılırken hata:", err.message);
     }
 }
 

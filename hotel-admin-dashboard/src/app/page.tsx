@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronRight, 
-  CheckCircle2, 
-  Settings, 
+import {
+  ChevronRight,
+  CheckCircle2,
+  Settings,
   ShieldCheck,
   Globe2,
   Clock,
@@ -25,14 +25,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function PresentationFunnelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Start on login screen if URL has ?login=settings
   const initialSlide = searchParams.get('login') === 'settings' ? 6 : 0;
   const initialModal = searchParams.get('login') === 'settings' ? 'settings' : 'none';
 
   const [slide, setSlide] = useState(initialSlide);
   const [showModals, setShowModals] = useState<'none' | 'settings' | 'admin'>(initialModal as any);
-  
+
   // Login States
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -57,7 +57,7 @@ function PresentationFunnelContent() {
     e.preventDefault();
     const cleanUser = username.trim().toUpperCase();
     const cleanPass = password.trim();
-    
+
     if (cleanUser === 'F/O' && cleanPass === '1234') {
       router.push('/settings/fo');
     } else if (cleanUser === 'F/B' && cleanPass === '1234') {
@@ -112,7 +112,7 @@ function PresentationFunnelContent() {
       title: "7/24 Kusursuz Mesai: Mazeretlerin Bittiği, Performansın Başladığı Nokta",
       content: (
         <span>
-           &quot;Bugün hastayım,&quot; &quot;Geç kaldım&quot; veya &quot;Yanlış anladım&quot; cümlelerini <strong className="font-bold text-white">otelinizin lügatinden siliyoruz.</strong> Operasyonun sürekliliği artık tesadüflere veya bireysel ruh hallerine bağlı değil. HotelGenDigital, <strong className="font-bold text-white">365 gün boyunca aynı enerji ve titizlikle</strong> görevini yerine getirir. Siz uyurken veya başka bir krizle uğraşırken, o nöbet yerini bir saniye bile terk etmeden otelinizi en iyi şekilde temsil etmeye devam eder. <strong className="font-bold text-white">Denetlemeye gerek duymadığınız bir profesyonellik hayal edin.</strong>
+          &quot;Bugün hastayım,&quot; &quot;Geç kaldım&quot; veya &quot;Yanlış anladım&quot; cümlelerini <strong className="font-bold text-white">otelinizin lügatinden siliyoruz.</strong> Operasyonun sürekliliği artık tesadüflere veya bireysel ruh hallerine bağlı değil. HotelGenDigital, <strong className="font-bold text-white">365 gün boyunca aynı enerji ve titizlikle</strong> görevini yerine getirir. Siz uyurken veya başka bir krizle uğraşırken, o nöbet yerini bir saniye bile terk etmeden otelinizi en iyi şekilde temsil etmeye devam eder. <strong className="font-bold text-white">Denetlemeye gerek duymadığınız bir profesyonellik hayal edin.</strong>
         </span>
       ),
       actionText: "Devam Et"
@@ -155,7 +155,7 @@ function PresentationFunnelContent() {
   return (
     <div className="min-h-screen bg-[#0a0f1c] flex items-center justify-center relative overflow-hidden font-sans text-white">
       {/* Test Hotel Background Image */}
-      <div 
+      <div
         className="absolute inset-0 z-0 opacity-20 pointer-events-none"
         style={{
           backgroundImage: 'url("https://images.unsplash.com/photo-1542314831-c6a4d14d837e?q=80&w=2070&auto=format&fit=crop")',
@@ -165,47 +165,47 @@ function PresentationFunnelContent() {
         }}
       />
       {/* Background Effects */}
-      <motion.div 
-        animate={{ 
+      <motion.div
+        animate={{
           scale: [1, 1.2, 1],
           opacity: [0.2, 0.4, 0.2],
           x: [0, 60, 0]
         }}
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/30 rounded-full blur-[150px] pointer-events-none" 
+        className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/30 rounded-full blur-[150px] pointer-events-none"
       />
-      <motion.div 
-        animate={{ 
+      <motion.div
+        animate={{
           scale: [1, 1.3, 1],
           opacity: [0.2, 0.5, 0.2],
           x: [0, -60, 0]
         }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-500/30 rounded-full blur-[150px] pointer-events-none" 
+        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-500/30 rounded-full blur-[150px] pointer-events-none"
       />
-      <motion.div 
-        animate={{ 
+      <motion.div
+        animate={{
           scale: [1, 1.5, 1],
           opacity: [0.1, 0.3, 0.1],
           y: [0, 50, 0]
         }}
         transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-[40%] left-[40%] w-[30%] h-[30%] bg-purple-500/20 rounded-full blur-[120px] pointer-events-none" 
+        className="absolute top-[40%] left-[40%] w-[30%] h-[30%] bg-purple-500/20 rounded-full blur-[120px] pointer-events-none"
       />
 
       {/* Top Navigation Options */}
       {slide < slides.length && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:top-10 md:right-10 flex flex-row gap-2 sm:gap-3 z-50 w-max">
-          <button 
-            onClick={() => { setSlide(slides.length); setShowModals('settings'); }} 
+          <button
+            onClick={() => { setSlide(slides.length); setShowModals('settings'); }}
             className="px-3 py-1.5 md:px-4 md:py-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-700/50 rounded-lg text-[10px] md:text-xs font-medium text-slate-300 backdrop-blur-md shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <Settings className="w-4 h-4" />
             <span className="hidden sm:inline">Sisteme Giriş Yapın</span>
             <span className="sm:hidden">Sistem</span>
           </button>
-          <button 
-            onClick={() => { setSlide(slides.length); setShowModals('admin'); }} 
+          <button
+            onClick={() => { setSlide(slides.length); setShowModals('admin'); }}
             className="px-3 py-1.5 md:px-4 md:py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/50 rounded-lg text-[10px] md:text-xs font-medium text-purple-200 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all flex items-center justify-center gap-2"
           >
             <ShieldCheck className="w-4 h-4 text-purple-400" />
@@ -226,10 +226,10 @@ function PresentationFunnelContent() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-[95%] md:max-w-5xl lg:max-w-7xl w-full px-4 sm:px-6 md:px-8 flex flex-col items-center text-center z-10"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1, y: [0, -12, 0] }}
-              transition={{ 
+              transition={{
                 scale: { type: 'spring', stiffness: 200, damping: 12, delay: 0.2 },
                 opacity: { delay: 0.2 },
                 y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }
@@ -242,7 +242,7 @@ function PresentationFunnelContent() {
               </div>
             </motion.div>
 
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -252,7 +252,7 @@ function PresentationFunnelContent() {
             </motion.h1>
 
             {slides[slide].subtitle && (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -262,7 +262,7 @@ function PresentationFunnelContent() {
               </motion.p>
             )}
 
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -278,11 +278,10 @@ function PresentationFunnelContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
               onClick={nextSlide}
-              className={`group relative overflow-hidden flex items-center gap-2 md:gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-[15px] md:text-lg shadow-2xl transition-all ${
-                slide === slides.length - 1 
-                  ? 'bg-teal-500 hover:bg-teal-400 text-white shadow-[0_0_20px_rgba(20,184,166,0.5)]' 
+              className={`group relative overflow-hidden flex items-center gap-2 md:gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-[15px] md:text-lg shadow-2xl transition-all ${slide === slides.length - 1
+                  ? 'bg-teal-500 hover:bg-teal-400 text-white shadow-[0_0_20px_rgba(20,184,166,0.5)]'
                   : 'bg-white text-slate-900 border-2 border-transparent hover:border-blue-300 hover:bg-blue-50 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
-              }`}
+                }`}
             >
               <div className="absolute inset-0 bg-white/40 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out skew-x-12" />
               <span className="relative z-10 flex items-center gap-3">
@@ -294,8 +293,8 @@ function PresentationFunnelContent() {
             {/* Pagination Dots */}
             <div className="flex gap-2 mt-5 md:mt-16">
               {slides.map((_, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`h-1.5 rounded-full transition-all duration-300 ${i === slide ? 'w-6 md:w-8 bg-blue-500' : 'w-1.5 md:w-2 bg-slate-700'}`}
                 />
               ))}
@@ -325,14 +324,14 @@ function PresentationFunnelContent() {
 
             <div className="grid md:grid-cols-2 gap-4 md:gap-8 w-full">
               {/* Sistem Ayarları Button/Modal */}
-              <motion.div 
+              <motion.div
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setShowModals('settings')}
                 onClick={() => setShowModals('settings')}
                 className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-5 sm:p-8 overflow-hidden cursor-pointer ${showModals === 'settings' ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
               >
                 <div className={`absolute inset-0 bg-blue-500/5 transition-opacity duration-500 ${showModals === 'settings' ? 'opacity-100' : 'opacity-0'}`} />
-                
+
                 {showModals !== 'settings' ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-6 sm:py-12">
                     <Settings className="w-12 h-12 md:w-16 md:h-16 text-blue-500 mb-4 md:mb-6 group-hover:rotate-90 transition-transform duration-700" />
@@ -340,9 +339,9 @@ function PresentationFunnelContent() {
                     <p className="text-sm sm:text-base text-slate-400">Konsept bilgi ve belgelerini yüklemek için giriş yapın.</p>
                   </div>
                 ) : (
-                  <motion.form 
+                  <motion.form
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    onSubmit={handleSettingsLogin} 
+                    onSubmit={handleSettingsLogin}
                     className="flex flex-col h-full relative z-10"
                   >
                     <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
@@ -366,7 +365,7 @@ function PresentationFunnelContent() {
                         <div className="relative">
                           <Lock className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                           <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none focus:border-blue-500" placeholder="••••" />
-                          <button 
+                          <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
@@ -377,7 +376,7 @@ function PresentationFunnelContent() {
                       </div>
                     </div>
 
-                    {error && showModals==='settings' && <p className="text-red-400 text-sm mb-4">{error}</p>}
+                    {error && showModals === 'settings' && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
                     <button type="submit" className="mt-auto w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors">
                       Giriş Yap
@@ -387,14 +386,14 @@ function PresentationFunnelContent() {
               </motion.div>
 
               {/* Yönetici Paneli Button/Modal */}
-              <motion.div 
+              <motion.div
                 whileHover={{ y: -5 }}
                 onMouseEnter={() => setShowModals('admin')}
                 onClick={() => setShowModals('admin')}
                 className={`relative group bg-slate-900/50 backdrop-blur-xl border-2 transition-all duration-500 rounded-3xl p-5 sm:p-8 overflow-hidden cursor-pointer ${showModals === 'admin' ? 'border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)]' : 'border-slate-800 hover:border-slate-600'}`}
               >
                 <div className={`absolute inset-0 bg-purple-500/5 transition-opacity duration-500 ${showModals === 'admin' ? 'opacity-100' : 'opacity-0'}`} />
-                
+
                 {showModals !== 'admin' ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-6 sm:py-12">
                     <ShieldCheck className="w-12 h-12 md:w-16 md:h-16 text-purple-500 mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-500" />
@@ -402,9 +401,9 @@ function PresentationFunnelContent() {
                     <p className="text-sm sm:text-base text-slate-400">Üst Düzey Yönetici ve İletişim yetkileri.</p>
                   </div>
                 ) : (
-                  <motion.form 
+                  <motion.form
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    onSubmit={handleAdminLogin} 
+                    onSubmit={handleAdminLogin}
                     className="flex flex-col h-full relative z-10"
                   >
                     <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
@@ -428,7 +427,7 @@ function PresentationFunnelContent() {
                         <div className="relative">
                           <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                           <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none focus:border-purple-500" placeholder="••••••••" />
-                          <button 
+                          <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
@@ -439,7 +438,7 @@ function PresentationFunnelContent() {
                       </div>
                     </div>
 
-                    {error && showModals==='admin' && <p className="text-red-400 text-sm mb-4">{error}</p>}
+                    {error && showModals === 'admin' && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
                     <button type="submit" className="mt-auto w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors">
                       Yetkili Girişi Yap

@@ -10,8 +10,8 @@ export async function POST(request: Request) {
         console.log("📨 ManyChat / n8n Webhook Alındı");
 
         // 1. Gelen Veriyi Al
-        const subscriberId = payload.subscriber_id || payload.chat_id || "unknown";
-        const incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message;
+        const subscriberId = payload.subscriber_id || payload.chat_id || payload.contact_id || "unknown";
+        const incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message || payload.text;
         const isAudio = payload.custom_fields?.[MANYCHAT_CONFIG.fields.cuf_audio_url] ? true : false;
 
         // (Simüle Edilmiş Misafir Bilgileri - Normalde custom_fields'den / DB'den eşleştirilir)

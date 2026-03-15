@@ -1,38 +1,48 @@
 -- 1. OTELLER (HOTELS) TABLOSU
--- Sistemdeki her bir otelin (Hotel A, Hotel B vb.) kimliğini tutar.
-CREATE TABLE hotels (
+-- (Eğer tablo zaten varsa hata vermemesi için IF NOT EXISTS ekledik)
+CREATE TABLE IF NOT EXISTS hotels (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    domain TEXT UNIQUE, -- İleride oteli domain adından tanımak için
+    domain TEXT UNIQUE, 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 2. DOKÜMANLAR (HOTEL DOCUMENTS) TABLOSU
--- F/O, F/B gibi departmanların yüklediği tüm dosyaların kalıcı listesini tutar.
--- "hotel_id" kolonu sayesinde hangi dosyanın hangi otele ait olduğu duvarlarla örülür.
-CREATE TABLE hotel_documents (
+-- (FO, SPA vs. belgeleri kaydedeceğimiz tablo)
+CREATE TABLE IF NOT EXISTS hotel_documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hotel_id UUID NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
-    department TEXT NOT NULL, -- Örn: 'FO', 'FB', 'SPA'
-    doc_type TEXT NOT NULL, -- Örn: 'inhouse', 'factsheet', 'menus'
-    file_url TEXT NOT NULL, -- Storage'daki dosyanın erişim linki
+    department TEXT NOT NULL,
+    doc_type TEXT NOT NULL,
+    file_url TEXT NOT NULL,
     file_name TEXT,
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. GÜVENLİK DUVARI (ROW LEVEL SECURITY - RLS) AKTİVASYONU
--- Bu politikalar sayesinde Hotel A, sadece kendi hotel_id'sine sahip kayıtları görebilecek.
+-- RLS (Güvenlik) Ayarını Açalım
 ALTER TABLE hotel_documents ENABLE ROW LEVEL SECURITY;
 
--- Örnek bir Güvenlik Politikası (Gerçek auth sisteminde jwt'den gelen hotel_id'ye eşitse izin verilir):
-CREATE POLICY "Sadece kendi otellerinin dökümanlarını görebilir"
-ON hotel_documents
-FOR SELECT
-USING (
-    hotel_id = auth.jwt()->>'user_hotel_id'
-);
+-- Eğer mevcut bir policy varsa silinmesi için (hata vermemek adına):
+DROP POLICY IF EXISTS "Sadece kendi otellerinin dökümanlarını görebilir" ON hotel_documents;
 
--- Örnek veri (Sistemi test etmek için örnek iki otel)
-INSERT INTO hotels (id, name, domain) VALUES 
+-- Tabloya herkesin okuma ve yazma yapabilmesini şimdilik sağlayalım (Geliştirme süreci için):
+CREATE POLICY "Herkese açık doküman okuma" ON hotel_documents FOR SELECT USING (true);
+CREATE POLICY "Herkese açık doküman yazma" ON hotel_documents FOR INSERT WITH CHECK (true);
+CREATE POLICY "Herkese açık doküman güncelleme" ON hotel_documents FOR UPDATE USING (true);
+
+-- Otel verilerini girmeden önce temizleyelim (Aynı otel 2 kere girmesin diye)
+-- Varsa Rixos ve Titanic'i oluştur:
+INSERT INTO hotels (id, name, domain) 
+VALUES 
 ('11111111-1111-1111-1111-111111111111', 'Rixos (Hotel A)', 'rixos'),
-('22222222-2222-2222-2222-222222222222', 'Titanic (Hotel B)', 'titanic');
+('22222222-2222-2222-2222-222222222222', 'Titanic (Hotel B)', 'titanic')
+ON CONFLICT (id) DO NOTHING;
+
+-- 3. STORAGE İZİNLERİ (Sizin elinizle yapacağınız yeri KODLA yapıyoruz)
+-- hotel-documents kovasına yetki vermek için arka plan SQL kodları
+-- Herkes dosya yükleyebilir, görüntüleyebilir, silebilir ve güncelleyebilir.
+
+CREATE POLICY "Give public access to hotel_documents" ON storage.objects FOR SELECT USING (bucket_id = 'hotel-documents');
+CREATE POLICY "Give public insert to hotel_documents" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'hotel-documents');
+CREATE POLICY "Give public update to hotel_documents" ON storage.objects FOR UPDATE USING (bucket_id = 'hotel-documents');
+CREATE POLICY "Give public delete to hotel_documents" ON storage.objects FOR DELETE USING (bucket_id = 'hotel-documents');

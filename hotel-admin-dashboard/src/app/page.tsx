@@ -66,6 +66,8 @@ function PresentationFunnelContent() {
       router.push('/settings/gr');
     } else if (cleanUser === 'H/K' && cleanPass === '1234') {
       router.push('/settings/hk');
+    } else if (cleanUser === 'SPA' && cleanPass === '1234') {
+      router.push('/settings/spa');
     } else {
       setError(`Geçersiz departman ("${username}") veya hatalı şifre.`);
     }

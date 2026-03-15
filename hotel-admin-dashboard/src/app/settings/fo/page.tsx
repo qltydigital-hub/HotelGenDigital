@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle } from 'lucide-react';
+import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 // Mock Data Type
@@ -33,6 +33,11 @@ export default function FrontOfficeSettings() {
     const [messageSent, setMessageSent] = useState(false);
     const [messageTime, setMessageTime] = useState<string | null>(null);
     const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+    
+    // AI Welcome Settings States
+    const [offerMap, setOfferMap] = useState(true);
+    const [remind247, setRemind247] = useState(true);
+    const [offerInfo, setOfferInfo] = useState(true);
 
     // Toggle selection for a single guest
     const toggleGuest = (id: string) => {
@@ -199,8 +204,63 @@ export default function FrontOfficeSettings() {
                     )}
                 </div>
 
+                {/* --- NEW FEATURE: AI WELCOME BEHAVIOR SETTINGS --- */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                    <div className="flex items-center gap-4 mb-6">
+                        <Bot className="w-8 h-8 text-purple-400" />
+                        <div>
+                            <h2 className="text-2xl font-bold">Dijital Asistan (Yapay Zeka) Karşılama Davranışları</h2>
+                            <p className="text-slate-400 text-sm mt-1">Misafir sisteme giriş yaptığında asistanın vereceği ilk tepkileri ve sunacağı teklifleri yönetin.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Map Toggle */}
+                        <div 
+                            onClick={() => setOfferMap(!offerMap)}
+                            className={`flex flex-col p-5 rounded-2xl border-2 transition-all cursor-pointer ${offerMap ? 'bg-purple-900/20 border-purple-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-white">Otel Krokisi Teklif Et</h3>
+                                <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${offerMap ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${offerMap ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-400 leading-relaxed">"Otelimizin haritasını/krokisini görmek ister misiniz?" şeklinde otomatik teklifte bulunur. (Aşağıdan kroki yüklediğinizden emin olun)</p>
+                        </div>
+
+                        {/* 24/7 Toggle */}
+                        <div 
+                            onClick={() => setRemind247(!remind247)}
+                            className={`flex flex-col p-5 rounded-2xl border-2 transition-all cursor-pointer ${remind247 ? 'bg-purple-900/20 border-purple-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-white">7/24 Kesintisiz Hizmet Modu</h3>
+                                <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${remind247 ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${remind247 ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-400 leading-relaxed">Misafire "7/24 buradayım, bir sorunuz olursa dilediğiniz zaman yazabilirsiniz" güvenini aşılar.</p>
+                        </div>
+
+                        {/* Info Toggle */}
+                        <div 
+                            onClick={() => setOfferInfo(!offerInfo)}
+                            className={`flex flex-col p-5 rounded-2xl border-2 transition-all cursor-pointer ${offerInfo ? 'bg-purple-900/20 border-purple-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-white">Bölge & Tesis Tanıtımı</h3>
+                                <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${offerInfo ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${offerInfo ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-400 leading-relaxed">"Otelimiz veya bölgemiz hakkında bilgi almak isterseniz, size yardımcı olmaktan memnuniyet duyarım." mesajını iletir.</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Eski Yükleme Modülleri (Konsept, Fact Sheet vb.) Grid Halinde Altta */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {/* Konsept Yükleme */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
                         <div>
@@ -266,6 +326,23 @@ export default function FrontOfficeSettings() {
                         </label>
                         {uploadTimes['daypass'] && (
                             <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['daypass']}</div>
+                        )}
+                    </div>
+
+                    {/* Hotel Kroki Yükleme */}
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
+                        <div>
+                            <MapIcon className="w-6 h-6 text-slate-400 mb-3" />
+                            <h2 className="text-lg font-bold mb-2">Otel Krokisi / Harita</h2>
+                            <p className="text-slate-500 text-xs mb-4">Misafirlere otomatik sunulacak olan görsel krokiyi yükleyin (Örn: JPG, PNG).</p>
+                        </div>
+                        <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
+                            <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
+                            <span className="text-xs font-bold text-slate-400">Görsel Yükle</span>
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleGenericUpload('map', e)} />
+                        </label>
+                        {uploadTimes['map'] && (
+                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['map']}</div>
                         )}
                     </div>
                 </div>

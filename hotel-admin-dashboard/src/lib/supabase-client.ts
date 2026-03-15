@@ -58,6 +58,60 @@ export function getServiceSupabase() {
     return createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
 }
 
+// ─── Yükleme İşlemleri (Storage & Database) ──────────────────────────────
+
+/** Belgeyi (PDF, Excel, Görsel vb.) Storage'a yükler ve veritabanına kaydeder */
+export async function uploadDocumentToSupabase(
+    file: File, 
+    department: string, 
+    docType: string, 
+    hotelId: string = '11111111-1111-1111-1111-111111111111' // Şimdilik Rixos örnek ID
+): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${hotelId}/${department}/${docType}_${Date.now()}.${fileExt}`;
+        
+        // 1. Storage'a Yükle (hotel-documents kovasına)
+        const { error: storageError } = await supabase
+            .storage
+            .from('hotel-documents')
+            .upload(fileName, file, { cacheControl: '3600', upsert: true });
+
+        if (storageError) {
+            console.error('Storage Hatası:', storageError.message);
+            return { success: false, error: storageError.message };
+        }
+
+        // 2. Herkese Açık Linkini Al
+        const { data: { publicUrl } } = supabase
+            .storage
+            .from('hotel-documents')
+            .getPublicUrl(fileName);
+
+        // 3. Veritabanına (hotel_documents) Bu Yüklemeyi Kaydet
+        const { error: dbError } = await supabase
+            .from('hotel_documents')
+            .insert({
+                hotel_id: hotelId,
+                department: department,
+                doc_type: docType,
+                file_url: publicUrl,
+                file_name: file.name
+            });
+
+        if (dbError) {
+            console.error('Veritabanı Kayıt Hatası:', dbError.message);
+            // Tablo henüz yoksa bile sistemin çökmemsi için false dönüyoruz
+            return { success: false, error: dbError.message };
+        }
+
+        return { success: true, url: publicUrl };
+
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
 // ─── Yardımcı Fonksiyonlar ───────────────────────────────────────────────
 
 /** Telegram mesajını Supabase'e kaydet */

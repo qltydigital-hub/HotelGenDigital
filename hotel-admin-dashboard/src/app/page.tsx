@@ -15,19 +15,37 @@ import {
   Lock,
   User,
   KeyRound,
-  Hotel
+  Hotel,
+  Eye,
+  EyeOff,
+  ArrowLeft
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PresentationFunnel() {
+function PresentationFunnelContent() {
   const router = useRouter();
-  const [slide, setSlide] = useState(0);
-  const [showModals, setShowModals] = useState<'none' | 'settings' | 'admin'>('none');
+  const searchParams = useSearchParams();
+  
+  // Start on login screen if URL has ?login=settings
+  const initialSlide = searchParams.get('login') === 'settings' ? 6 : 0;
+  const initialModal = searchParams.get('login') === 'settings' ? 'settings' : 'none';
+
+  const [slide, setSlide] = useState(initialSlide);
+  const [showModals, setShowModals] = useState<'none' | 'settings' | 'admin'>(initialModal as any);
   
   // Login States
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Clear states when modal changes
+  useEffect(() => {
+    setUsername('');
+    setPassword('');
+    setError('');
+    setShowPassword(false);
+  }, [showModals]);
 
   const nextSlide = () => {
     if (slide < slides.length) {
@@ -37,10 +55,19 @@ export default function PresentationFunnel() {
 
   const handleSettingsLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === '1234') {
-      router.push('/settings');
+    const cleanUser = username.trim().toUpperCase();
+    const cleanPass = password.trim();
+    
+    if (cleanUser === 'F/O' && cleanPass === '1234') {
+      router.push('/settings/fo');
+    } else if (cleanUser === 'F/B' && cleanPass === '1234') {
+      router.push('/settings/fb');
+    } else if (cleanUser === 'G/R' && cleanPass === '1234') {
+      router.push('/settings/gr');
+    } else if (cleanUser === 'H/K' && cleanPass === '1234') {
+      router.push('/settings/hk');
     } else {
-      setError('Hatalı kullanıcı adı veya şifre.');
+      setError(`Geçersiz departman ("${username}") veya hatalı şifre.`);
     }
   };
 
@@ -281,7 +308,14 @@ export default function PresentationFunnel() {
             transition={{ duration: 0.5 }}
             className="max-w-5xl w-full px-4 md:px-6 flex flex-col items-center z-10"
           >
-            <div className="text-center mb-8 md:mb-16">
+            <div className="text-center mb-8 md:mb-16 relative w-full flex flex-col items-center">
+              <button
+                onClick={() => { setSlide(0); setShowModals('none'); }}
+                className="absolute left-0 top-0 md:top-2 flex items-center gap-2 text-slate-400 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700/50 px-3 py-2 rounded-lg backdrop-blur-sm"
+              >
+                <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="text-sm md:text-base hidden sm:inline">Sunuma Dön</span>
+              </button>
               <CheckCircle2 className="w-16 h-16 md:w-20 md:h-20 text-teal-400 mx-auto mb-4 md:mb-6" />
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 md:mb-4">Sisteme Giriş Yapın</h2>
               <p className="text-[15px] sm:text-xl text-slate-400 font-light">Lütfen yetkili olduğunuz alanı seçerek devam edin.</p>
@@ -319,17 +353,24 @@ export default function PresentationFunnel() {
 
                     <div className="space-y-4 mb-4 md:mb-6">
                       <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Kullanıcı Adı</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Departman Kodu</label>
                         <div className="relative">
                           <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500" placeholder="admin" />
+                          <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500" placeholder="Örn: F/O, F/B, vb." />
                         </div>
                       </div>
                       <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Şifre</label>
                         <div className="relative">
                           <Lock className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500" placeholder="••••" />
+                          <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none focus:border-blue-500" placeholder="••••" />
+                          <button 
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -384,7 +425,14 @@ export default function PresentationFunnel() {
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Yönetici Parolası</label>
                         <div className="relative">
                           <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500" placeholder="••••••••" />
+                          <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none focus:border-purple-500" placeholder="••••••••" />
+                          <button 
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -403,4 +451,12 @@ export default function PresentationFunnel() {
       </AnimatePresence>
     </div>
   );
+}
+
+export default function PresentationFunnel() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#0a0f1c]" />}>
+      <PresentationFunnelContent />
+    </React.Suspense>
+  )
 }

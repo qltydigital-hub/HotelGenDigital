@@ -107,20 +107,20 @@ export default function FrontOfficeSettings() {
                 </div>
 
                 {/* --- NEW FEATURE: INHOUSE LIST EXCEL/PDF UPLOAD & FILTERING --- */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                        <div className="flex items-center gap-4">
-                            <FileSearch className="w-7 h-7 text-blue-400" />
-                            <div>
-                                <h2 className="text-2xl font-bold">Günlük Inhouse Listesi Yükle (Akıllı Filtreleme)</h2>
-                                <p className="text-slate-400 text-sm mt-1">Excel veya PDF yüklediğinizde fiyatlar vb. gizli bilgiler otomatik silinir; sadece iletişim ve konaklama özeti listelenir.</p>
+                    <div className={`bg-slate-900/50 border rounded-3xl p-6 relative overflow-hidden group transition-all ${isUploaded ? 'border-emerald-500/50 bg-emerald-900/10' : 'border-slate-800 hover:border-blue-500/30'}`}>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                            <div className="flex items-center gap-4">
+                                {isUploaded ? <CheckSquare className="w-7 h-7 text-emerald-400" /> : <FileSearch className="w-7 h-7 text-blue-400" />}
+                                <div>
+                                    <h2 className={`text-2xl font-bold ${isUploaded ? 'text-emerald-400' : ''}`}>Günlük Inhouse Listesi Yükle (Akıllı Filtreleme)</h2>
+                                    <p className="text-slate-400 text-sm mt-1">Excel veya PDF yüklediğinizde fiyatlar vb. gizli bilgiler otomatik silinir; sadece iletişim ve konaklama özeti listelenir.</p>
+                                </div>
                             </div>
-                        </div>
                         
                             <div className="flex flex-col items-center">
-                                <label className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl cursor-pointer font-bold transition-colors">
+                                <label className={`flex items-center px-6 py-3 rounded-xl cursor-pointer font-bold transition-colors ${isUploaded ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-blue-600 hover:bg-blue-500'}`}>
                                     <UploadCloud className="w-5 h-5 mr-2" />
-                                    Dosya Yükle
+                                    {isUploaded ? 'Listeyi Güncelle' : 'Dosya Yükle'}
                                     <input type="file" className="hidden" accept=".xlsx, .xls, .pdf" onChange={handleFileUpload} />
                                 </label>
                                 {uploadTimes['inhouse'] && (
@@ -262,15 +262,16 @@ export default function FrontOfficeSettings() {
                 {/* Eski Yükleme Modülleri (Konsept, Fact Sheet vb.) Grid Halinde Altta */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {/* Konsept Yükleme */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
+                    {/* Konsept Yükleme */}
+                    <div className={`border rounded-3xl p-6 relative group transition-all flex flex-col justify-between ${uploadTimes['konsept'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>
                         <div>
-                            <FileText className="w-6 h-6 text-slate-400 mb-3" />
-                            <h2 className="text-lg font-bold mb-2">Konsept Dosyası</h2>
+                            {uploadTimes['konsept'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <FileText className="w-6 h-6 text-slate-400 mb-3" />}
+                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['konsept'] ? 'text-emerald-400' : ''}`}>Konsept Dosyası</h2>
                             <p className="text-slate-500 text-xs mb-4">Yaz/Kış sezonu, özel etkinlik konseptleri.</p>
                         </div>
-                        <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
-                            <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
-                            <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
+                        <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['konsept'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
+                            <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['konsept'] ? 'text-emerald-400' : 'text-slate-500'}`} />
+                            <span className={`text-xs font-bold ${uploadTimes['konsept'] ? 'text-emerald-400' : 'text-slate-400'}`}>{uploadTimes['konsept'] ? 'Yeniden Yükle' : 'Dosya Yükle'}</span>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('konsept', e)} />
                         </label>
                         {uploadTimes['konsept'] && (
@@ -279,15 +280,15 @@ export default function FrontOfficeSettings() {
                     </div>
 
                     {/* Fact Sheet Yükleme */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
+                    <div className={`border rounded-3xl p-6 relative group transition-all flex flex-col justify-between ${uploadTimes['factsheet'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>
                         <div>
-                            <FileSpreadsheet className="w-6 h-6 text-slate-400 mb-3" />
-                            <h2 className="text-lg font-bold mb-2">Fact Sheet</h2>
+                            {uploadTimes['factsheet'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <FileSpreadsheet className="w-6 h-6 text-slate-400 mb-3" />}
+                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['factsheet'] ? 'text-emerald-400' : ''}`}>Fact Sheet</h2>
                             <p className="text-slate-500 text-xs mb-4">Otel fiziki özellik dökümanı.</p>
                         </div>
-                        <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
-                            <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
-                            <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
+                        <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['factsheet'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
+                            <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['factsheet'] ? 'text-emerald-400' : 'text-slate-500'}`} />
+                            <span className={`text-xs font-bold ${uploadTimes['factsheet'] ? 'text-emerald-400' : 'text-slate-400'}`}>{uploadTimes['factsheet'] ? 'Yeniden Yükle' : 'Dosya Yükle'}</span>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('factsheet', e)} />
                         </label>
                         {uploadTimes['factsheet'] && (
@@ -296,15 +297,15 @@ export default function FrontOfficeSettings() {
                     </div>
 
                     {/* Fiyat Listesi Yükleme */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
+                    <div className={`border rounded-3xl p-6 relative group transition-all flex flex-col justify-between ${uploadTimes['prices'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>
                         <div>
-                            <Banknote className="w-6 h-6 text-slate-400 mb-3" />
-                            <h2 className="text-lg font-bold mb-2">Fiyat Listesi</h2>
+                            {uploadTimes['prices'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <Banknote className="w-6 h-6 text-slate-400 mb-3" />}
+                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['prices'] ? 'text-emerald-400' : ''}`}>Fiyat Listesi</h2>
                             <p className="text-slate-500 text-xs mb-4">Önbüro harici hizmet fiyatlandırmaları.</p>
                         </div>
-                        <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
-                            <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
-                            <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
+                        <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['prices'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
+                            <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['prices'] ? 'text-emerald-400' : 'text-slate-500'}`} />
+                            <span className={`text-xs font-bold ${uploadTimes['prices'] ? 'text-emerald-400' : 'text-slate-400'}`}>{uploadTimes['prices'] ? 'Yeniden Yükle' : 'Dosya Yükle'}</span>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('prices', e)} />
                         </label>
                         {uploadTimes['prices'] && (
@@ -313,15 +314,15 @@ export default function FrontOfficeSettings() {
                     </div>
 
                     {/* Daypass Yükleme */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
+                    <div className={`border rounded-3xl p-6 relative group transition-all flex flex-col justify-between ${uploadTimes['daypass'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>
                         <div>
-                            <Sun className="w-6 h-6 text-slate-400 mb-3" />
-                            <h2 className="text-lg font-bold mb-2">Day-Pass Fiyatları</h2>
+                            {uploadTimes['daypass'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <Sun className="w-6 h-6 text-slate-400 mb-3" />}
+                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['daypass'] ? 'text-emerald-400' : ''}`}>Day-Pass Fiyatları</h2>
                             <p className="text-slate-500 text-xs mb-4">Günübirlik misafir kabul şartları.</p>
                         </div>
-                        <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
-                            <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
-                            <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
+                        <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['daypass'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
+                            <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['daypass'] ? 'text-emerald-400' : 'text-slate-500'}`} />
+                            <span className={`text-xs font-bold ${uploadTimes['daypass'] ? 'text-emerald-400' : 'text-slate-400'}`}>{uploadTimes['daypass'] ? 'Yeniden Yükle' : 'Dosya Yükle'}</span>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('daypass', e)} />
                         </label>
                         {uploadTimes['daypass'] && (
@@ -330,15 +331,15 @@ export default function FrontOfficeSettings() {
                     </div>
 
                     {/* Hotel Kroki Yükleme */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative group hover:border-slate-700 transition-all flex flex-col justify-between">
+                    <div className={`border rounded-3xl p-6 relative group transition-all flex flex-col justify-between ${uploadTimes['map'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>
                         <div>
-                            <MapIcon className="w-6 h-6 text-slate-400 mb-3" />
-                            <h2 className="text-lg font-bold mb-2">Otel Krokisi / Harita</h2>
-                            <p className="text-slate-500 text-xs mb-4">Misafirlere otomatik sunulacak olan görsel krokiyi yükleyin (Örn: JPG, PNG).</p>
+                            {uploadTimes['map'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <MapIcon className="w-6 h-6 text-slate-400 mb-3" />}
+                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['map'] ? 'text-emerald-400' : ''}`}>Otel Krokisi / Harita</h2>
+                            <p className="text-slate-500 text-xs mb-4">Misafirlere otomatik sunulacak olan görsel kroki. (JPG, PNG)</p>
                         </div>
-                        <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
-                            <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
-                            <span className="text-xs font-bold text-slate-400">Görsel Yükle</span>
+                        <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['map'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
+                            <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['map'] ? 'text-emerald-400' : 'text-slate-500'}`} />
+                            <span className={`text-xs font-bold ${uploadTimes['map'] ? 'text-emerald-400' : 'text-slate-400'}`}>{uploadTimes['map'] ? 'Yeniden Yükle' : 'Görsel Yükle'}</span>
                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleGenericUpload('map', e)} />
                         </label>
                         {uploadTimes['map'] && (

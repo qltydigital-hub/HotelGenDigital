@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { UploadCloud, CheckCircle2, Save, LogOut, BellRing, Smartphone, ClipboardList, Send } from 'lucide-react';
+import { UploadCloud, CheckCircle2, Save, LogOut, BellRing, Smartphone, ClipboardList, Send, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HKSettings() {
@@ -61,17 +61,17 @@ export default function HKSettings() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
                     {/* H/K Belge Upload */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-teal-500/30 transition-all h-fit">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all h-fit ${uploadTimes['standards'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-teal-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <ClipboardList className="w-6 h-6 text-teal-400" />
-                            <h2 className="text-xl font-bold">Oda Temizlik Standartları ve Periyotları</h2>
+                            {uploadTimes['standards'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <ClipboardList className="w-6 h-6 text-teal-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['standards'] ? 'text-emerald-400' : ''}`}>Oda Temizlik Standartları ve Periyotları</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Havlu-çarşaf değişim günleri, temizlik standartları ve kimyasal güvenlik dokümanları.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['standards'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-teal-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-teal-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['standards'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-teal-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['standards'] ? 'text-emerald-400' : 'text-teal-400'}`}>{uploadTimes['standards'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('standards', e)} />
                         </label>

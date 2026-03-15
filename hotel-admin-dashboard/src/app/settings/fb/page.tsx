@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, Utensils, Coffee, Clock, LogOut } from 'lucide-react';
+import { Settings, FileText, UploadCloud, Utensils, Coffee, Clock, LogOut, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FandBSettings() {
@@ -41,17 +41,17 @@ export default function FandBSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     
                     {/* Restoran & Bar Menüleri */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all ${uploadTimes['menus'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-orange-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <FileText className="w-6 h-6 text-orange-400" />
-                            <h2 className="text-xl font-bold">A'la Carte & Bar Menüleri Ekler</h2>
+                            {uploadTimes['menus'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <FileText className="w-6 h-6 text-orange-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['menus'] ? 'text-emerald-400' : ''}`}>A'la Carte & Bar Menüleri Ekler</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Tüm restoran ve barlardaki menüleri, içerikleri ve alerjen bilgilerini güncelleyin.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['menus'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-orange-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-orange-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['menus'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-orange-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['menus'] ? 'text-emerald-400' : 'text-orange-400'}`}>{uploadTimes['menus'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('menus', e)} />
                         </label>
@@ -61,17 +61,17 @@ export default function FandBSettings() {
                     </div>
 
                     {/* Çalışma Saatleri & Konsept */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-yellow-500/30 transition-all">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all ${uploadTimes['hours'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-yellow-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <Clock className="w-6 h-6 text-yellow-400" />
-                            <h2 className="text-xl font-bold">Çalışma Saatleri & Kurallar</h2>
+                            {uploadTimes['hours'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Clock className="w-6 h-6 text-yellow-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['hours'] ? 'text-emerald-400' : ''}`}>Çalışma Saatleri & Kurallar</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Restoran açılış-kapanış saatlerini, Dress Code kurallarını asistan için sabitleyin.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['hours'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-yellow-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-yellow-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['hours'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['hours'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{uploadTimes['hours'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('hours', e)} />
                         </label>
@@ -81,17 +81,17 @@ export default function FandBSettings() {
                     </div>
 
                     {/* Özel Yemekler ve Mini Bar */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all md:col-span-2">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all md:col-span-2 ${uploadTimes['roomservice'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-emerald-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <Coffee className="w-6 h-6 text-emerald-400" />
-                            <h2 className="text-xl font-bold">Room Service & Minibar Listesi</h2>
+                            {uploadTimes['roomservice'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Coffee className="w-6 h-6 text-emerald-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['roomservice'] ? 'text-emerald-400' : ''}`}>Room Service & Minibar Listesi</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Oda servisi içerikleri, ekstra F/B talepleri veya minibar dolum periyotları/fiyatları.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['roomservice'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-emerald-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-emerald-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['roomservice'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['roomservice'] ? 'text-emerald-400' : 'text-emerald-400'}`}>{uploadTimes['roomservice'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('roomservice', e)} />
                         </label>

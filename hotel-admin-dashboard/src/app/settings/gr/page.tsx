@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut } from 'lucide-react';
+import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function GuestRelationSettings() {
@@ -41,17 +41,17 @@ export default function GuestRelationSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     
                     {/* A'la carte info */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all ${uploadTimes['alacarte'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-pink-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <UtensilsIcon className="w-6 h-6 text-pink-400" />
-                            <h2 className="text-xl font-bold">A'la Carte İşleyiş ve Kuralları</h2>
+                            {uploadTimes['alacarte'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <UtensilsIcon className="w-6 h-6 text-pink-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['alacarte'] ? 'text-emerald-400' : ''}`}>A'la Carte İşleyiş ve Kuralları</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Misafirlerin restoran randevularını onaylama şartları, masa sayıları ve uygunlukları.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['alacarte'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-pink-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-pink-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['alacarte'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-pink-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['alacarte'] ? 'text-emerald-400' : 'text-pink-400'}`}>{uploadTimes['alacarte'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('alacarte', e)} />
                         </label>
@@ -61,17 +61,17 @@ export default function GuestRelationSettings() {
                     </div>
 
                     {/* Etkinlik ve Harita */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all ${uploadTimes['activities'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-blue-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <Map className="w-6 h-6 text-blue-400" />
-                            <h2 className="text-xl font-bold">Günlük Aktivite ve Şov Bilgileri</h2>
+                            {uploadTimes['activities'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Map className="w-6 h-6 text-blue-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['activities'] ? 'text-emerald-400' : ''}`}>Günlük Aktivite ve Şov Bilgileri</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Akşam şovları, animasyon programı ve çocuk kulübü aktivite planlarını ekleyin.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['activities'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-blue-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-blue-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['activities'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-blue-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['activities'] ? 'text-emerald-400' : 'text-blue-400'}`}>{uploadTimes['activities'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('activities', e)} />
                         </label>
@@ -81,17 +81,17 @@ export default function GuestRelationSettings() {
                     </div>
 
                     {/* VIP Listesi */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-yellow-500/30 transition-all md:col-span-2">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all md:col-span-2 ${uploadTimes['vip'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-yellow-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <Star className="w-6 h-6 text-yellow-400" />
-                            <h2 className="text-xl font-bold">VIP & Sadakat Misafir Listeleri</h2>
+                            {uploadTimes['vip'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Star className="w-6 h-6 text-yellow-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : ''}`}>VIP & Sadakat Misafir Listeleri</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Özel hizmet alması gereken Repeat Guest veya VIP misafirlerin odaya giriş kuralları (Meyve sepeti, Şarap vs).</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['vip'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-yellow-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-yellow-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{uploadTimes['vip'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('vip', e)} />
                         </label>

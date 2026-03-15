@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, UploadCloud, Droplets, Sparkles, Image as ImageIcon, HeartPulse, LogOut } from 'lucide-react';
+import { Settings, UploadCloud, Droplets, Sparkles, Image as ImageIcon, HeartPulse, LogOut, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SpaSettings() {
@@ -42,17 +42,17 @@ export default function SpaSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     
                     {/* Masaj, Terapi vs Listesi */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all ${uploadTimes['services'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-indigo-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <Sparkles className="w-6 h-6 text-indigo-400" />
-                            <h2 className="text-xl font-bold">Terapi & Masaj Türleri Bilgilendirmesi</h2>
+                            {uploadTimes['services'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Sparkles className="w-6 h-6 text-indigo-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['services'] ? 'text-emerald-400' : ''}`}>Terapi & Masaj Türleri Bilgilendirmesi</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Thai, Bali, Medikal masajlar ve diğer terapi türlerinin süre, içerik ve fiyat bilgilerini (PDF/Excel) yükleyin.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['services'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-indigo-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-indigo-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['services'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-indigo-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['services'] ? 'text-emerald-400' : 'text-indigo-400'}`}>{uploadTimes['services'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('services', e)} />
                         </label>
@@ -62,17 +62,17 @@ export default function SpaSettings() {
                     </div>
 
                     {/* Hizmet Görselleri */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all ${uploadTimes['images'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-pink-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <ImageIcon className="w-6 h-6 text-pink-400" />
-                            <h2 className="text-xl font-bold">SPA Ortam & Hizmet Görselleri</h2>
+                            {uploadTimes['images'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <ImageIcon className="w-6 h-6 text-pink-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['images'] ? 'text-emerald-400' : ''}`}>SPA Ortam & Hizmet Görselleri</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Misafirlere sunulacak olan hamam, sauna ve terapi odası görsellerini yükleyin (Asistan, sorulara bu görsellerle yanıt verecektir).</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['images'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-pink-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-pink-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['images'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-pink-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['images'] ? 'text-emerald-400' : 'text-pink-400'}`}>{uploadTimes['images'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleGenericUpload('images', e)} />
                         </label>
@@ -82,17 +82,17 @@ export default function SpaSettings() {
                     </div>
 
                     {/* SPA Paketleri ve Üyelikler */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all md:col-span-2">
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all md:col-span-2 ${uploadTimes['packages'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-emerald-500/30'}`}>
                         <div className="flex items-center gap-4 mb-4">
-                            <HeartPulse className="w-6 h-6 text-emerald-400" />
-                            <h2 className="text-xl font-bold">Özel SPA Paketleri & VIP Bakımlar</h2>
+                            {uploadTimes['packages'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <HeartPulse className="w-6 h-6 text-emerald-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['packages'] ? 'text-emerald-400' : ''}`}>Özel SPA Paketleri & VIP Bakımlar</h2>
                         </div>
                         <p className="text-slate-400 text-sm mb-6">Balayı çiftlerine özel paketler, haftalık/Aylık spa üyelik avantajları ve cilt bakım ritüelleri bilgilerini ekleyin.</p>
                         
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['packages'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-emerald-400 transition-colors" />
-                                <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-emerald-400">Tıklayın</span> veya sürükleyin</p>
+                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['packages'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-400'}`} />
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['packages'] ? 'text-emerald-400' : 'text-emerald-400'}`}>{uploadTimes['packages'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
                             <input type="file" className="hidden" onChange={(e) => handleGenericUpload('packages', e)} />
                         </label>

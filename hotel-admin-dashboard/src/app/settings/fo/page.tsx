@@ -31,6 +31,8 @@ export default function FrontOfficeSettings() {
     const [guests, setGuests] = useState<InhouseGuest[]>([]);
     const [isUploaded, setIsUploaded] = useState(false);
     const [messageSent, setMessageSent] = useState(false);
+    const [messageTime, setMessageTime] = useState<string | null>(null);
+    const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
 
     // Toggle selection for a single guest
     const toggleGuest = (id: string) => {
@@ -49,11 +51,26 @@ export default function FrontOfficeSettings() {
             // In a real app, you would parse the Excel/PDF here
             setIsUploaded(true);
             setGuests(generateMockGuests());
+            
+            // Record upload time
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
+            setUploadTimes(prev => ({ ...prev, 'inhouse': timeString }));
+        }
+    };
+
+    const handleGenericUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
+            setUploadTimes(prev => ({ ...prev, [key]: timeString }));
         }
     };
 
     const handleSendMessage = () => {
         setMessageSent(true);
+        const now = new Date();
+        setMessageTime(`${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`);
         setTimeout(() => setMessageSent(false), 4000);
     };
 
@@ -95,13 +112,16 @@ export default function FrontOfficeSettings() {
                             </div>
                         </div>
                         
-                        {!isUploaded && (
-                            <label className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl cursor-pointer font-bold transition-colors">
-                                <UploadCloud className="w-5 h-5 mr-2" />
-                                Dosya Yükle
-                                <input type="file" className="hidden" accept=".xlsx, .xls, .pdf" onChange={handleFileUpload} />
-                            </label>
-                        )}
+                            <div className="flex flex-col items-center">
+                                <label className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl cursor-pointer font-bold transition-colors">
+                                    <UploadCloud className="w-5 h-5 mr-2" />
+                                    Dosya Yükle
+                                    <input type="file" className="hidden" accept=".xlsx, .xls, .pdf" onChange={handleFileUpload} />
+                                </label>
+                                {uploadTimes['inhouse'] && (
+                                    <span className="text-xs text-emerald-400 mt-2 font-medium">Son yükleme: {uploadTimes['inhouse']}</span>
+                                )}
+                            </div>
                     </div>
 
                     {isUploaded && (
@@ -168,6 +188,12 @@ export default function FrontOfficeSettings() {
                                         <>Seçili {selectedCount} Odaya Çıkış Mesajını Gönder <Send className="w-5 h-5" /></>
                                     )}
                                 </button>
+                                
+                                {messageTime && (
+                                    <div className="mt-4 text-sm font-medium text-emerald-400 flex items-center gap-2">
+                                        <CheckSquare className="w-4 h-4" /> Son Mesaj Gönderimi: {messageTime}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -185,8 +211,11 @@ export default function FrontOfficeSettings() {
                         <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
                             <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
                             <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('konsept', e)} />
                         </label>
+                        {uploadTimes['konsept'] && (
+                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['konsept']}</div>
+                        )}
                     </div>
 
                     {/* Fact Sheet Yükleme */}
@@ -199,8 +228,11 @@ export default function FrontOfficeSettings() {
                         <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
                             <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
                             <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('factsheet', e)} />
                         </label>
+                        {uploadTimes['factsheet'] && (
+                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['factsheet']}</div>
+                        )}
                     </div>
 
                     {/* Fiyat Listesi Yükleme */}
@@ -213,8 +245,11 @@ export default function FrontOfficeSettings() {
                         <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
                             <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
                             <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('prices', e)} />
                         </label>
+                        {uploadTimes['prices'] && (
+                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['prices']}</div>
+                        )}
                     </div>
 
                     {/* Daypass Yükleme */}
@@ -227,8 +262,11 @@ export default function FrontOfficeSettings() {
                         <label className="flex flex-col items-center justify-center w-full py-4 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors">
                             <UploadCloud className="w-5 h-5 text-slate-500 mb-1" />
                             <span className="text-xs font-bold text-slate-400">Dosya Yükle</span>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('daypass', e)} />
                         </label>
+                        {uploadTimes['daypass'] && (
+                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['daypass']}</div>
+                        )}
                     </div>
                 </div>
             </div>

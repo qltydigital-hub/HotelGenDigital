@@ -4,6 +4,15 @@ import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut } from 'lucide
 import Link from 'next/link';
 
 export default function GuestRelationSettings() {
+    const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+
+    const handleGenericUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
+            setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+        }
+    };
     return (
         <div className="min-h-screen bg-[#0a0f1c] text-white p-6 md:p-10 font-sans">
             <div className="max-w-6xl mx-auto space-y-8">
@@ -44,8 +53,11 @@ export default function GuestRelationSettings() {
                                 <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-pink-400 transition-colors" />
                                 <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-pink-400">Tıklayın</span> veya sürükleyin</p>
                             </div>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('alacarte', e)} />
                         </label>
+                        {uploadTimes['alacarte'] && (
+                            <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['alacarte']}</div>
+                        )}
                     </div>
 
                     {/* Etkinlik ve Harita */}
@@ -61,8 +73,11 @@ export default function GuestRelationSettings() {
                                 <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-blue-400 transition-colors" />
                                 <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-blue-400">Tıklayın</span> veya sürükleyin</p>
                             </div>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('activities', e)} />
                         </label>
+                        {uploadTimes['activities'] && (
+                            <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['activities']}</div>
+                        )}
                     </div>
 
                     {/* VIP Listesi */}
@@ -78,8 +93,11 @@ export default function GuestRelationSettings() {
                                 <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-yellow-400 transition-colors" />
                                 <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-yellow-400">Tıklayın</span> veya sürükleyin</p>
                             </div>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('vip', e)} />
                         </label>
+                        {uploadTimes['vip'] && (
+                            <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['vip']}</div>
+                        )}
                     </div>
 
                 </div>

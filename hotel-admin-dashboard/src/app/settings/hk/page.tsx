@@ -5,6 +5,15 @@ import Link from 'next/link';
 
 export default function HKSettings() {
     const [saved, setSaved] = useState(false);
+    const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+
+    const handleGenericUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
+            setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+        }
+    };
     
     // Notifications States
     const [telegramEnabled, setTelegramEnabled] = useState(true);
@@ -64,8 +73,11 @@ export default function HKSettings() {
                                 <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-teal-400 transition-colors" />
                                 <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-teal-400">Tıklayın</span> veya sürükleyin</p>
                             </div>
-                            <input type="file" className="hidden" />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('standards', e)} />
                         </label>
+                        {uploadTimes['standards'] && (
+                            <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['standards']}</div>
+                        )}
                     </div>
 
                     {/* Günlük Rapor Modülü */}

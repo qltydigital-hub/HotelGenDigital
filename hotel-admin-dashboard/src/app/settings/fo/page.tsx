@@ -81,12 +81,14 @@ export default function FrontOfficeSettings() {
     };
 
     const handleAddAgency = async () => {
-        const name = prompt('Acenta Veya Satış Kanalı Adı (Örn: Jolly Tur):');
+        const name = prompt('Acenta Adı (Örn: Jolly Tour):');
         if (!name) return;
-        const url = prompt('Acenta Rezervasyon Linki (http ile başlamalı):');
+        const url = prompt('Acenta Rez. Linki (Örn: https://jolly.com):');
         if (!url) return;
-        const price_text = prompt('Tahmini Fiyat Veya Avantaj Metni (Örn: ₺3.000):') || 'Bilgi Yok';
-        const is_direct = confirm('Bu sizin DİREKT (Ana Kaynak) web siteniz mi?\n\nEvet ise OK basın, normal acenta ise İptal (Cancel) basın.');
+        
+        // Basitleştirilmiş UX: Fiyat ve Tür gizli olarak default atanır
+        const price_text = 'Bilgi Yok';
+        const is_direct = false;
 
         try {
             const res = await fetch('/api/agencies', {
@@ -108,12 +110,14 @@ export default function FrontOfficeSettings() {
     };
 
     const handleEditAgency = async (agency: any) => {
-        const name = prompt('Acenta Veya Satış Kanalı Adı:', agency.name);
+        const name = prompt('Acenta Adı:', agency.name);
         if (!name) return;
-        const url = prompt('Acenta Rezervasyon Linki:', agency.url);
+        const url = prompt('Acenta Rez. Linki:', agency.url);
         if (!url) return;
-        const price_text = prompt('Tahmini Fiyat Veya Avantaj Metni:', agency.price_text) || 'Bilgi Yok';
-        const is_direct = confirm('Bu sizin DİREKT (Ana Kaynak) web siteniz mi?\n\nEvet ise OK basın, normal acenta ise İptal (Cancel) basın.');
+        
+        // Mevcut görünmez değerleri koru
+        const price_text = agency.price_text;
+        const is_direct = agency.is_direct;
 
         try {
             const res = await fetch('/api/agencies', {
@@ -395,54 +399,44 @@ export default function FrontOfficeSettings() {
                         <table className="w-full text-left text-sm text-slate-300">
                             <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 uppercase text-xs">
                                 <tr>
+                                    <th className="px-5 py-4 w-[120px]">İşlem</th>
                                     <th className="px-6 py-4">Acenta Adı</th>
-                                    <th className="px-6 py-4">Rezervasyon Linki</th>
-                                    <th className="px-6 py-4">Fiyat / Avantaj Durumu</th>
-                                    <th className="px-6 py-4">Tür</th>
-                                    <th className="px-6 py-4 text-right">İşlem</th>
+                                    <th className="px-6 py-4">Acenta Rez. Linki</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/50">
                                 {isAgenciesLoading ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                        <td colSpan={3} className="px-6 py-8 text-center text-slate-500">
                                             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                             Acentalar yükleniyor...
                                         </td>
                                     </tr>
                                 ) : agencies.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                        <td colSpan={3} className="px-6 py-8 text-center text-slate-500">
                                             Henüz eklenmiş acenta linki bulunmuyor.
                                         </td>
                                     </tr>
                                 ) : (
                                     agencies.map((agency) => (
                                         <tr key={agency.id} className={`transition-colors duration-500 ${highlightedAgency === agency.id ? 'bg-emerald-900/40' : 'hover:bg-slate-800/20'}`}>
-                                            <td className="px-6 py-4 font-bold text-white">{agency.name}</td>
-                                            <td className="px-6 py-4">
-                                                <a href={agency.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
-                                                    <span className="max-w-[150px] md:max-w-[250px] truncate">{agency.url}</span>
-                                                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                                                </a>
-                                            </td>
-                                            <td className="px-6 py-4">{agency.price_text}</td>
-                                            <td className="px-6 py-4">
-                                                {agency.is_direct ? (
-                                                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-lg font-bold">Ana Kaynak</span>
-                                                ) : (
-                                                    <span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg">Acenta</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button onClick={() => handleEditAgency(agency)} className="p-2 bg-blue-900/40 hover:bg-blue-900/80 text-blue-400 rounded-lg transition-colors border border-blue-900/50" title="Düzenle">
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => handleEditAgency(agency)} className="p-2 bg-blue-900/40 hover:bg-blue-900/80 text-blue-400 rounded-lg transition-colors border border-blue-900/50" title="Link Güncelle">
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
                                                     <button onClick={() => handleDeleteAgency(agency.id)} className="p-2 bg-red-900/40 hover:bg-red-900/80 text-red-400 rounded-lg transition-colors border border-red-900/50" title="Sil">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-white">{agency.name}</td>
+                                            <td className="px-6 py-4">
+                                                <a href={agency.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+                                                    <span className="max-w-[200px] md:max-w-[350px] truncate">{agency.url}</span>
+                                                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                                </a>
                                             </td>
                                         </tr>
                                     ))

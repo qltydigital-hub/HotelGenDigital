@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase-client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     try {
         const supabase = getServiceSupabase();
@@ -41,6 +43,28 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
         console.error("POST /api/agencies Error:", error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
+export async function PUT(request: Request) {
+    try {
+        const supabase = getServiceSupabase();
+        const body = await request.json();
+        const { id, name, url, price_text, is_direct } = body;
+
+        if (!id || !name || !url) {
+            return NextResponse.json({ success: false, error: 'Eksik veri (ID, isim veya link eksik).' }, { status: 400 });
+        }
+
+        const { data, error } = await supabase.from('agencies').update({
+            name, url, price_text, is_direct: !!is_direct
+        }).eq('id', id).select().single();
+
+        if (error) throw error;
+        return NextResponse.json({ success: true, data });
+    } catch (error: any) {
+        console.error("PUT /api/agencies Error:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }

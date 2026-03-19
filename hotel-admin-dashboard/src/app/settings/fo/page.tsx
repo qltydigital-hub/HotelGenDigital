@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2 } from 'lucide-react';
+import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { uploadDocumentToSupabase } from '../../../lib/supabase-client';
 
@@ -43,6 +43,12 @@ export default function FrontOfficeSettings() {
     // Agencies State
     const [agencies, setAgencies] = useState<any[]>([]);
     const [isAgenciesLoading, setIsAgenciesLoading] = useState(true);
+    const [highlightedAgency, setHighlightedAgency] = useState<string | null>(null);
+
+    const triggerHighlight = (id: string) => {
+        setHighlightedAgency(id);
+        setTimeout(() => setHighlightedAgency(null), 3000);
+    };
 
     const loadAgencies = async () => {
         try {
@@ -91,12 +97,40 @@ export default function FrontOfficeSettings() {
             const data = await res.json();
             if (data.success) {
                 setAgencies([...agencies, data.data]);
+                triggerHighlight(data.data.id);
             } else {
                 alert('Acenta eklenirken hata: ' + data.error);
             }
         } catch (error) {
             console.error(error);
             alert('Acenta eklenemedi.');
+        }
+    };
+
+    const handleEditAgency = async (agency: any) => {
+        const name = prompt('Acenta Veya Satış Kanalı Adı:', agency.name);
+        if (!name) return;
+        const url = prompt('Acenta Rezervasyon Linki:', agency.url);
+        if (!url) return;
+        const price_text = prompt('Tahmini Fiyat Veya Avantaj Metni:', agency.price_text) || 'Bilgi Yok';
+        const is_direct = confirm('Bu sizin DİREKT (Ana Kaynak) web siteniz mi?\n\nEvet ise OK basın, normal acenta ise İptal (Cancel) basın.');
+
+        try {
+            const res = await fetch('/api/agencies', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: agency.id, name, url, price_text, is_direct })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAgencies(agencies.map(a => a.id === agency.id ? data.data : a));
+                triggerHighlight(agency.id);
+            } else {
+                alert('Acenta güncellenirken hata: ' + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Acenta güncellenemedi.');
         }
     };
 
@@ -384,9 +418,14 @@ export default function FrontOfficeSettings() {
                                     </tr>
                                 ) : (
                                     agencies.map((agency) => (
-                                        <tr key={agency.id} className="hover:bg-slate-800/20">
+                                        <tr key={agency.id} className={`transition-colors duration-500 ${highlightedAgency === agency.id ? 'bg-emerald-900/40' : 'hover:bg-slate-800/20'}`}>
                                             <td className="px-6 py-4 font-bold text-white">{agency.name}</td>
-                                            <td className="px-6 py-4 text-blue-400 max-w-[200px] truncate" title={agency.url}>{agency.url}</td>
+                                            <td className="px-6 py-4">
+                                                <a href={agency.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+                                                    <span className="max-w-[150px] md:max-w-[250px] truncate">{agency.url}</span>
+                                                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                                </a>
+                                            </td>
                                             <td className="px-6 py-4">{agency.price_text}</td>
                                             <td className="px-6 py-4">
                                                 {agency.is_direct ? (
@@ -396,9 +435,14 @@ export default function FrontOfficeSettings() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button onClick={() => handleDeleteAgency(agency.id)} className="p-2 bg-red-900/40 hover:bg-red-900/80 text-red-400 rounded-lg transition-colors border border-red-900/50">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button onClick={() => handleEditAgency(agency)} className="p-2 bg-blue-900/40 hover:bg-blue-900/80 text-blue-400 rounded-lg transition-colors border border-blue-900/50" title="Düzenle">
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteAgency(agency.id)} className="p-2 bg-red-900/40 hover:bg-red-900/80 text-red-400 rounded-lg transition-colors border border-red-900/50" title="Sil">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

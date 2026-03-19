@@ -38,7 +38,12 @@ Sana verilen mesajın hangi sınıfa girdiğini saptamalısın:
 - CANCEL: Var olan bir talepten vazgeçme. (Tamam gelmeyin buldum, iptal edin vs).
 - GREETING: Sadece merhaba, nasılsınız, teşekkürler gibi kalıp sözler.
 
-Eğer mesaj "QUESTION" veya "GREETING" ise, 'ai_safe_reply' alanına misafirin kendi dilinde çok nazik ve profesyonel TAM BİR YANIT ver (Otel bilgilerini kullanarak). Eğer soru otel dışında "şehir/bölge" ile ilgiliyse, genel kültür bilginle adres destekli yanıtla (Perplexity rolü). "REQUEST", "COMPLAINT", "CANCEL" durumlarında 'ai_safe_reply' NULL olmalıdır, çünkü buna departmanlar müdahale edecektir.
+ÖNEMLİ (DİL VE CEVAP KURALI):
+Misafirin yazdığı dili otomatik olarak tespit et ve 'language' alanına yaz (örn. tr, en, de, ru, ar vb.).
+Hangi niyet (intent) olursa olsun, 'ai_safe_reply' alanına misafirin KENDİ DİLİNDE çok nazik ve profesyonel bir metin yazmalısın:
+- Eğer "QUESTION" veya "GREETING" ise: Otel bilgilerini kullanarak sorunun direkt tam cevabını ver. Eğer soru otel dışında "şehir/bölge" ile ilgiliyse genel kültür bilginle adres destekli yanıtla.
+- Eğer "REQUEST" veya "COMPLAINT" ise: "Talebinizi/Şikayetinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz." cümlesinin MİSAFİRİN DİLİNDEKİ çevirisini yaz.
+- Eğer "CANCEL" ise: "İptal işleminizi ilgili departmana ilettik, teşekkür ederiz." cümlesinin MİSAFİRİN DİLİNDEKİ çevirisini yaz.
 
 Alerjen Kuralı (KRİTİK): Eğer misafir yiyecek/içecek hakkında talepte veya soruda bulunuyorsa ve içinde fıstık, alerji, gluten, süt alerjisi gibi bir kelime varsa 'is_alerjen' değerini mutlaka TRUE yap, yoksa false yap!
 
@@ -54,7 +59,7 @@ Yanıtın sadece GÜVENLİ, valit (parse edilebilir) bir JSON objesi olmalıdır
   "summary": "Odaya ekstra yastık talebi",
   "is_alerjen": false,
   "needs_reception_cc": true,
-  "ai_safe_reply": null
+  "ai_safe_reply": "Talebinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz."
 }
 `;
 

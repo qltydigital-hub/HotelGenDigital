@@ -3,11 +3,15 @@ import { MANYCHAT_CONFIG } from '@/lib/manychat-config';
 import { analyzeGuestMessage } from '@/lib/openai-service';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { notifyDepartment } from '@/lib/telegram-service';
+import { setManyChatCustomField, sendManyChatFlow } from '@/lib/manychat-client';
 
 export async function POST(request: Request) {
     try {
         const payload = await request.json();
         console.log("📨 ManyChat / n8n Webhook Alındı");
+
+        const url = new URL(request.url);
+        const channel = url.searchParams.get('channel') || 'instagram'; // ?channel=whatsapp veya instagram
 
         // 1. Gelen Veriyi Al
         const subscriberId = payload.subscriber_id || payload.chat_id || payload.contact_id || "unknown";
@@ -33,6 +37,22 @@ export async function POST(request: Request) {
 
         // DURUM A: Sadece Soru/Bilgi talebiyse (Departmana gitmesine gerek yok, direkt yapay zeka cevaplasın)
         if (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING") {
+            // Arka planda doğrudan misafire mesaji ManyChat üzerinden gönder
+            if (subscriberId && subscriberId !== "unknown") {
+                console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan mesaj gönderiliyor...`);
+                
+                // AI Cevabını kaydet (Hem geri uyumluluk için n8n_cevap hem de yeni ai_cevap)
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
+                
+                // 2. Ardından doğru platform akışını tetikle
+                const flowId = channel === 'whatsapp' 
+                    ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap 
+                    : MANYCHAT_CONFIG.contentIds.instagram.noLink;
+                
+                await sendManyChatFlow(subscriberId, flowId);
+            }
+
             // N8n veya ManyChat'e geri dönüş JSON'u hazırla
             return NextResponse.json({
                 success: true,
@@ -80,9 +100,21 @@ export async function POST(request: Request) {
             }
 
             // MANYCHAT'e / N8N'e departmana yönlendirildiğini haber veren onay dönüşü
-            const guestAcknowledgeMsg = aiAnalysis.language === 'tr'
-                ? "Talebinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz."
-                : "We have received your request and forwarded it to the relevant department. We will attend to your room shortly. (Auto-translated)";
+            const guestAcknowledgeMsg = aiAnalysis.ai_safe_reply || "Talebinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz.";
+
+            // Arka planda misafire bilgilendirme mesajını ManyChat'ten gönder
+            if (subscriberId && subscriberId !== "unknown") {
+                console.log(`📲 ManyChat (${channel}) kullanıcısına departman yönlendirme bildirimi gönderiliyor...`);
+                // Talebin aldığını bildiren cevabı AI_Cevap alanına kaydet ve flow'u tetikle
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, guestAcknowledgeMsg);
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, guestAcknowledgeMsg);
+                
+                const flowId = channel === 'whatsapp' 
+                    ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap 
+                    : MANYCHAT_CONFIG.contentIds.instagram.noLink;
+                
+                await sendManyChatFlow(subscriberId, flowId); 
+            }
 
             return NextResponse.json({
                 success: true,

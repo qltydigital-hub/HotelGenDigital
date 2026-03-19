@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { uploadDocumentToSupabase } from '../../../lib/supabase-client';
 
@@ -39,6 +39,66 @@ export default function FrontOfficeSettings() {
     const [offerMap, setOfferMap] = useState(true);
     const [remind247, setRemind247] = useState(true);
     const [offerInfo, setOfferInfo] = useState(true);
+
+    // Agencies State
+    const [agencies, setAgencies] = useState<any[]>([]);
+    const [isAgenciesLoading, setIsAgenciesLoading] = useState(true);
+
+    const loadAgencies = async () => {
+        try {
+            const res = await fetch('/api/agencies');
+            const data = await res.json();
+            if (data.success) {
+                setAgencies(data.data);
+            }
+        } catch (error) {
+            console.error("Acentalar yüklenemedi", error);
+        } finally {
+            setIsAgenciesLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadAgencies();
+    }, []);
+
+    const handleDeleteAgency = async (id: string) => {
+        if (!confirm('Bu acentayı silmek istediğinize emin misiniz?')) return;
+        try {
+            const res = await fetch(`/api/agencies?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setAgencies(agencies.filter(a => a.id !== id));
+            }
+        } catch (error) {
+            console.error("Acenta silinemedi", error);
+        }
+    };
+
+    const handleAddAgency = async () => {
+        const name = prompt('Acenta Veya Satış Kanalı Adı (Örn: Jolly Tur):');
+        if (!name) return;
+        const url = prompt('Acenta Rezervasyon Linki (http ile başlamalı):');
+        if (!url) return;
+        const price_text = prompt('Tahmini Fiyat Veya Avantaj Metni (Örn: ₺3.000):') || 'Bilgi Yok';
+        const is_direct = confirm('Bu sizin DİREKT (Ana Kaynak) web siteniz mi?\n\nEvet ise OK basın, normal acenta ise İptal (Cancel) basın.');
+
+        try {
+            const res = await fetch('/api/agencies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, url, price_text, is_direct })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAgencies([...agencies, data.data]);
+            } else {
+                alert('Acenta eklenirken hata: ' + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Acenta eklenemedi.');
+        }
+    };
 
     // Toggle selection for a single guest
     const toggleGuest = (id: string) => {
@@ -305,32 +365,49 @@ export default function FrontOfficeSettings() {
                                     <th className="px-6 py-4">Rezervasyon Linki</th>
                                     <th className="px-6 py-4">Fiyat / Avantaj Durumu</th>
                                     <th className="px-6 py-4">Tür</th>
+                                    <th className="px-6 py-4 text-right">İşlem</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/50">
-                                <tr className="hover:bg-slate-800/20">
-                                    <td className="px-6 py-4 font-bold text-white">Direkt Web Sitemiz</td>
-                                    <td className="px-6 py-4 text-blue-400">https://greenpark.com/rez...</td>
-                                    <td className="px-6 py-4 text-emerald-400 font-bold">₺2.500 (En Ucuz)</td>
-                                    <td className="px-6 py-4"><span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-lg">Ana Kaynak</span></td>
-                                </tr>
-                                <tr className="hover:bg-slate-800/20">
-                                    <td className="px-6 py-4 font-bold text-white">ETS Tur</td>
-                                    <td className="px-6 py-4 text-blue-400">https://etstur.com/hotel</td>
-                                    <td className="px-6 py-4">₺2.800</td>
-                                    <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg">Acenta</span></td>
-                                </tr>
-                                <tr className="hover:bg-slate-800/20">
-                                    <td className="px-6 py-4 font-bold text-white">Booking.com</td>
-                                    <td className="px-6 py-4 text-blue-400">https://booking.com/hotel</td>
-                                    <td className="px-6 py-4">₺3.000</td>
-                                    <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg">Acenta</span></td>
-                                </tr>
+                                {isAgenciesLoading ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                                            Acentalar yükleniyor...
+                                        </td>
+                                    </tr>
+                                ) : agencies.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                            Henüz eklenmiş acenta linki bulunmuyor.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    agencies.map((agency) => (
+                                        <tr key={agency.id} className="hover:bg-slate-800/20">
+                                            <td className="px-6 py-4 font-bold text-white">{agency.name}</td>
+                                            <td className="px-6 py-4 text-blue-400 max-w-[200px] truncate" title={agency.url}>{agency.url}</td>
+                                            <td className="px-6 py-4">{agency.price_text}</td>
+                                            <td className="px-6 py-4">
+                                                {agency.is_direct ? (
+                                                    <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-lg font-bold">Ana Kaynak</span>
+                                                ) : (
+                                                    <span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg">Acenta</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button onClick={() => handleDeleteAgency(agency.id)} className="p-2 bg-red-900/40 hover:bg-red-900/80 text-red-400 rounded-lg transition-colors border border-red-900/50">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                     
-                    <button className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold transition-all text-white border border-slate-700">
+                    <button onClick={handleAddAgency} className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold transition-all text-white border border-slate-700">
                         + Yeni Acenta Ekle
                     </button>
                     <p className="text-xs text-slate-500 mt-4 leading-relaxed italic">

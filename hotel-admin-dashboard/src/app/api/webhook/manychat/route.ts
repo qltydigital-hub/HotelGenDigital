@@ -26,23 +26,32 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: "Mesaj metni yok." }, { status: 400 });
         }
 
-        // TODO: Acentaları DB'den dinamik çek. Şimdilik örnek veri.
-        const mockAgencies = [
-            { name: "Direkt Web Sitemiz", url: "https://greenpark.com/rezervasyon", priceText: "₺2.500 / gece", isDirect: true },
-            { name: "ETS Tur", url: "https://etstur.com", priceText: "₺2.800 / gece", isDirect: false },
-            { name: "Booking.com", url: "https://booking.com", priceText: "₺3.000 / gece", isDirect: false }
-        ];
+        const supabase = getServiceSupabase();
+
+        // Acentaları DB'den dinamik çek.
+        let agenciesPayload: Array<{name: string, url: string, priceText: string, isDirect: boolean}> = [];
+        try {
+            const { data: dbAgencies, error } = await supabase.from('agencies').select('*');
+            if (dbAgencies && !error) {
+                agenciesPayload = dbAgencies.map(a => ({
+                    name: a.name,
+                    url: a.url,
+                    priceText: a.price_text,
+                    isDirect: a.is_direct
+                }));
+            }
+        } catch (e) {
+            console.error("Acenta bilgileri çekilemedi:", e);
+        }
 
         // 2. OpenAI Niyet Sınıflandırması (Intent Classification)
         console.log("🧠 Yapay Zeka motoru cümleyi analiz ediyor...");
         const aiAnalysis = await analyzeGuestMessage(incomingText, isAudio, {
             roomNo: roomNo,
             guestName: guestName,
-            agencies: mockAgencies
+            agencies: agenciesPayload
         });
         console.log("📊 Yapay Zeka Sonucu:", aiAnalysis);
-
-        const supabase = getServiceSupabase();
 
         // 3. Duruma Göre İş Akışı (Orkestrasyon)
 

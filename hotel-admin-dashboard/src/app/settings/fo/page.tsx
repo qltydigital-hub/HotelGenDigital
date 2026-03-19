@@ -287,6 +287,58 @@ export default function FrontOfficeSettings() {
                     </div>
                 </div>
 
+                {/* --- NEW FEATURE: AGENCY LINKS & RESERVATION SETTINGS --- */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                    <div className="flex items-center gap-4 mb-6">
+                        <Banknote className="w-8 h-8 text-emerald-400" />
+                        <div>
+                            <h2 className="text-2xl font-bold">Rezervasyon & Acenta Linkleri</h2>
+                            <p className="text-slate-400 text-sm mt-1">Yapay zekanın rezervasyon yapmak isteyen kullanıcılara önereceği direkt satış siteleriniz ve acenta sayfalarınız.</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden mb-6">
+                        <table className="w-full text-left text-sm text-slate-300">
+                            <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 uppercase text-xs">
+                                <tr>
+                                    <th className="px-6 py-4">Acenta Adı</th>
+                                    <th className="px-6 py-4">Rezervasyon Linki</th>
+                                    <th className="px-6 py-4">Fiyat / Avantaj Durumu</th>
+                                    <th className="px-6 py-4">Tür</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                                <tr className="hover:bg-slate-800/20">
+                                    <td className="px-6 py-4 font-bold text-white">Direkt Web Sitemiz</td>
+                                    <td className="px-6 py-4 text-blue-400">https://greenpark.com/rez...</td>
+                                    <td className="px-6 py-4 text-emerald-400 font-bold">₺2.500 (En Ucuz)</td>
+                                    <td className="px-6 py-4"><span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-lg">Ana Kaynak</span></td>
+                                </tr>
+                                <tr className="hover:bg-slate-800/20">
+                                    <td className="px-6 py-4 font-bold text-white">ETS Tur</td>
+                                    <td className="px-6 py-4 text-blue-400">https://etstur.com/hotel</td>
+                                    <td className="px-6 py-4">₺2.800</td>
+                                    <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg">Acenta</span></td>
+                                </tr>
+                                <tr className="hover:bg-slate-800/20">
+                                    <td className="px-6 py-4 font-bold text-white">Booking.com</td>
+                                    <td className="px-6 py-4 text-blue-400">https://booking.com/hotel</td>
+                                    <td className="px-6 py-4">₺3.000</td>
+                                    <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg">Acenta</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold transition-all text-white border border-slate-700">
+                        + Yeni Acenta Ekle
+                    </button>
+                    <p className="text-xs text-slate-500 mt-4 leading-relaxed italic">
+                        * Yapay zeka, bir rezervasyon isteği algıladığında listelediğiniz mevcut acentaları fiyat bilgileriyle karşılaştırıp, 
+                        müşteriye <strong>ilk ve özel olarak "Ana Kaynak (Direkt Web)" adresinden satış yapmayı</strong> önerecektir.
+                    </p>
+                </div>
+
                 {/* Eski Yükleme Modülleri (Konsept, Fact Sheet vb.) Grid Halinde Altta */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {/* Konsept Yükleme */}

@@ -6,7 +6,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export type IntentType = "QUESTION" | "REQUEST" | "COMPLAINT" | "CANCEL" | "GREETING";
+export type IntentType = "QUESTION" | "REQUEST" | "COMPLAINT" | "CANCEL" | "GREETING" | "RESERVATION";
 
 // AI Analiz Çıktısı Formatı
 export interface AIAnalysisResult {
@@ -22,7 +22,11 @@ export interface AIAnalysisResult {
 /**
  * Gelen mesajın AI tarafından analiz edildiği "AKILLI MOTOR" katmanı.
  */
-export async function analyzeGuestMessage(message: string, isAudioContext: boolean = false): Promise<AIAnalysisResult> {
+export async function analyzeGuestMessage(
+    message: string, 
+    isAudioContext: boolean = false, 
+    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}> }
+): Promise<AIAnalysisResult> {
     const systemPrompt = `
 Sen 5 Yıldızlı The Green Park Gaziantep otelinde çalışan "GuestFlow AI" adlı misafir ilişkileri uzmanısın.
 Görevin misafirden gelen metni (veya sesten çevrilmiş metni) analiz etmek ve JSON formatında kategorize etmektir.
@@ -33,6 +37,7 @@ ${JSON.stringify(HOTEL_KNOWLEDGE_BASE.hotel, null, 2)}
 
 Sana verilen mesajın hangi sınıfa girdiğini saptamalısın:
 - QUESTION: Sadece bilgi almak istiyor (saat kaçta, neredesiniz, otopark var mı vs.).
+- RESERVATION: Oda ayırtmak, fiyat sormak, rezervasyon yapmak istiyor.
 - REQUEST: Oda içi bir talep. (Havlu istiyorum, kahve bitti, taksi çağır vb.).
 - COMPLAINT: Arıza veya şikayet. (Klima çalışmıyor, oda temizlenmemiş, yemek soğuk vs.).
 - CANCEL: Var olan bir talepten vazgeçme. (Tamam gelmeyin buldum, iptal edin vs).
@@ -41,11 +46,16 @@ Sana verilen mesajın hangi sınıfa girdiğini saptamalısın:
 ÖNEMLİ (DİL VE CEVAP KURALI):
 Misafirin yazdığı dili otomatik olarak tespit et ve 'language' alanına yaz (örn. tr, en, de, ru, ar vb.).
 Hangi niyet (intent) olursa olsun, 'ai_safe_reply' alanına misafirin KENDİ DİLİNDE çok nazik ve profesyonel bir metin yazmalısın:
-- Eğer "QUESTION" veya "GREETING" ise: Otel bilgilerini kullanarak sorunun direkt tam cevabını ver. Eğer soru otel dışında "şehir/bölge" ile ilgiliyse genel kültür bilginle adres destekli yanıtla.
-- Eğer "REQUEST" veya "COMPLAINT" ise: "Talebinizi/Şikayetinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz." cümlesinin MİSAFİRİN DİLİNDEKİ çevirisini yaz.
-- Eğer "CANCEL" ise: "İptal işleminizi ilgili departmana ilettik, teşekkür ederiz." cümlesinin MİSAFİRİN DİLİNDEKİ çevirisini yaz.
+- Eğer "QUESTION" veya "GREETING" ise: Otel bilgilerini kullanarak sorunun direkt tam cevabını ver.
+- Eğer "RESERVATION" ise: Misafire otelin direkt rezervasyon seçeneğini (eğer varsa) ve ek olarak diğer acenta bağlantılarını öner. Acentalar arasında fiyat karşılaştırması yaparak EN UYGUN olanı özellikle vurgula.
+${context?.agencies && context.agencies.length > 0 ? "Mevcut Acentalar ve Linkleri:\n" + JSON.stringify(context.agencies, null, 2) : "Şu an sisteme ekli acenta yok, resepsiyonla doğrudan iletişim numarası ver."}
+- Eğer "REQUEST" veya "COMPLAINT" ise: 
+  * DİKKAT: Konaklayan bir misafirin oda numarası ve ismi şu an sistemde: Oda: ${context?.roomNo || "Bilinmiyor"}, İsim: ${context?.guestName || "Misafir"}.
+  * Eğer Oda Numarası 'Bilinmiyor' ise: Talebi işleme almadan önce misafirden LÜTFEN çok nazikçe Oda Numarasını ve İsim Soyismini iste! "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?" tarzında bir cevap yaz.
+  * Eğer Oda Numarası biliniyorsa: "Talebinizi/Şikayetinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz." yaz.
+- Eğer "CANCEL" ise: İptal işleminizi ilgili departmana ilettik, teşekkür ederiz.
 
-Alerjen Kuralı (KRİTİK): Eğer misafir yiyecek/içecek hakkında talepte veya soruda bulunuyorsa ve içinde fıstık, alerji, gluten, süt alerjisi gibi bir kelime varsa 'is_alerjen' değerini mutlaka TRUE yap, yoksa false yap!
+Alerjen Kuralı (KRİTİK): Eğer misafir yiyecek/içecek hakkında talepte veya soruda bulunuyorsa ve içinde fıstık, alerji, gluten, süt alerjisi gibi bir kelime varsa 'is_alerjen' değerini mutlaka TRUE yap.
 
 Departman Eşleşmesi: Housekeeping, Teknik Servis, F&B (Gastro), Resepsiyon, Guest Relation, Rezervasyon. Talep bu departmanlardan en mantıklı olanını seç veya null bırak.
 

@@ -26,108 +26,84 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: "Mesaj metni yok." }, { status: 400 });
         }
 
+        // TODO: Acentaları DB'den dinamik çek. Şimdilik örnek veri.
+        const mockAgencies = [
+            { name: "Direkt Web Sitemiz", url: "https://greenpark.com/rezervasyon", priceText: "₺2.500 / gece", isDirect: true },
+            { name: "ETS Tur", url: "https://etstur.com", priceText: "₺2.800 / gece", isDirect: false },
+            { name: "Booking.com", url: "https://booking.com", priceText: "₺3.000 / gece", isDirect: false }
+        ];
+
         // 2. OpenAI Niyet Sınıflandırması (Intent Classification)
         console.log("🧠 Yapay Zeka motoru cümleyi analiz ediyor...");
-        const aiAnalysis = await analyzeGuestMessage(incomingText, isAudio);
+        const aiAnalysis = await analyzeGuestMessage(incomingText, isAudio, {
+            roomNo: roomNo,
+            guestName: guestName,
+            agencies: mockAgencies
+        });
         console.log("📊 Yapay Zeka Sonucu:", aiAnalysis);
 
         const supabase = getServiceSupabase();
 
         // 3. Duruma Göre İş Akışı (Orkestrasyon)
 
-        // DURUM A: Sadece Soru/Bilgi talebiyse (Departmana gitmesine gerek yok, direkt yapay zeka cevaplasın)
-        if (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING") {
-            // Arka planda doğrudan misafire mesaji ManyChat üzerinden gönder
+        // DURUM A: Sadece Soru, Selamlama ve Rezervasyon ise (Direkt AI cevaplasın)
+        if (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING" || aiAnalysis.intent === "RESERVATION") {
             if (subscriberId && subscriberId !== "unknown") {
                 console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan mesaj gönderiliyor...`);
-                
-                // AI Cevabını kaydet (Hem geri uyumluluk için n8n_cevap hem de yeni ai_cevap)
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
-                
-                // 2. Ardından doğru platform akışını tetikle
                 const flowId = channel === 'whatsapp' 
                     ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap 
                     : MANYCHAT_CONFIG.contentIds.instagram.noLink;
-                
                 await sendManyChatFlow(subscriberId, flowId);
             }
-
-            // N8n veya ManyChat'e geri dönüş JSON'u hazırla
             return NextResponse.json({
-                success: true,
-                action: "AI_REPLY_DIRECTLY",
-                reply_text: aiAnalysis.ai_safe_reply,
-                update_manychat_fields: {
-                    [MANYCHAT_CONFIG.fields.n8n_reply]: aiAnalysis.ai_safe_reply,
-                    [MANYCHAT_CONFIG.fields.n8n_status]: "RESOLVED_BY_AI"
-                }
+                success: true, action: "AI_REPLY_DIRECTLY", reply_text: aiAnalysis.ai_safe_reply
             });
         }
 
-        // DURUM B: Oda Talebi / Şikayet (SLA Süreci Başlar)
+        // DURUM B: Oda Talebi / Şikayet
         if (aiAnalysis.intent === "REQUEST" || aiAnalysis.intent === "COMPLAINT") {
+            
+            // EĞER ODA NUMARASI BİLİNMİYORSA: Bilet açma, önce adama sor!
+            if (roomNo === "Bilinmiyor" || guestName === "Misafir") {
+                const missingInfoReply = aiAnalysis.ai_safe_reply || "Lütfen talebinizi işleme alabilmemiz için oda numaranızı ve isim-soyisminizi yazar mısınız?";
+                
+                if (subscriberId && subscriberId !== "unknown") {
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, missingInfoReply);
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, missingInfoReply);
+                    const flowId = channel === 'whatsapp' 
+                        ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap 
+                        : MANYCHAT_CONFIG.contentIds.instagram.noLink;
+                    await sendManyChatFlow(subscriberId, flowId); 
+                }
 
-            // Benzersiz Bilet ID Üret
+                return NextResponse.json({
+                    success: true, action: "MISSING_GUEST_INFO", reply_text: missingInfoReply
+                });
+            }
+
+            // ODA VE İSİM BİLİNİYORSA -> SÜRECİ BAŞLAT (Departmana yönlendir)
             const ticketId = `HTL-${Math.floor(Math.random() * 10000)}`;
 
-            // Supabase DB'ye Kayıt At (Talep oluştu!)
-            // (Gerçek ortamda hotel_id, guest_id vb FK ilişkilendirmeleriyle atılır)
-            /*
-            await supabase.from('requests').insert({
-                ticket_id: ticketId,
-                topic: aiAnalysis.summary,
-                description: incomingText,
-                status: 'OPEN',
-                priority: aiAnalysis.is_alerjen ? 'CRITICAL' : 'NORMAL'
-            });
-            */
-
-            // 4. Telegram Üzerinden İlgili Departmanı Uyar
-            // NOT: Prod'da departmanın chat_id'sini DB'den, "departments" veya "staff_users" tablosundan çekeceğiz.
-            // Şimdilik demo chat id (Yönetici bot id'sini proxy olarak kullanıyoruz vs / ya da terminal log)
             const mockDeptChatId = process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_DEPT_CHAT_ID_TBD" : null;
-
             if (mockDeptChatId) {
                 await notifyDepartment(
-                    mockDeptChatId,
-                    ticketId,
-                    roomNo,
-                    guestName,
-                    incomingText, // Misafirin orjinal mesajı veya çevirisi
-                    aiAnalysis.is_alerjen
+                    mockDeptChatId, ticketId, roomNo, guestName, incomingText, aiAnalysis.is_alerjen
                 );
             }
 
-            // MANYCHAT'e / N8N'e departmana yönlendirildiğini haber veren onay dönüşü
-            const guestAcknowledgeMsg = aiAnalysis.ai_safe_reply || "Talebinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz.";
+            const guestAcknowledgeMsg = aiAnalysis.ai_safe_reply || "Talebinizi aldık, ilgili departmana ilettik.";
 
-            // Arka planda misafire bilgilendirme mesajını ManyChat'ten gönder
             if (subscriberId && subscriberId !== "unknown") {
-                console.log(`📲 ManyChat (${channel}) kullanıcısına departman yönlendirme bildirimi gönderiliyor...`);
-                // Talebin aldığını bildiren cevabı AI_Cevap alanına kaydet ve flow'u tetikle
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, guestAcknowledgeMsg);
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, guestAcknowledgeMsg);
-                
-                const flowId = channel === 'whatsapp' 
-                    ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap 
-                    : MANYCHAT_CONFIG.contentIds.instagram.noLink;
-                
+                const flowId = channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink;
                 await sendManyChatFlow(subscriberId, flowId); 
             }
 
             return NextResponse.json({
-                success: true,
-                action: "ROUTE_TO_DEPARTMENT",
-                ticket_id: ticketId,
-                department: aiAnalysis.department,
-                reply_text: guestAcknowledgeMsg,
-                is_critical: aiAnalysis.is_alerjen,
-                update_manychat_fields: {
-                    [MANYCHAT_CONFIG.fields.n8n_reply]: guestAcknowledgeMsg,
-                    [MANYCHAT_CONFIG.fields.n8n_status]: "ROUTED_TO_DEPT",
-                    [MANYCHAT_CONFIG.fields.otel_ticket_id]: ticketId
-                }
+                success: true, action: "ROUTE_TO_DEPARTMENT", ticket_id: ticketId, reply_text: guestAcknowledgeMsg
             });
         }
 

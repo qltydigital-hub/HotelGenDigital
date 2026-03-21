@@ -61,6 +61,7 @@ ${context?.agencies && context.agencies.length > 0 ? "Mevcut Acentalar ve Linkle
     ? `* PAKET 1 KURALI (ÇOK ÖNEMLİ): Otel şu anda sadece "Soru-Cevap" yapay zeka paketini kullanmaktadır. Eğer misafir (havlu, temizlik, yemek siparişi gibi) fiziksel bir "Departman Talebinde" bulunursa, bu talebi KESİNLİKLE ONAYLAMA. Intent alanını "QUESTION" olarak işaretle ve 'ai_safe_reply' alanına çok kibar bir dille misafirin kendi dilinde şunu yaz: "Oda servisi ve kat hizmetleri talepleriniz için lütfen odanızdaki dahili telefonu arayınız veya resepsiyon ile iletişime geçiniz."` 
     : `* PAKET 2 KURALI: Eğer Oda Numarası 'Bilinmiyor' ise: Talebi işleme almadan önce misafirden LÜTFEN çok nazikçe Oda Numarasını ve İsim Soyismini iste! "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?" tarzında bir cevap yaz. Eğer Oda Numarası biliniyorsa: "İsteğinizi ilgili departmana hızlıca iletiyoruz." yaz ve bunu 'ai_safe_reply' içine de koyabilirsin.`}
 - Eğer "CANCEL" ise: İptal işleminizi ilgili departmana ilettik, teşekkür ederiz.
+- SKILL / YETENEK KULLANIMI: Eğer misafir mesajında uçak bileti, uçuş, havalimanı (flight, tickets vb.) kelimeleri geçerse; "ai_skills" bölümündeki linki (https://www.google.com/travel/flights/deals) verip ona çok nazikçe yardımcı ol ve "intent" olarak QUESTION işaretle.
 
 AYRICA ŞU ÇEVİRİLERİ DOLDURMALISIN (Misafir hangi dilde yazdıysa o dilde):
 - 'turkish_translation': Misafirin yazdığı mesajın departman çalışanının anlaması için TÜRKÇE tam çevirisi veya özeti.

@@ -51,6 +51,14 @@ export const HOTEL_KNOWLEDGE_BASE = {
             highlights: ["Temiz ve konforlu odalar", "Zengin kahvaltı", "Merkezi konum"],
             common_criticisms: ["Spa ve havuzun ekstra ücretli olması", "Yoğun dönemlerde servis hızı"]
         },
-        legal_information: { property_registration_number: "15181" }
+        legal_information: { property_registration_number: "15181" },
+        ai_skills: [
+            {
+                skill_name: "Flight Deals Analyzer",
+                trigger_keywords: ["uçak", "bilet", "uçuş", "flight", "plane", "ticket"],
+                instruction: "Misafir uçak bileti, uçuş arayışı veya indirimli bilet sorarsa aşağıda yer alan linki sunarak oradan ucuza bilet bulabileceğini çok kibar bir dille söyle.",
+                provided_url: "https://www.google.com/travel/flights/deals"
+            }
+        ]
     }
 };

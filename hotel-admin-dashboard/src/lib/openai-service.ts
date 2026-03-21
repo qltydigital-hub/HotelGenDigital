@@ -21,6 +21,8 @@ export interface AIAnalysisResult {
     reply_routing_lang: string;     // Misafirin dilinde: "İsteğinizi ilgili departmana hızlıca iletiyoruz."
     reply_immediate_lang: string;   // Misafirin dilinde: "Talebinizi aldık, hemen ilgileniyorum."
     reply_later_lang: string;       // Misafirin dilinde: "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim."
+    extracted_room_no: string | null;  // Mesajın içinden saptanabilen oda numarası (örn. "oda 201" -> "201") 
+    extracted_guest_name: string | null; // Mesajın içinden saptanabilen konuk ismi (örn. "Ben Ahmet Yılmaz" -> "Ahmet Yılmaz")
 }
 
 /**
@@ -65,6 +67,8 @@ AYRICA ŞU ÇEVİRİLERİ DOLDURMALISIN (Misafir hangi dilde yazdıysa o dilde):
 - 'reply_immediate_lang': "Talebinizi aldık, hemen ilgileniyorum." cümlesinin misafirin dilindeki çevirisi.
 - 'reply_later_lang': "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim." cümlesinin misafirin dilindeki çevirisi.
 
+KİMLİK BİLGİSİ ÇIKARTMA KURALI (INFO EXTRACTION): EĞER misafir doğrudan oda numarasını veya ismini girdiyse (örn: "oda numaram 101, ismim Ahmet"), intent ne olursa olsun, bunları 'extracted_room_no' (ör: "101") ve 'extracted_guest_name' (ör: "Ahmet") alanlarına çıkart. Yoksa null bırak.
+
 Alerjen Kuralı (KRİTİK): Eğer misafir yiyecek/içecek hakkında talepte veya soruda bulunuyorsa ve içinde fıstık, alerji, gluten, süt alerjisi gibi bir kelime varsa 'is_alerjen' değerini mutlaka TRUE yap.
 
 Departman Eşleşmesi: Housekeeping, Teknik Servis, F&B (Gastro), Resepsiyon, Guest Relation, Rezervasyon. Talep bu departmanlardan en mantıklı olanını seç veya null bırak.
@@ -83,7 +87,9 @@ Yanıtın sadece GÜVENLİ, valit (parse edilebilir) bir JSON objesi olmalıdır
   "turkish_translation": "Odaya ekstra yastık ve havlu gönderebilir misiniz?",
   "reply_routing_lang": "We are quickly forwarding your request to the relevant department.",
   "reply_immediate_lang": "We have received your request and I am taking care of it immediately.",
-  "reply_later_lang": "I have received your request and will attend to it as soon as I finish my current task."
+  "reply_later_lang": "I have received your request and will attend to it as soon as I finish my current task.",
+  "extracted_room_no": null,
+  "extracted_guest_name": null
 }
 `;
 
@@ -116,7 +122,9 @@ Yanıtın sadece GÜVENLİ, valit (parse edilebilir) bir JSON objesi olmalıdır
             turkish_translation: "Anlaşılamayan mesaj",
             reply_routing_lang: "İsteğinizi ilgili departmana hızlıca iletiyoruz.",
             reply_immediate_lang: "Talebinizi aldık, hemen ilgileniyorum.",
-            reply_later_lang: "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim."
+            reply_later_lang: "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim.",
+            extracted_room_no: null,
+            extracted_guest_name: null
         };
     }
 }

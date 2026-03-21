@@ -31,7 +31,7 @@ export interface AIAnalysisResult {
 export async function analyzeGuestMessage(
     message: string, 
     isAudioContext: boolean = false, 
-    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}> }
+    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2' }
 ): Promise<AIAnalysisResult> {
     const systemPrompt = `
 Sen 5 Yıldızlı The Green Park Gaziantep otelinde çalışan "GuestFlow AI" adlı misafir ilişkileri uzmanısın.
@@ -57,8 +57,9 @@ Hangi niyet (intent) olursa olsun, 'ai_safe_reply' alanına misafirin KENDİ Dİ
 ${context?.agencies && context.agencies.length > 0 ? "Mevcut Acentalar ve Linkleri:\n" + JSON.stringify(context.agencies, null, 2) : "Şu an sisteme ekli acenta yok, resepsiyonla doğrudan iletişim numarası ver."}
 - Eğer "REQUEST" veya "COMPLAINT" ise: 
   * DİKKAT: Konaklayan bir misafirin oda numarası ve ismi şu an sistemde: Oda: ${context?.roomNo || "Bilinmiyor"}, İsim: ${context?.guestName || "Misafir"}.
-  * Eğer Oda Numarası 'Bilinmiyor' ise: Talebi işleme almadan önce misafirden LÜTFEN çok nazikçe Oda Numarasını ve İsim Soyismini iste! "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?" tarzında bir cevap yaz.
-  * Eğer Oda Numarası biliniyorsa: "İsteğinizi ilgili departmana hızlıca iletiyoruz." yaz ve bunu 'ai_safe_reply' içine de koyabilirsin.
+  ${context?.hotelTier === 'paket1' 
+    ? `* PAKET 1 KURALI (ÇOK ÖNEMLİ): Otel şu anda sadece "Soru-Cevap" yapay zeka paketini kullanmaktadır. Eğer misafir (havlu, temizlik, yemek siparişi gibi) fiziksel bir "Departman Talebinde" bulunursa, bu talebi KESİNLİKLE ONAYLAMA. Intent alanını "QUESTION" olarak işaretle ve 'ai_safe_reply' alanına çok kibar bir dille misafirin kendi dilinde şunu yaz: "Oda servisi ve kat hizmetleri talepleriniz için lütfen odanızdaki dahili telefonu arayınız veya resepsiyon ile iletişime geçiniz."` 
+    : `* PAKET 2 KURALI: Eğer Oda Numarası 'Bilinmiyor' ise: Talebi işleme almadan önce misafirden LÜTFEN çok nazikçe Oda Numarasını ve İsim Soyismini iste! "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?" tarzında bir cevap yaz. Eğer Oda Numarası biliniyorsa: "İsteğinizi ilgili departmana hızlıca iletiyoruz." yaz ve bunu 'ai_safe_reply' içine de koyabilirsin.`}
 - Eğer "CANCEL" ise: İptal işleminizi ilgili departmana ilettik, teşekkür ederiz.
 
 AYRICA ŞU ÇEVİRİLERİ DOLDURMALISIN (Misafir hangi dilde yazdıysa o dilde):

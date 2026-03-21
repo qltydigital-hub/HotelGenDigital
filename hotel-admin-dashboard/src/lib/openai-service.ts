@@ -17,6 +17,10 @@ export interface AIAnalysisResult {
     is_alerjen: boolean;            // F&B'de alerjen (fıstık, gluten vs) şüphesi
     needs_reception_cc: boolean;    // Resepsiyonun acil bilmesi gereken bir durum mu (Kaza, iptal, kavga vs.)
     ai_safe_reply: string | null;   // Eğer sadece "Soru" (QUESTION) ise misafire dönülecek direkt Türkçe/Yabancı dildeki yanıt (Knowledge Base den)
+    turkish_translation: string;    // Misafirin talebinin departman personeli için Türkçe'ye çevrilmiş hali
+    reply_routing_lang: string;     // Misafirin dilinde: "İsteğinizi ilgili departmana hızlıca iletiyoruz."
+    reply_immediate_lang: string;   // Misafirin dilinde: "Talebinizi aldık, hemen ilgileniyorum."
+    reply_later_lang: string;       // Misafirin dilinde: "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim."
 }
 
 /**
@@ -52,8 +56,14 @@ ${context?.agencies && context.agencies.length > 0 ? "Mevcut Acentalar ve Linkle
 - Eğer "REQUEST" veya "COMPLAINT" ise: 
   * DİKKAT: Konaklayan bir misafirin oda numarası ve ismi şu an sistemde: Oda: ${context?.roomNo || "Bilinmiyor"}, İsim: ${context?.guestName || "Misafir"}.
   * Eğer Oda Numarası 'Bilinmiyor' ise: Talebi işleme almadan önce misafirden LÜTFEN çok nazikçe Oda Numarasını ve İsim Soyismini iste! "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?" tarzında bir cevap yaz.
-  * Eğer Oda Numarası biliniyorsa: "Talebinizi/Şikayetinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz." yaz.
+  * Eğer Oda Numarası biliniyorsa: "İsteğinizi ilgili departmana hızlıca iletiyoruz." yaz ve bunu 'ai_safe_reply' içine de koyabilirsin.
 - Eğer "CANCEL" ise: İptal işleminizi ilgili departmana ilettik, teşekkür ederiz.
+
+AYRICA ŞU ÇEVİRİLERİ DOLDURMALISIN (Misafir hangi dilde yazdıysa o dilde):
+- 'turkish_translation': Misafirin yazdığı mesajın departman çalışanının anlaması için TÜRKÇE tam çevirisi veya özeti.
+- 'reply_routing_lang': "İsteğinizi ilgili departmana hızlıca iletiyoruz." cümlesinin misafirin dilindeki çevirisi.
+- 'reply_immediate_lang': "Talebinizi aldık, hemen ilgileniyorum." cümlesinin misafirin dilindeki çevirisi.
+- 'reply_later_lang': "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim." cümlesinin misafirin dilindeki çevirisi.
 
 Alerjen Kuralı (KRİTİK): Eğer misafir yiyecek/içecek hakkında talepte veya soruda bulunuyorsa ve içinde fıstık, alerji, gluten, süt alerjisi gibi bir kelime varsa 'is_alerjen' değerini mutlaka TRUE yap.
 
@@ -65,11 +75,15 @@ Yanıtın sadece GÜVENLİ, valit (parse edilebilir) bir JSON objesi olmalıdır
 {
   "intent": "REQUEST",
   "department": "Housekeeping",
-  "language": "tr",
+  "language": "en",
   "summary": "Odaya ekstra yastık talebi",
   "is_alerjen": false,
   "needs_reception_cc": true,
-  "ai_safe_reply": "Talebinizi aldık, ilgili departmana ilettik. En kısa sürede odanızla ilgileneceğiz."
+  "ai_safe_reply": "We are quickly forwarding your request to the relevant department.",
+  "turkish_translation": "Odaya ekstra yastık ve havlu gönderebilir misiniz?",
+  "reply_routing_lang": "We are quickly forwarding your request to the relevant department.",
+  "reply_immediate_lang": "We have received your request and I am taking care of it immediately.",
+  "reply_later_lang": "I have received your request and will attend to it as soon as I finish my current task."
 }
 `;
 
@@ -98,7 +112,11 @@ Yanıtın sadece GÜVENLİ, valit (parse edilebilir) bir JSON objesi olmalıdır
             summary: "Anlaşılamayan mesaj / Fallback dönüldü.",
             is_alerjen: false,
             needs_reception_cc: true,
-            ai_safe_reply: "Değerli misafirimiz, size şu anda sistemlerimizdeki anlık bir yoğunluktan dolayı yanıt veremiyorum. Lütfen resepsiyonu arayarak destek isteyiniz."
+            ai_safe_reply: "Değerli misafirimiz, size şu anda sistemlerimizdeki anlık bir yoğunluktan dolayı yanıt veremiyorum. Lütfen resepsiyonu arayarak destek isteyiniz.",
+            turkish_translation: "Anlaşılamayan mesaj",
+            reply_routing_lang: "İsteğinizi ilgili departmana hızlıca iletiyoruz.",
+            reply_immediate_lang: "Talebinizi aldık, hemen ilgileniyorum.",
+            reply_later_lang: "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim."
         };
     }
 }

@@ -17,6 +17,8 @@ export async function POST(request: Request) {
         const subscriberId = payload.subscriber_id || payload.chat_id || payload.contact_id || "unknown";
         const incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message || payload.text;
         const isAudio = payload.custom_fields?.[MANYCHAT_CONFIG.fields.cuf_audio_url] ? true : false;
+        // ManyChat'ten veya external sistemden gelebilecek olası resim URL'leri
+        const incomingUrl = payload.url || payload.image_url || payload.custom_fields?.image_url || payload.custom_fields?.[MANYCHAT_CONFIG.fields.ai_urun_gorsel_url] || null;
 
         // (Simüle Edilmiş Misafir Bilgileri - Normalde custom_fields'den / DB'den eşleştirilir)
         const roomNo = payload.custom_fields?.[MANYCHAT_CONFIG.fields.oda_no] || "Bilinmiyor";
@@ -93,16 +95,52 @@ export async function POST(request: Request) {
             }
 
             // ODA VE İSİM BİLİNİYORSA -> SÜRECİ BAŞLAT (Departmana yönlendir)
-            const ticketId = `HTL-${Math.floor(Math.random() * 10000)}`;
+            const ticketId = `HTL-${Math.floor(Math.random() * 100000)}`;
+
+            // SLA Süresini al
+            let timeoutMinutes = 15;
+            try {
+                const { data: settingsData } = await supabase.from('hotel_settings').select('department_timeout_minutes').single();
+                if (settingsData && settingsData.department_timeout_minutes) {
+                    timeoutMinutes = settingsData.department_timeout_minutes;
+                }
+            } catch(e) { console.warn("Hotel settings fetch warning", e); }
+
+            // DB'ye bileti kaydet
+            try {
+                await supabase.from('active_tickets').insert({
+                    ticket_id: ticketId,
+                    status: 'PENDING',
+                    department: aiAnalysis.department || 'Resepsiyon',
+                    guest_name: guestName,
+                    room_no: roomNo,
+                    subscriber_id: subscriberId,
+                    channel: channel,
+                    guest_language: aiAnalysis.language || 'tr',
+                    original_message: incomingText,
+                    turkish_translation: aiAnalysis.turkish_translation || incomingText,
+                    image_url: incomingUrl,
+                    reply_immediate_lang: aiAnalysis.reply_immediate_lang || "Talebinizi aldık, hemen ilgileniyorum.",
+                    reply_later_lang: aiAnalysis.reply_later_lang || "Talebinizi aldım, sonrasında ilgileneceğim.",
+                    timeout_minutes: timeoutMinutes
+                });
+            } catch(e) { console.error("Ticket DB Insert Error:", e); }
 
             const mockDeptChatId = process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_DEPT_CHAT_ID_TBD" : null;
             if (mockDeptChatId) {
                 await notifyDepartment(
-                    mockDeptChatId, ticketId, roomNo, guestName, incomingText, aiAnalysis.is_alerjen
+                    mockDeptChatId, 
+                    ticketId, 
+                    roomNo, 
+                    guestName, 
+                    incomingText, 
+                    aiAnalysis.turkish_translation || incomingText,
+                    aiAnalysis.is_alerjen,
+                    incomingUrl
                 );
             }
 
-            const guestAcknowledgeMsg = aiAnalysis.ai_safe_reply || "Talebinizi aldık, ilgili departmana ilettik.";
+            const guestAcknowledgeMsg = aiAnalysis.reply_routing_lang || "İsteğinizi ilgili departmana hızlıca iletiyoruz.";
 
             if (subscriberId && subscriberId !== "unknown") {
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, guestAcknowledgeMsg);

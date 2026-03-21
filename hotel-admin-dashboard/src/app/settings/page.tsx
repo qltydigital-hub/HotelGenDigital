@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, Hotel, Save, CheckCircle2, Building, Info, FileSpreadsheet, Users, Banknote, ListPlus, ShieldCheck } from 'lucide-react';
+import { Settings, Hotel, Save, CheckCircle2, Building, Info, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -45,87 +45,8 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    
-                    {/* Left Column: Uploads */}
-                    <div className="lg:col-span-5 space-y-6">
-                        
-                        {/* Konsept Yükleme */}
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <FileText className="w-6 h-6 text-blue-400" />
-                                <h2 className="text-xl font-bold">Konsept Dosyası Ekle</h2>
-                            </div>
-                            <p className="text-slate-400 text-sm mb-6">Yaz sezonu, kış sezonu veya özel etkinlik konseptlerini içeren belgeleri yükleyin (Word/PDF).</p>
-                            
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-blue-400 transition-colors" />
-                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-blue-400">Tıklayın</span> veya sürükleyip bırakın</p>
-                                    <p className="text-xs text-slate-500">PDF, DOCX, veya TXT (Max 10MB)</p>
-                                </div>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
-
-                        {/* Fact Sheet Yükleme */}
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <FileSpreadsheet className="w-6 h-6 text-cyan-400" />
-                                <h2 className="text-xl font-bold">Hotel Fact Sheet Ekle</h2>
-                            </div>
-                            <p className="text-slate-400 text-sm mb-6">Otelin tüm fiziki özelliklerinin yer aldığı detaylı Excel, Word veya PDF dokümanını sisteme yükleyin.</p>
-                            
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-cyan-400 transition-colors" />
-                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-cyan-400">Tıklayın</span> veya sürükleyip bırakın</p>
-                                    <p className="text-xs text-slate-500">XLSX, PDF veya DOCX (Max 15MB)</p>
-                                </div>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
-
-                        {/* Fiyat Listesi Yükleme */}
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <Banknote className="w-6 h-6 text-emerald-400" />
-                                <h2 className="text-xl font-bold">Fiyat Listesi Ekle</h2>
-                            </div>
-                            <p className="text-slate-400 text-sm mb-6">A la carte restoranlar, SPA, transfer veya ekstra servislerin güncel fiyatlandırmalarını sisteme yükleyin.</p>
-                            
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-emerald-400 transition-colors" />
-                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-emerald-400">Tıklayın</span> veya sürükleyip bırakın</p>
-                                    <p className="text-xs text-slate-500">PDF, XLSX, DOCX (Max 10MB)</p>
-                                </div>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
-
-                        {/* In-house Yükleme */}
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-orange-500/30 transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <ListPlus className="w-6 h-6 text-orange-400" />
-                                <h2 className="text-xl font-bold">In-house Liste Ekle</h2>
-                            </div>
-                            <p className="text-slate-400 text-sm mb-6">İçeride konaklayan anlık misafir listesini yükleyerek yapay zekanın misafirleri ve odalarını tanımasını sağlayın.</p>
-                            
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors group">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <UploadCloud className="w-8 h-8 text-slate-500 mb-2 group-hover:text-orange-400 transition-colors" />
-                                    <p className="mb-2 text-sm text-slate-400"><span className="font-bold text-orange-400">Tıklayın</span> veya sürükleyip bırakın</p>
-                                    <p className="text-xs text-slate-500">XLSX, XLS (Sadece Excel - Max 15MB)</p>
-                                </div>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
-
-                    </div>
-
-                    {/* Right Column: Hotel Detail Info */}
-                    <div className="lg:col-span-7">
+                <div className="flex justify-center">
+                    <div className="w-full max-w-4xl">
                         <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
@@ -192,57 +113,6 @@ export default function SettingsPage() {
                                 TÜM BİLGİLERİ KAYDET
                             </button>
                         </form>
-                    </div>
-
-                </div>
-
-                {/* Departman Özel Eğitim & Veri Setleri */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                    <div className="flex items-center gap-4 mb-8">
-                        <Users className="w-7 h-7 text-blue-400" />
-                        <div>
-                            <h2 className="text-2xl font-extrabold uppercase tracking-wide">Departman Özel Veri Setleri</h2>
-                            <p className="text-slate-400 text-sm mt-1">Sistemin departmanlardan gelen görev ve sorulara nasıl davranması gerektiğini belirleyen kural ve raporlama dosyaları.</p>
-                        </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-6">
-                        {/* Resepsiyon */}
-                        <div className="flex flex-col justify-between border border-slate-700 bg-slate-950/50 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
-                            <div>
-                                <h3 className="font-bold text-lg mb-2 text-white">Resepsiyon</h3>
-                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">Giriş/Çıkış işlemleri, upgrade politikaları, vize bilgileri ve resepsiyon standart kuralları.</p>
-                            </div>
-                            <label className="flex items-center justify-center w-full py-3 border border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors group/btn">
-                                <UploadCloud className="w-5 h-5 text-slate-500 mr-2 group-hover/btn:text-blue-400" />
-                                <span className="text-sm text-slate-400 group-hover/btn:text-blue-400 font-bold">Resepsiyon Belgesi Yükle</span>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
-                        {/* Guest Relation */}
-                        <div className="flex flex-col justify-between border border-slate-700 bg-slate-950/50 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
-                            <div>
-                                <h3 className="font-bold text-lg mb-2 text-white">Guest Relation</h3>
-                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">Misafir şikayet çözümleri, balayı paketleri, doğum günü ikram setleri ve sadakat programı kuralları.</p>
-                            </div>
-                            <label className="flex items-center justify-center w-full py-3 border border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors group/btn">
-                                <UploadCloud className="w-5 h-5 text-slate-500 mr-2 group-hover/btn:text-blue-400" />
-                                <span className="text-sm text-slate-400 group-hover/btn:text-blue-400 font-bold">GR Belgesi Yükle</span>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
-                        {/* Üst Yöneticiler */}
-                        <div className="flex flex-col justify-between border border-slate-700 bg-slate-950/50 rounded-2xl p-6 hover:border-purple-500/30 transition-colors">
-                            <div>
-                                <h3 className="font-bold text-lg mb-2 pl-1 border-l-4 border-purple-500 text-white">Üst Yöneticiler (VIP)</h3>
-                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">Gizli mali veriler, personel raporlama şablonları, kriz yönetimi ve VIP misafir protokolleri.</p>
-                            </div>
-                            <label className="flex items-center justify-center w-full py-3 border border-slate-700 border-dashed rounded-xl cursor-pointer hover:bg-slate-800/50 transition-colors group/btn">
-                                <UploadCloud className="w-5 h-5 text-slate-500 mr-2 group-hover/btn:text-purple-400" />
-                                <span className="text-sm text-slate-400 group-hover/btn:text-purple-400 font-bold">VIP Belge Yükle</span>
-                                <input type="file" className="hidden" />
-                            </label>
-                        </div>
                     </div>
                 </div>
             </div>

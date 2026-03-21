@@ -20,6 +20,7 @@ type Department = {
   offlineShifts: string[];
   offlineDays: string[];
   is24_7: boolean;
+  timeout_minutes: number;
 };
 
 const newContact = (): Contact => ({
@@ -36,23 +37,23 @@ export default function AdminPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([
     {
-      id: 1, name: 'Resepsiyon (Ön Büro)', is24_7: true, offlineShifts: [], offlineDays: [],
+      id: 1, name: 'Resepsiyon (Ön Büro)', is24_7: true, offlineShifts: [], offlineDays: [], timeout_minutes: 15,
       contacts: [{ id: 1, name: 'Resepsiyon Ana Hat', telegramId: '-419082348', whatsappId: '+905551234567' }],
     },
     {
-      id: 2, name: 'Misafir İlişkileri (Guest Relation)', is24_7: true, offlineShifts: ['00:00 - 08:00'], offlineDays: [],
+      id: 2, name: 'Misafir İlişkileri (Guest Relation)', is24_7: true, offlineShifts: ['00:00 - 08:00'], offlineDays: [], timeout_minutes: 15,
       contacts: [{ id: 2, name: 'Guest Relation', telegramId: '-412345678', whatsappId: '+905559876543' }],
     },
     {
-      id: 3, name: 'Kat Hizmetleri (Housekeeping)', is24_7: true, offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: [],
+      id: 3, name: 'Kat Hizmetleri (Housekeeping)', is24_7: true, offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: [], timeout_minutes: 20,
       contacts: [{ id: 3, name: 'Housekeeping', telegramId: '', whatsappId: '' }],
     },
     {
-      id: 4, name: 'Yiyecek & İçecek (F&B)', is24_7: true, offlineShifts: ['00:00 - 08:00'], offlineDays: [],
+      id: 4, name: 'Yiyecek & İçecek (F&B)', is24_7: true, offlineShifts: ['00:00 - 08:00'], offlineDays: [], timeout_minutes: 10,
       contacts: [{ id: 4, name: 'F&B', telegramId: '', whatsappId: '' }],
     },
     {
-      id: 5, name: 'Teknik Servis', is24_7: true, offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: ['Paz'],
+      id: 5, name: 'Teknik Servis', is24_7: true, offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: ['Paz'], timeout_minutes: 30,
       contacts: [{ id: 5, name: 'Teknik', telegramId: '', whatsappId: '' }],
     },
   ]);
@@ -68,7 +69,8 @@ export default function AdminPanel() {
             is24_7: d.is24_7 !== undefined ? d.is24_7 : true,
             offlineShifts: d.offlineShifts || [],
             offlineDays: d.offlineDays || [],
-            contacts: d.contacts || []
+            contacts: d.contacts || [],
+            timeout_minutes: d.timeout_minutes || 15
           }));
           setDepartments(loadedDeps);
         }
@@ -158,6 +160,7 @@ export default function AdminPanel() {
       offlineShifts: [],
       offlineDays: [],
       is24_7: true,
+      timeout_minutes: 15,
     }]);
     setNewDept('');
   };
@@ -308,6 +311,29 @@ export default function AdminPanel() {
                     <UserPlus className="w-4 h-4" />
                     Sorumlu / Kişi Ekle
                   </button>
+
+                  {/* DEPARTMAN ÖZEL SLA / YANIT SÜRESİ */}
+                  <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
+                        <ShieldCheck className="w-4 h-4 text-red-400" />
+                        <span className="font-bold text-red-200">SLA Süresi (Dakika):</span>
+                      </div>
+                      <div className="flex items-center gap-4 flex-1">
+                        <input 
+                            type="range" 
+                            min="1" 
+                            max="60" 
+                            step="1"
+                            value={dept.timeout_minutes}
+                            onChange={(e) => updateDept(dept.id, 'timeout_minutes', parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                        />
+                        <span className="text-xl font-extrabold text-white min-w-[40px] text-center">{dept.timeout_minutes}'</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 pl-[165px]">Bu departmana iletilen taleplerin üstlenilmesi için maksimum hedef süre.</p>
+                  </div>
 
                   {/* Çalışma Düzeni */}
                   <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-2">

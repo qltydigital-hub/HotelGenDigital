@@ -40,10 +40,6 @@ export default function FrontOfficeSettings() {
     const [remind247, setRemind247] = useState(true);
     const [offerInfo, setOfferInfo] = useState(true);
 
-    // Timeout (SLA) State
-    const [timeoutMinutes, setTimeoutMinutes] = useState(15);
-    const [isSavingTimeout, setIsSavingTimeout] = useState(false);
-
     // Agencies State
     const [agencies, setAgencies] = useState<any[]>([]);
     const [isAgenciesLoading, setIsAgenciesLoading] = useState(true);
@@ -70,12 +66,6 @@ export default function FrontOfficeSettings() {
 
     useEffect(() => {
         loadAgencies();
-        // Load global settings
-        fetch('/api/settings').then(res => res.json()).then(data => {
-            if (data.success && data.data) {
-                setTimeoutMinutes(data.data.department_timeout_minutes || 15);
-            }
-        });
     }, []);
 
     const handleDeleteAgency = async (id: string) => {
@@ -145,32 +135,6 @@ export default function FrontOfficeSettings() {
         } catch (error) {
             console.error(error);
             alert('Acenta güncellenemedi.');
-        }
-    };
-
-    const handleSaveTimeout = async () => {
-        if (timeoutMinutes < 1 || timeoutMinutes > 30) {
-            alert('Süre 1 ile 30 dakika arasında olmalıdır.');
-            return;
-        }
-        setIsSavingTimeout(true);
-        try {
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ department_timeout_minutes: timeoutMinutes })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert('SLA (Timeout) Süresi başarıyla kaydedildi.');
-            } else {
-                alert('Hata: ' + data.error);
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Ayar kaydedilirken bir hata oluştu');
-        } finally {
-            setIsSavingTimeout(false);
         }
     };
 
@@ -417,47 +381,6 @@ export default function FrontOfficeSettings() {
                                 </div>
                             </div>
                             <p className="text-sm text-slate-400 leading-relaxed">"Otelimiz veya bölgemiz hakkında bilgi almak isterseniz, size yardımcı olmaktan memnuniyet duyarım." mesajını iletir.</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- NEW FEATURE: TIMEOUT / SLA SETTINGS --- */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-all">
-                    <div className="flex items-center gap-4 mb-6">
-                        <ShieldCheck className="w-8 h-8 text-red-400" />
-                        <div>
-                            <h2 className="text-2xl font-bold">Departman Yanıt Süresi (SLA / Timeout)</h2>
-                            <p className="text-slate-400 text-sm mt-1">Personelin talep bildirimlerini üstlenmesi için tanınan maksimum süre. Bu süre aşıldığında resepsiyona acil uyarı eskalasyonu düşer.</p>
-                        </div>
-                    </div>
-                    
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6 bg-slate-950 p-6 rounded-2xl border border-slate-800">
-                        <div className="flex-1 w-full">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Hedef Süre (Dakika)</label>
-                            <input 
-                                type="range" 
-                                min="1" 
-                                max="30" 
-                                step="1"
-                                value={timeoutMinutes}
-                                onChange={(e) => setTimeoutMinutes(parseInt(e.target.value))}
-                                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500"
-                            />
-                            <div className="flex justify-between text-xs text-slate-500 mt-2">
-                                <span>1 Dk</span>
-                                <span>15 Dk</span>
-                                <span>30 Dk</span>
-                            </div>
-                        </div>
-                        <div className="flex flex-col items-center justify-center min-w-[120px]">
-                            <span className="text-4xl font-extrabold text-white mb-2">{timeoutMinutes} <span className="text-lg text-slate-500">DK</span></span>
-                            <button 
-                                onClick={handleSaveTimeout}
-                                disabled={isSavingTimeout}
-                                className={`w-full px-4 py-2 rounded-xl text-sm font-bold transition-all text-white border ${isSavingTimeout ? 'bg-slate-800 text-slate-500 border-slate-700' : 'bg-red-600 hover:bg-red-500 border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.3)]'}`}
-                            >
-                                {isSavingTimeout ? 'Kaydediliyor...' : 'Süreyi Kaydet'}
-                            </button>
                         </div>
                     </div>
                 </div>

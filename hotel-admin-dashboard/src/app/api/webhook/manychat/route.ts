@@ -179,9 +179,15 @@ export async function POST(request: Request) {
 
             let timeoutMinutes = 15;
             try {
-                const { data: settingsData } = await supabase.from('hotel_settings').select('department_timeout_minutes').single();
-                if (settingsData && settingsData.department_timeout_minutes) timeoutMinutes = settingsData.department_timeout_minutes;
-            } catch(e) {}
+                const { data: settingsData } = await supabase.from('hotel_settings').select('value').eq('key', 'departments').single();
+                if (settingsData && settingsData.value) {
+                    const depts = settingsData.value;
+                    const matchedDept = depts.find((d: any) => currentDept && d.name.includes(currentDept));
+                    if (matchedDept && matchedDept.timeout_minutes) {
+                        timeoutMinutes = matchedDept.timeout_minutes;
+                    }
+                }
+            } catch(e) { console.warn("SLA fetch error", e); }
 
             try {
                 await supabase.from('active_tickets').insert({

@@ -25,6 +25,11 @@ export async function GET(request: Request) {
         let escalatedCount = 0;
 
         for (const ticket of tickets) {
+            // Resepsiyon departmanında geçici olarak SLA / Yanıt süresi aranmıyor
+            if (ticket.department && ticket.department.includes('Resepsiyon')) {
+                continue;
+            }
+
             const createdAt = new Date(ticket.created_at);
             const diffMinutes = Math.floor((now.getTime() - createdAt.getTime()) / 60000);
 

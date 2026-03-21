@@ -313,27 +313,29 @@ export default function AdminPanel() {
                   </button>
 
                   {/* DEPARTMAN ÖZEL SLA / YANIT SÜRESİ */}
-                  <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
-                        <ShieldCheck className="w-4 h-4 text-red-400" />
-                        <span className="font-bold text-red-200">SLA Süresi (Dakika):</span>
+                  {dept.id !== 1 && (
+                    <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm text-slate-400 min-w-[150px]">
+                          <ShieldCheck className="w-4 h-4 text-red-400" />
+                          <span className="font-bold text-red-200">SLA Süresi (Dakika):</span>
+                        </div>
+                        <div className="flex items-center gap-4 flex-1">
+                          <input 
+                              type="range" 
+                              min="1" 
+                              max="60" 
+                              step="1"
+                              value={dept.timeout_minutes}
+                              onChange={(e) => updateDept(dept.id, 'timeout_minutes', parseInt(e.target.value))}
+                              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                          />
+                          <span className="text-xl font-extrabold text-white min-w-[40px] text-center">{dept.timeout_minutes}'</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 flex-1">
-                        <input 
-                            type="range" 
-                            min="1" 
-                            max="60" 
-                            step="1"
-                            value={dept.timeout_minutes}
-                            onChange={(e) => updateDept(dept.id, 'timeout_minutes', parseInt(e.target.value))}
-                            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500"
-                        />
-                        <span className="text-xl font-extrabold text-white min-w-[40px] text-center">{dept.timeout_minutes}'</span>
-                      </div>
+                      <p className="text-xs text-slate-500 mt-2 pl-[165px]">Bu departmana iletilen taleplerin üstlenilmesi için maksimum hedef süre.</p>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2 pl-[165px]">Bu departmana iletilen taleplerin üstlenilmesi için maksimum hedef süre.</p>
-                  </div>
+                  )}
 
                   {/* Çalışma Düzeni */}
                   <div className="flex flex-col bg-slate-900/80 rounded-xl p-4 border border-slate-800 mt-2">

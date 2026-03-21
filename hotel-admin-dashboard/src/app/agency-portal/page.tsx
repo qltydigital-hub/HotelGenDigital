@@ -61,8 +61,8 @@ export default function MasterAgencyPortal() {
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             Sistem Çevrimiçi
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-black text-slate-300">
-                            Ö&K
+                        <div className="h-10 px-4 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-black text-slate-300 text-sm md:text-base whitespace-nowrap shadow-inner">
+                            ÖzgürÖZEN & Kemal KUYUCU
                         </div>
                     </div>
                 </div>
@@ -133,8 +133,11 @@ export default function MasterAgencyPortal() {
                             disabled={!currentHotelData || currentHotelData.status === 'installation'}
                             onClick={() => {
                                 if(currentHotelData) {
-                                    // Gerçek senaryoda bu link otelin kopyalanan bağımsız vercel linkinin '/admin-panel' yoludur.
-                                    window.open(`${currentHotelData.url}/admin-panel`, '_blank');
+                                    if (currentHotelData.id === 'demo-01') {
+                                        window.location.href = '/';
+                                    } else {
+                                        window.open(currentHotelData.url, '_blank');
+                                    }
                                 }
                             }}
                             className="w-full md:w-auto flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(59,130,246,0.3)] disabled:shadow-none"

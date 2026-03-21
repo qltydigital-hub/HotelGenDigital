@@ -21,6 +21,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 function PresentationFunnelContent() {
   const router = useRouter();
@@ -212,6 +213,14 @@ function PresentationFunnelContent() {
             <span className="hidden sm:inline">VIP Yönetici Girişi</span>
             <span className="sm:hidden">VIP Giriş</span>
           </button>
+          <Link
+            href="/agency-portal"
+            className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-500/60 hover:to-purple-500/60 border border-white/20 rounded-lg text-[10px] md:text-xs font-bold text-white backdrop-blur-md shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2"
+          >
+            <Globe2 className="w-4 h-4 text-white" />
+            <span className="hidden sm:inline">Master Hub</span>
+            <span className="sm:hidden">Hub</span>
+          </Link>
         </div>
       )}
 

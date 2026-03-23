@@ -58,3 +58,50 @@ export async function sendManyChatFlow(subscriberId: string | number, flowNs: st
 
     return await response.json();
 }
+
+/**
+ * Dinamik "Quick Reply" butonları ile ManyChat'e doğrudan mesaj gönderir.
+ * Facebook / Instagram için mesajın altına buton çıkartmak için kullanılır.
+ */
+export async function sendManyChatInteractiveMessage(subscriberId: string | number, text: string, options: string[]) {
+    if (!MANYCHAT_CONFIG.apiKey) {
+        console.warn("ManyChat API Key eksik, interactive message gönderilemiyor.");
+        return null;
+    }
+    
+    const response = await fetch(`${BASE_URL}/sending/sendContent`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${MANYCHAT_CONFIG.apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            subscriber_id: subscriberId,
+            data: {
+                version: "v2",
+                content: {
+                    messages: [
+                        {
+                            type: "text",
+                            text: text,
+                            quick_replies: options.map(opt => ({
+                                type: "node", 
+                                caption: opt
+                            }))
+                        }
+                    ]
+                }
+            }
+        }),
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        console.error(`ManyChat sendInteractiveMessage Hata:`, errText);
+        // Hata durumunda null dön veya hata mesajını yakala
+        return null;
+    }
+
+    return await response.json();
+}

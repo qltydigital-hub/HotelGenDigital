@@ -70,8 +70,14 @@ export async function POST(request: Request) {
         // YENİ EKLEME: EĞER KULLANICI MOCK ONAYI BEKLİYORSA (TEST PROJESİ İÇİN)
         // ------------------------------------------------------------------
         if (sessionData && sessionData.status === 'AWAITING_MOCK_APPROVAL') {
-            if (aiAnalysis.intent === 'CONFIRMATION' || incomingText.toLowerCase().includes('evet') || incomingText.toLowerCase().includes('tamam') || incomingText.toLowerCase().includes('olur')) {
-                const proceedSsg = "Tamam, seçiminize göre örnek olması adına Oda No: 102 ve Mehmet Kaya olarak bu şekilde devam ediyorum. İsteğinizi ilgili departmana hızlıca iletiyoruz.";
+            const isConfirmed = aiAnalysis.intent === 'CONFIRMATION' || 
+                                incomingText.toLowerCase().includes('evet') || 
+                                incomingText.toLowerCase().includes('tamam') || 
+                                incomingText.toLowerCase().includes('olur') ||
+                                incomingText === '1';
+                                
+            if (isConfirmed) {
+                const proceedSsg = "Harika! Sayın Mehmet Kaya (Oda: 102), demo modunda işlemlerinize sizinle devam etmekten memnuniyet duyarım. İsteğinizi ilgili departmana hızlıca iletiyoruz.";
                 if (subscriberId && subscriberId !== "unknown") {
                     await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, proceedSsg);
                     await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, proceedSsg);
@@ -101,8 +107,20 @@ export async function POST(request: Request) {
                         timeout_minutes: 15
                     });
                 } catch(e) { console.error("Ticket DB Insert Error (Mock):", e); }
-
-                // Bilgilendirme için departmana Telegram vs atılabilir (kod uzatmamak için burda var olan notifyDepartment'i isteğe bağlı ekleriz veya atlarız).
+                
+                const mockDeptChatId = process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_DEPT_CHAT_ID_TBD" : null;
+                if (mockDeptChatId) {
+                    await notifyDepartment(
+                        mockDeptChatId, 
+                        ticketId, 
+                        '102', 
+                        'Mehmet Kaya', 
+                        sessionData.pending_request || 'Bilinmiyor', 
+                        sessionData.turkish_translation || sessionData.pending_request || 'Bilinmiyor',
+                        false,
+                        incomingUrl
+                    );
+                }
 
                 return NextResponse.json({ success: true, action: "MOCK_PROCEED", ticket_id: ticketId, reply_text: proceedSsg });
             } else {
@@ -120,7 +138,8 @@ export async function POST(request: Request) {
         // 3. Duruma Göre İş Akışı (Orkestrasyon)
 
         // DURUM A: Sadece Soru, Selamlama, Rezervasyon ve Dış Sorgular ise (Direkt AI cevaplasın)
-        if (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING" || aiAnalysis.intent === "RESERVATION" || aiAnalysis.intent === "EXTERNAL_QUERY") {
+        const isAwaitingInfo = sessionData && sessionData.status === 'AWAITING_INFO';
+        if (!isAwaitingInfo && (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING" || aiAnalysis.intent === "RESERVATION" || aiAnalysis.intent === "EXTERNAL_QUERY")) {
             
             // YENİ EKLEME: EXTERNAL_QUERY ise Perplexity Dış Arama Motorunu Çalıştır
             if (aiAnalysis.intent === "EXTERNAL_QUERY" && roomNo !== "Bilinmiyor" && roomNo !== null) {
@@ -213,7 +232,7 @@ export async function POST(request: Request) {
 
             if (!isVerified) {
                 // Doğrulama başarısızsa adama sor ama session'ı da AWAITING_MOCK_APPROVAL'da tut ki örnek kullanıcı kabul etsin.
-                const failedVerifyReply = "Şu an konaklayanlar arasında verdiğiniz ad-soyad bilgisine ulaşamıyorum. Bu bir örnek proje olduğu için, deneyimi test edebilmeniz adına 'Oda No: 102 – Mehmet Kaya' şeklinde ilerleyelim mi?";
+                const failedVerifyReply = "Sistemdeki (in-house) konaklama kayıtlarıyla maalesef eşleşme sağlayamadık. Demo / test sürümü olduğu için, sanki içeride konaklıyormuşsunuz gibi sizi 102 nolu odada Mehmet Kaya olarak kabul edip taleplerinize cevap vermemi ister misiniz?\n\n1️⃣ Evet\n2️⃣ Hayır";
                 
                 if (subscriberId && subscriberId !== "unknown") {
                     await supabase.from('guest_sessions').upsert({

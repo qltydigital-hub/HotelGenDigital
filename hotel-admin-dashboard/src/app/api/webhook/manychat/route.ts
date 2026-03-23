@@ -4,6 +4,7 @@ import { analyzeGuestMessage } from '@/lib/openai-service';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { notifyDepartment } from '@/lib/telegram-service';
 import { setManyChatCustomField, sendManyChatFlow } from '@/lib/manychat-client';
+import { performLiveSearch } from '@/lib/external-apis';
 
 export async function POST(request: Request) {
     try {
@@ -65,10 +66,72 @@ export async function POST(request: Request) {
         });
         console.log("📊 Yapay Zeka Sonucu:", aiAnalysis);
 
+        // ------------------------------------------------------------------
+        // YENİ EKLEME: EĞER KULLANICI MOCK ONAYI BEKLİYORSA (TEST PROJESİ İÇİN)
+        // ------------------------------------------------------------------
+        if (sessionData && sessionData.status === 'AWAITING_MOCK_APPROVAL') {
+            if (aiAnalysis.intent === 'CONFIRMATION' || incomingText.toLowerCase().includes('evet') || incomingText.toLowerCase().includes('tamam') || incomingText.toLowerCase().includes('olur')) {
+                const proceedSsg = "Tamam, seçiminize göre örnek olması adına Oda No: 102 ve Mehmet Kaya olarak bu şekilde devam ediyorum. İsteğinizi ilgili departmana hızlıca iletiyoruz.";
+                if (subscriberId && subscriberId !== "unknown") {
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, proceedSsg);
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, proceedSsg);
+                    await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
+                }
+
+                if (subscriberId && subscriberId !== "unknown") {
+                    await supabase.from('guest_sessions').delete().eq('subscriber_id', subscriberId);
+                }
+
+                const ticketId = `HTL-${Math.floor(Math.random() * 100000)}`;
+                try {
+                    await supabase.from('active_tickets').insert({
+                        ticket_id: ticketId,
+                        status: 'PENDING',
+                        department: sessionData.pending_department || 'Resepsiyon',
+                        guest_name: 'Mehmet Kaya',
+                        room_no: '102',
+                        subscriber_id: subscriberId,
+                        channel: channel,
+                        guest_language: sessionData.language || 'tr',
+                        original_message: sessionData.pending_request || 'Bilinmiyor',
+                        turkish_translation: sessionData.turkish_translation || sessionData.pending_request || 'Bilinmiyor',
+                        image_url: incomingUrl,
+                        reply_immediate_lang: "Talebinizi aldık, hemen ilgileniyorum.",
+                        reply_later_lang: "Talebinizi aldım, sonrasında ilgileneceğim.",
+                        timeout_minutes: 15
+                    });
+                } catch(e) { console.error("Ticket DB Insert Error (Mock):", e); }
+
+                // Bilgilendirme için departmana Telegram vs atılabilir (kod uzatmamak için burda var olan notifyDepartment'i isteğe bağlı ekleriz veya atlarız).
+
+                return NextResponse.json({ success: true, action: "MOCK_PROCEED", ticket_id: ticketId, reply_text: proceedSsg });
+            } else {
+                const cancelMsg = "Peki, işleminizi şimdilik iptal ediyorum. Başka bir sorunuz veya talebiniz olursa buradayım.";
+                if (subscriberId && subscriberId !== "unknown") {
+                    await supabase.from('guest_sessions').delete().eq('subscriber_id', subscriberId);
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, cancelMsg);
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, cancelMsg);
+                    await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
+                }
+                return NextResponse.json({ success: true, action: "MOCK_CANCELLED", reply_text: cancelMsg });
+            }
+        }
+
         // 3. Duruma Göre İş Akışı (Orkestrasyon)
 
-        // DURUM A: Sadece Soru, Selamlama ve Rezervasyon ise (Direkt AI cevaplasın)
-        if (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING" || aiAnalysis.intent === "RESERVATION") {
+        // DURUM A: Sadece Soru, Selamlama, Rezervasyon ve Dış Sorgular ise (Direkt AI cevaplasın)
+        if (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING" || aiAnalysis.intent === "RESERVATION" || aiAnalysis.intent === "EXTERNAL_QUERY") {
+            
+            // YENİ EKLEME: EXTERNAL_QUERY ise Perplexity Dış Arama Motorunu Çalıştır
+            if (aiAnalysis.intent === "EXTERNAL_QUERY" && roomNo !== "Bilinmiyor" && roomNo !== null) {
+                console.log("🌐 Dış arama (Perplexity) başlatılıyor...");
+                const liveQuery = `Misafir şu soruyu sordu: "${incomingText}". Lütfen en güncel veriyi internett araştırarak yanıtla. Soru döviz kurları veya merkez bankasıyla ilgiliyse 'https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+page+site+area/bugun' verisini dikkate alarak cevap ver. Yanıtı misafirin dilinde ('${aiAnalysis.language}') çok kibar, profesyonel ve sadece tek paragraf (net bilgi) olacak şekilde ver.`;
+                const liveAnswer = await performLiveSearch(liveQuery);
+                if (liveAnswer) {
+                    aiAnalysis.ai_safe_reply = liveAnswer;
+                }
+            }
+
             if (subscriberId && subscriberId !== "unknown") {
                 console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan mesaj gönderiliyor...`);
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
@@ -111,7 +174,7 @@ export async function POST(request: Request) {
 
             // EĞER ODA NUMARASI BİLİNMİYORSA: Session'a yaz, adama sor!
             if (finalRoomNo === "Bilinmiyor" || finalRoomNo === null) {
-                const missingInfoReply = aiAnalysis.ai_safe_reply || "Lütfen talebinizi işleme alabilmemiz için oda numaranızı ve isim-soyisminizi yazar mısınız?";
+                const missingInfoReply = aiAnalysis.ai_safe_reply || "Tabii ki, talebinizi yerine getirebilmem için oda numaranızı ve ad-soyadınızı öğrenebilir miyim?";
                 
                 if (subscriberId && subscriberId !== "unknown") {
                     await supabase.from('guest_sessions').upsert({
@@ -149,13 +212,13 @@ export async function POST(request: Request) {
             } catch (e) { console.error("Inhouse DB doğrulama hatası:", e); }
 
             if (!isVerified) {
-                // Doğrulama başarısızsa adama sor ama session'ı da AWAITING_INFO'da tut ki düzeltince işlemi bitirsin.
-                const failedVerifyReply = "Kayıtlarımızda bu oda numarası eşleşmedi. Acaba oda numaranızı hatalı mı yazdınız? Lütfen tekrar kontrol ederek yazınız.";
+                // Doğrulama başarısızsa adama sor ama session'ı da AWAITING_MOCK_APPROVAL'da tut ki örnek kullanıcı kabul etsin.
+                const failedVerifyReply = "Şu an konaklayanlar arasında verdiğiniz ad-soyad bilgisine ulaşamıyorum. Bu bir örnek proje olduğu için, deneyimi test edebilmeniz adına 'Oda No: 102 – Mehmet Kaya' şeklinde ilerleyelim mi?";
                 
                 if (subscriberId && subscriberId !== "unknown") {
                     await supabase.from('guest_sessions').upsert({
                         subscriber_id: subscriberId,
-                        status: 'AWAITING_INFO',
+                        status: 'AWAITING_MOCK_APPROVAL',
                         pending_request: currentRequestMsg,
                         pending_intent: currentIntent,
                         pending_department: currentDept,
@@ -167,7 +230,7 @@ export async function POST(request: Request) {
                     await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, failedVerifyReply);
                     await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
                 }
-                return NextResponse.json({ success: true, action: "VERIFY_FAILED", reply_text: failedVerifyReply });
+                return NextResponse.json({ success: true, action: "ASK_MOCK_APPROVAL", reply_text: failedVerifyReply });
             }
 
             // DOĞRULAMA BAAŞARILIYSA -> Session'ı temizle, SÜRECİ BAŞLAT (Departmana yönlendir)

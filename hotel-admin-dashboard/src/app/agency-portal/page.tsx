@@ -202,7 +202,23 @@ export default function MasterAgencyPortal() {
                             {currentHotelData && currentHotelData.status !== 'installation' && <ExternalLink className="w-5 h-5" />}
                         </button>
                         
-                        <button className="w-full md:w-auto px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2 group">
+                        <button 
+                            onClick={() => {
+                                const hotelName = window.prompt("Yeni eklenecek otelin adını giriniz (Örn: Antalya C-Resort):");
+                                if(hotelName && hotelName.trim() !== "") {
+                                    setHotels(prev => [...prev, {
+                                        id: 'new-' + Date.now(),
+                                        name: hotelName,
+                                        slug: hotelName.toLowerCase().replace(/\s+/g, '-'),
+                                        url: '#',
+                                        plan: 'Seçilmedi',
+                                        packageType: 'paket1',
+                                        status: 'installation'
+                                    }]);
+                                }
+                            }}
+                            className="w-full md:w-auto px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2 group"
+                        >
                             <PlusCircle className="w-5 h-5 text-slate-400 group-hover:text-white" />
                             Yeni Otel (İstemci) Kaydet
                         </button>

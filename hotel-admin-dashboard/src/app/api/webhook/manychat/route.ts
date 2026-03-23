@@ -193,7 +193,7 @@ export async function POST(request: Request) {
 
             // EĞER ODA NUMARASI BİLİNMİYORSA: Session'a yaz, adama sor!
             if (finalRoomNo === "Bilinmiyor" || finalRoomNo === null) {
-                const missingInfoReply = aiAnalysis.ai_safe_reply || "Tabii ki, talebinizi yerine getirebilmem için oda numaranızı ve ad-soyadınızı öğrenebilir miyim?";
+                const missingInfoReply = "Talebinizi işleme alabilmemiz için lütfen isim, soyisim ve oda numaranızı yazınız. (Örn: 305 Ali Yılmaz)";
                 
                 if (subscriberId && subscriberId !== "unknown") {
                     await supabase.from('guest_sessions').upsert({

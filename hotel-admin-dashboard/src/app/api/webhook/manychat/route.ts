@@ -56,10 +56,16 @@ export async function POST(request: Request) {
             } catch (e) { /* Tablo yoksa vs */}
         }
 
-        let hotelSettings: any = { escalation_email: null, escalation_telegram_id: null, minibar_note: null };
+        let hotelSettings: any = { escalation_email: null, escalation_telegram_id: null, minibar_note: null, dnd_rooms: [] };
         try {
             const { data } = await supabase.from('hotel_settings').select('escalation_email, escalation_telegram_id, minibar_note').limit(1).maybeSingle();
-            if (data) hotelSettings = data;
+            if (data) hotelSettings = { ...hotelSettings, ...data };
+            
+            // DND Odaları
+            const { data: dndData } = await supabase.from('hotel_settings').select('value').eq('key', 'DND_LIST').maybeSingle();
+            if (dndData && dndData.value) {
+                hotelSettings.dnd_rooms = dndData.value.split(',').map((r: string) => r.trim());
+            }
         } catch(e) { console.warn("Hotel settings DB'den çekilemedi."); }
         // ------------------------------------------------------------------
 
@@ -102,7 +108,8 @@ export async function POST(request: Request) {
         const aiAnalysis = await analyzeGuestMessage(incomingText, isAudio, {
             guestName: guestName,
             roomNo: roomNo,
-            minibarNote: hotelSettings.minibar_note // Pass minibar rules to AI
+            minibarNote: hotelSettings.minibar_note, // Pass minibar rules to AI
+            dndRooms: hotelSettings.dnd_rooms // Pass DND list to AI
         });
         
         console.log("📊 Yapay Zeka Sonucu:", JSON.stringify(aiAnalysis, null, 2));

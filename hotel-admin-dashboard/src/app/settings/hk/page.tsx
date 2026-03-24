@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from 'react';
-import { UploadCloud, CheckCircle2, Save, LogOut, BellRing, Smartphone, ClipboardList, Send, CheckSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UploadCloud, CheckCircle2, Save, LogOut, BellRing, Smartphone, ClipboardList, Send, CheckSquare, Settings, CheckSquare2, FileText, Loader2, DoorClosed } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HKSettings() {
@@ -20,10 +20,55 @@ export default function HKSettings() {
     const [whatsappEnabled, setWhatsappEnabled] = useState(false);
     const [reportTime, setReportTime] = useState("16:00");
 
+    // DND States
+    const [dndListStr, setDndListStr] = useState<string>('');
+    const [isDndLoading, setIsDndLoading] = useState(false);
+    const [isDndSimulatingUpload, setIsDndSimulatingUpload] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/dnd').then(r=>r.json()).then(data => {
+            if(data.success && data.dnd_list) {
+                setDndListStr(data.dnd_list);
+            }
+        }).catch(err => console.log(err));
+    }, []);
+
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+    };
+
+    const handleSaveDND = async () => {
+        setIsDndLoading(true);
+        try {
+            const res = await fetch('/api/dnd', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dnd_list: dndListStr }) 
+            });
+            if(res.ok) {
+                const now = new Date();
+                setUploadTimes(prev => ({ ...prev, dnd: `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}` }));
+            }
+        } catch(e) { console.error(e); }
+        finally { setIsDndLoading(false); }
+    };
+
+    // DND upload simülasyonu
+    const handleDNDFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setIsDndSimulatingUpload(true);
+            // Simüle edilmiş bekleme süresi ve dummy data aktarımı
+            setTimeout(() => {
+                setDndListStr((prev) => prev ? prev + ', 101, 102, 105' : '101, 102, 105');
+                setIsDndSimulatingUpload(false);
+                const now = new Date();
+                setUploadTimes(prev => ({ ...prev, dnd_file: `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}` }));
+                // Uyarı
+                alert("Dosya başarıyla analiz edildi, listeye tespit edilen oda numaraları eklendi. Gözden geçirip 'Listeyi Kaydet' butonuna basınız.");
+            }, 1500);
+        }
     };
 
     // Temporary internal component for Icon
@@ -35,7 +80,7 @@ export default function HKSettings() {
 
     return (
         <div className="min-h-screen bg-[#0a0f1c] text-white p-6 md:p-10 font-sans">
-            <div className="max-w-6xl mx-auto space-y-8">
+            <div className="max-w-6xl mx-auto space-y-8 pb-20">
                 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-800">
@@ -48,13 +93,81 @@ export default function HKSettings() {
                                 <h1 className="text-3xl font-extrabold tracking-tight">H/K (Housekeeping) Paneli</h1>
                                 <span className="px-3 py-1 bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-lg text-xs font-bold uppercase tracking-wider">Yetkili</span>
                             </div>
-                            <p className="text-slate-400 font-medium mt-1">Kat hizmetleri operasyonu ve günlük raporlama yönetimi.</p>
+                            <p className="text-slate-400 font-medium mt-1">Kat hizmetleri operasyonu, DND takibi ve raporlama yönetimi.</p>
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3">
                         <Link href="/?login=settings" className="w-full sm:w-auto px-6 py-3 bg-red-900/40 hover:bg-red-800/60 rounded-xl font-bold transition-all border border-red-700/50 text-red-200 text-sm flex items-center justify-center gap-2">
                             <LogOut className="w-4 h-4" /> Çıkış Yap
                         </Link>
+                    </div>
+                </div>
+
+                {/* --- YENİ EKLENEN FEATURE: DND (DO NOT DISTURB) YÖNETİMİ --- */}
+                <div className={`bg-slate-900/50 border rounded-3xl p-8 relative overflow-hidden group transition-all ${uploadTimes['dnd'] ? 'border-amber-500/50 bg-amber-900/10' : 'border-slate-800 hover:border-amber-500/30'}`}>
+                    <div className="flex flex-col md:flex-row gap-8">
+                        {/* Sol Kısım: Açıklama ve Dosya Yükleme */}
+                        <div className="md:w-1/2 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <DoorClosed className="w-8 h-8 text-amber-400" />
+                                    <h2 className={`text-2xl font-bold ${uploadTimes['dnd'] ? 'text-amber-400' : 'text-white'}`}>Günlük DND (Rahatsız Etmeyin) Listesi</h2>
+                                </div>
+                                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                                    Kapısına "Rahatsız Etmeyin" kartı asılı olduğu için temizlik yapılamayan odaların listesi. 
+                                    Yapay Zeka bu bilgi sayesinde, ilgili odalardan gelen temizlik şikayetlerine çok daha akılcı bir dille otomatik yanıt verecek. (<span className="text-amber-400 font-bold">Her gün düzenli yüklenmelidir</span>)
+                                </p>
+                                
+                                <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 mb-6">
+                                    <p className="text-xs uppercase font-bold text-slate-500 mb-2">Önerilen Dosya Formatları</p>
+                                    <p className="text-sm font-medium text-blue-400">Excel (.xls, .xlsx) veya PDF</p>
+                                    <p className="text-[11px] text-slate-500 mt-1">İsterseniz doğrudan sağ taraftaki kutucuğa virgülle ayırarak manuel olarak da yazabilirsiniz.</p>
+                                </div>
+                            </div>
+                            
+                            <label className={`flex items-center justify-center gap-3 w-full py-4 border-2 border-dashed rounded-2xl cursor-pointer transition-colors ${uploadTimes['dnd_file'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
+                                {isDndSimulatingUpload ? <Loader2 className="w-5 h-5 text-amber-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 ${uploadTimes['dnd_file'] ? 'text-emerald-400' : 'text-amber-400'}`} />}
+                                <span className={`text-sm font-bold ${uploadTimes['dnd_file'] ? 'text-emerald-400' : 'text-slate-300'}`}>
+                                    {isDndSimulatingUpload ? 'Dosya Analiz Ediliyor...' : (uploadTimes['dnd_file'] ? 'Yeni Rapor Excel/PDF Yükle' : 'Günlük Rapor Excel/PDF Yükle')}
+                                </span>
+                                <input type="file" className="hidden" accept=".pdf,.xls,.xlsx" onChange={handleDNDFileUpload} disabled={isDndSimulatingUpload} />
+                            </label>
+                        </div>
+
+                        {/* Sağ Kısım: Manuel Giriş ve Kayıt */}
+                        <div className="md:w-1/2 flex flex-col bg-slate-950/80 rounded-2xl border border-slate-800 p-6 shadow-inner">
+                            <div className="flex justify-between items-center mb-4">
+                                <label className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-amber-500" /> Tespit Edilen Odalar
+                                </label>
+                                {uploadTimes['dnd'] && (
+                                    <span className="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full font-medium border border-emerald-500/30 flex items-center gap-1">
+                                        <CheckCircle2 className="w-3 h-3" /> Canlıda Aktif
+                                    </span>
+                                )}
+                            </div>
+                            <textarea 
+                                value={dndListStr}
+                                onChange={(e) => setDndListStr(e.target.value)}
+                                placeholder="Örn: 101, 102, 205..."
+                                className="w-full flex-grow bg-slate-900 border border-slate-700 text-white rounded-xl p-4 text-lg focus:ring-2 focus:ring-amber-500 outline-none resize-none font-mono"
+                            />
+                            
+                            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                                <span className="text-xs text-slate-500 italic">
+                                    {uploadTimes['dnd'] ? `Son Kayıt Tarihi: ${uploadTimes['dnd']}` : 'Sisteme henüz liste yansıtılmadı.'}
+                                </span>
+                                
+                                <button 
+                                    onClick={handleSaveDND}
+                                    disabled={isDndLoading}
+                                    className="w-full sm:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(217,119,6,0.2)] disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isDndLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                    Listeyi Kaydet & Onayla
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -73,7 +186,7 @@ export default function HKSettings() {
                                 <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['standards'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-teal-400'}`} />
                                 <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['standards'] ? 'text-emerald-400' : 'text-teal-400'}`}>{uploadTimes['standards'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('standards', e)} />
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleGenericUpload('standards', e)} />
                         </label>
                         {uploadTimes['standards'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['standards']}</div>

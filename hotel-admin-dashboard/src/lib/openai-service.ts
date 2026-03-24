@@ -32,9 +32,12 @@ export interface AIAnalysisResult {
 export async function analyzeGuestMessage(
     message: string, 
     isAudioContext: boolean = false, 
-    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2', minibarNote?: string }
+    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2', minibarNote?: string, dndRooms?: string[] }
 ): Promise<AIAnalysisResult> {
     const isGuestKnown = context?.roomNo && context.roomNo !== "Bilinmiyor";
+
+    // DND Kuralı kontrolü
+    const isDnd = isGuestKnown && context?.dndRooms && context.dndRooms.includes(context.roomNo!);
 
     const systemPrompt = `
 Sen 5 Yıldızlı The Green Park Gaziantep otelinde çalışan "GuestFlow AI" adlı misafir ilişkileri uzmanısın.
@@ -71,6 +74,8 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
   * ${context?.minibarNote ? `ÖNEMLİ MİNİBAR VE ODA SERVİSİ KURALI: 
     Misafir minibar tüketimi veya oda servisi hakkındaki haklarını sorduğunda aşağıdaki kesin otel kuralını baz al:
     "${context.minibarNote}"` : ""}
+  * ${isDnd ? `🚨 ÖNEMLİ DND (RAHATSIZ ETMEYİN) KURALI (ŞUAN BU ODA İÇİN AKTİF): 
+    Housekeeping departmanının sistemdeki raporuna göre ${context?.roomNo} numaralı odanın kapısında 'Rahatsız Etmeyin' (Do Not Disturb - DND) kartı asılıdır! Eğer misafir odasının temizlenmemesinden şikayet ediyorsa, 'ai_safe_reply' ve 'reply_routing_lang' değerlerinde misafire çok kibar ve profesyonel bir dille: "Sistemimizde odanızın kapısında 'Rahatsız Etmeyin / DND' kartı asılı olduğu raporlanmıştır, bu sebeple rahatsız etmemek adına odanıza girilmemiştir. Talebinizi şimdi uygun gördüğünüz bir saat veya diğer gün için departmanımıza hemen iletiyorum." tarzı bir cevap üret (kendi dilinde). Görevlileri veya oteli ASLA suçlama.` : ""}
   * Eğer Oda Numarası veya Ad-Soyad Sistemde Yoksa ("Bilinmiyor" ise): Talebi al, "intent"i REQUEST/COMPLAINT yap ancak 'ai_safe_reply' içine KESİNLİKLE ŞUNU DÖN: "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?"
   * Eğer Oda Numarası ve İsim belli ise: "İsteğinizi ilgili departmana hızlıca iletiyoruz" yaz. (Not: Misafirin ilettiği oda numarası ve isim otel in-house sistemiyle eşleşmez ise, arka planda resepsiyona/yöneticiye "Güvenlik İhlali / Eşleşmeyen Kayıt" adıyla acil bildirim mesajı gönderilecektir.  Sen sadece normal departman cevabını oluştur ve yetkiyi sisteme bırak.)
 - EXTERNAL_QUERY (Döviz, Altın, Hava Durumu gibi Otel Dışı Konular):
@@ -131,3 +136,4 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
         };
     }
 }
+

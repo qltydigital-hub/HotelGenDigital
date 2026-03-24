@@ -1,16 +1,52 @@
 "use client";
-import React, { useState } from 'react';
-import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
 export default function GuestRelationSettings() {
     const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+    const [isUploadingObj, setIsUploadingObj] = useState<Record<string, boolean>>({});
 
-    const handleGenericUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        const loadUploadTimes = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('hotel_documents')
+                    .select('doc_type, created_at')
+                    .eq('department', 'GR')
+                    .order('created_at', { ascending: false });
+                    
+                if (data && !error) {
+                    const times: Record<string, string> = {};
+                    for (const doc of data) {
+                        if (!times[doc.doc_type]) {
+                            const d = new Date(doc.created_at);
+                            times[doc.doc_type] = `${d.toLocaleDateString('tr-TR')} - ${d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                        }
+                    }
+                    setUploadTimes(times);
+                }
+            } catch(e) { console.warn("Doküman tarihleri yüklenemedi", e); }
+        };
+        loadUploadTimes();
+    }, []);
+
+    const handleGenericUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const now = new Date();
-            const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
-            setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+            const file = e.target.files[0];
+            setIsUploadingObj(prev => ({ ...prev, [key]: true }));
+
+            const result = await uploadDocumentToSupabase(file, 'GR', key);
+
+            if (result.success) {
+                const now = new Date();
+                const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+            } else {
+                alert(`Dosya yüklenirken hata oluştu: ${result.error}`);
+            }
+            setIsUploadingObj(prev => ({ ...prev, [key]: false }));
         }
     };
     return (
@@ -50,10 +86,10 @@ export default function GuestRelationSettings() {
                         
                         <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['alacarte'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['alacarte'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-pink-400'}`} />
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['alacarte'] ? 'text-emerald-400' : 'text-pink-400'}`}>{uploadTimes['alacarte'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
+                                {isUploadingObj['alacarte'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['alacarte'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-pink-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['alacarte'] ? 'text-emerald-400' : 'text-pink-400'}`}>{isUploadingObj['alacarte'] ? 'Yükleniyor...' : (uploadTimes['alacarte'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['alacarte'] ? '' : 'veya sürükleyin'}</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('alacarte', e)} />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('alacarte', e)} disabled={isUploadingObj['alacarte']} />
                         </label>
                         {uploadTimes['alacarte'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['alacarte']}</div>
@@ -70,10 +106,10 @@ export default function GuestRelationSettings() {
                         
                         <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['activities'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['activities'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-blue-400'}`} />
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['activities'] ? 'text-emerald-400' : 'text-blue-400'}`}>{uploadTimes['activities'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
+                                {isUploadingObj['activities'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['activities'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-blue-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['activities'] ? 'text-emerald-400' : 'text-blue-400'}`}>{isUploadingObj['activities'] ? 'Yükleniyor...' : (uploadTimes['activities'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['activities'] ? '' : 'veya sürükleyin'}</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('activities', e)} />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('activities', e)} disabled={isUploadingObj['activities']} />
                         </label>
                         {uploadTimes['activities'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['activities']}</div>
@@ -90,10 +126,10 @@ export default function GuestRelationSettings() {
                         
                         <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['vip'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{uploadTimes['vip'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
+                                {isUploadingObj['vip'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{isUploadingObj['vip'] ? 'Yükleniyor...' : (uploadTimes['vip'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['vip'] ? '' : 'veya sürükleyin'}</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('vip', e)} />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('vip', e)} disabled={isUploadingObj['vip']} />
                         </label>
                         {uploadTimes['vip'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['vip']}</div>

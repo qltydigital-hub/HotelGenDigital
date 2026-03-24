@@ -105,3 +105,43 @@ export async function sendManyChatInteractiveMessage(subscriberId: string | numb
 
     return await response.json();
 }
+
+/**
+ * Gönderilen mesajın anında iletilmesi için (Custom Field asenkron sorunlarını önlemek maksadıyla) direkt metin mesajı gönderir.
+ */
+export async function sendManyChatTextMessage(subscriberId: string | number, text: string) {
+    if (!MANYCHAT_CONFIG.apiKey) {
+        return null;
+    }
+    
+    const response = await fetch(`${BASE_URL}/sending/sendContent`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${MANYCHAT_CONFIG.apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            subscriber_id: subscriberId,
+            data: {
+                version: "v2",
+                content: {
+                    messages: [
+                        {
+                            type: "text",
+                            text: text
+                        }
+                    ]
+                }
+            }
+        }),
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        console.error(`ManyChat sendTextMessage Hata:`, errText);
+        return null;
+    }
+
+    return await response.json();
+}

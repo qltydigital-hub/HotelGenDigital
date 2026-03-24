@@ -21,6 +21,7 @@ export interface AIAnalysisResult {
     reply_routing_lang: string;     
     reply_immediate_lang: string;   
     reply_later_lang: string;       
+    reply_mismatch_lang: string;    
     extracted_room_no: string | null;  
     extracted_guest_name: string | null; 
 }
@@ -31,7 +32,7 @@ export interface AIAnalysisResult {
 export async function analyzeGuestMessage(
     message: string, 
     isAudioContext: boolean = false, 
-    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2' }
+    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2', minibarNote?: string }
 ): Promise<AIAnalysisResult> {
     const isGuestKnown = context?.roomNo && context.roomNo !== "Bilinmiyor";
 
@@ -61,17 +62,20 @@ Gelen mesajın sınıfı (intent):
 3. Şive / Yöresel (ÇOK ÖNEMLİ): Otelin bulunduğu Antep bölgesinin veya farklı bölgelerin şivesine hakim ol. Örneğin "Su ısınıyi mi?" ifadesinin "Su iyi ısınıyor mu?" olduğunu kavra ve misafire doğal, onu anladığını hissettiren profesyonel bir yanıt ver.
 
 CEVAP STRATEJİLERİ ('ai_safe_reply'):
-- GREETING: Eğer niyet GREETING ise her zaman şu mesaja benzer bir şekilde (kendi dilinde) harika bir tonla karşıla: "Merhabalar, hoş geldiniz. Sizi gördüğüme çok memnun oldum. Bu bir sunum projesi ve test sürecidir. Bu süreçte size elimden geldiğince yardımcı olacağım. Sorularınızı bekliyorum."
+- GREETING: Eğer niyet GREETING ise her zaman şu mesaja benzer bir şekilde (kendi dilinde) harika bir tonla karşıla: "Merhabalar! The Green Park Gaziantep'e hoş geldiniz. Size nasıl yardımcı olabilirim?"
+- CONFIRMATION / DENIAL / CANCEL: Misafir "teşekkür ederim", "tamamdır", "iptal", "hayır" diyerek konuyu kapatıyorsa, "Rica ederim, başka bir ihtiyacınız olursa buradayım. İyi günler dilerim." gibi ÇOK KISA ve konuyu kapatan bir mesaj ver. KESİNLİKLE "Size nasıl yardımcı olabilirim?", "Başka isteğiniz var mı?" GİBİ YENİ SORULAR SORMA.
 - QUESTION: Otel bilgilerini kullanarak sorunun direkt cevabını ver.
 - RESERVATION: Otele ait acenta bağlantılarını öner, fiyat karşılaştırması yap. (${context?.agencies?.length ? JSON.stringify(context.agencies) : "Acenta yok, resepsiyonu öner."})
 - REQUEST / COMPLAINT:
   * Oda : ${context?.roomNo || "Bilinmiyor"}, İsim: ${context?.guestName || "Misafir"}
-  * Eğer Oda Numarası veya Ad-Soyad Sistemde Yoksa ("Bilinmiyor" ise): Talebi al, "intent"i REQUEST/COMPLAINT yap ancak 'ai_safe_reply' içine KESİNLİKLE ŞUNU DÖN: "Tabii ki, talebinizi yerine getirebilmem için oda numaranızı ve ad-soyadınızı öğrenebilir miyim?"
-  * Eğer Oda Numarası ve İsim belli ise: "İsteğinizi ilgili departmana hızlıca iletiyoruz" yaz.
-- CANCEL: İptal işlemini departmana ilettik de.
-- EXTERNAL_QUERY (Döviz, Altın, Maç gibi Otel Dışı Konular):
-  * DURUM A (Kullanıcı Konaklıyorsa, yani Oda: ${context?.roomNo || "Bilinmiyor"} "Bilinmiyor" DEĞİLSE): Güvenilir bir kaynaktan araştırma yapmış gibi davranarak profesyonelce yanıt ver. Örneğin; Döviz mi sordu? "Merkez Bankası verilerine göre güncel kur..." diyerek sun, maç mı sordu? Spor sitelerinden almış gibi yanıtla. Sahip olduğun en yeni veriyle hizmet ver, dilersen bir link öner. (Misafirin dilinde cevap ver).
-  * DURUM B (Kullanıcı Konaklamıyorsa, yani Oda halen "Bilinmiyor" ise): KESİNLİKLE red yanıtı ver ve O DİLDE şu metne benzer nazik ve profesyonel bir cevap dön: "Bu konu, sunduğumuz hizmet kapsamı dışında kalmaktadır. Güncel bilgiler için Google üzerinden arama yapabilirsiniz."
+  * ${context?.minibarNote ? `ÖNEMLİ MİNİBAR VE ODA SERVİSİ KURALI: 
+    Misafir minibar tüketimi veya oda servisi hakkındaki haklarını sorduğunda aşağıdaki kesin otel kuralını baz al:
+    "${context.minibarNote}"` : ""}
+  * Eğer Oda Numarası veya Ad-Soyad Sistemde Yoksa ("Bilinmiyor" ise): Talebi al, "intent"i REQUEST/COMPLAINT yap ancak 'ai_safe_reply' içine KESİNLİKLE ŞUNU DÖN: "Talebinizi yerine getirebilmemiz için lütfen oda numaranızı ve isminizi paylaşır mısınız?"
+  * Eğer Oda Numarası ve İsim belli ise: "İsteğinizi ilgili departmana hızlıca iletiyoruz" yaz. (Not: Misafirin ilettiği oda numarası ve isim otel in-house sistemiyle eşleşmez ise, arka planda resepsiyona/yöneticiye "Güvenlik İhlali / Eşleşmeyen Kayıt" adıyla acil bildirim mesajı gönderilecektir.  Sen sadece normal departman cevabını oluştur ve yetkiyi sisteme bırak.)
+- EXTERNAL_QUERY (Döviz, Altın, Hava Durumu gibi Otel Dışı Konular):
+  * DURUM A (Kullanıcı Konaklıyorsa, yani Oda: ${context?.roomNo || "Bilinmiyor"} "Bilinmiyor" DEĞİLSE): Misafire internet üzerinden gerçek zamanlı bilgi verebileceğini hissettir. "Şu anki güncel verilere göre..." gibi bir giriş yap (Misafirin dilinde cevap ver).
+  * DURUM B (Kullanıcı Konaklamıyorsa, yani Oda halen "Bilinmiyor" ise): KESİNLİKLE red yanıtı ver ve O DİLDE şu metne benzer nazik ve profesyonel bir cevap dön: "Üzgünüm, bu tür konularda güncel bilgi veremiyorum. Ancak, otelimizde konakladığınız süre boyunca resepsiyondan destek alabilirsiniz."
 
 SKILL: Misafir uçak, bilet (flight, tickets) kelimeleri yazarsa intent=QUESTION ve linki ver: https://www.google.com/travel/flights/deals
 
@@ -87,6 +91,7 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
 - 'reply_routing_lang': "İsteğinizi ilgili departmana hızlıca iletiyoruz." çevirisi
 - 'reply_immediate_lang': "Talebinizi aldık, hemen ilgileniyorum." çevirisi
 - 'reply_later_lang': "Talebinizi aldım, daha önce gelen isteği tamamladıktan sonra ilgileneceğim." çevirisi
+- 'reply_mismatch_lang': "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz." çevirisi
 
 Çıktı sadece parse edilebilir JSON objesi olmalıdır! Başka hiçbir metin dönme.
 `;
@@ -120,6 +125,7 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
             reply_routing_lang: "İsteğinizi ilgili departmana hızlıca iletiyoruz.",
             reply_immediate_lang: "Talebinizi aldık, hemen ilgileniyorum.",
             reply_later_lang: "Talebinizi aldım, sonrasında ilgileneceğim.",
+            reply_mismatch_lang: "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz.",
             extracted_room_no: null,
             extracted_guest_name: null
         };

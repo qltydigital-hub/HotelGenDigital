@@ -53,7 +53,7 @@ export async function performLiveSearch(query: string): Promise<string | null> {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'llama-3-sonar-large-32k-online', // Perplexity internet arama motoru
+                model: 'sonar', // Perplexity güncel internet arama motoru
                 messages: [{ role: 'user', content: query + " (En güncel ve kesin veriyi kısaca ver)" }]
             })
         });

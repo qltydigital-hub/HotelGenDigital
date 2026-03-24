@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { MANYCHAT_CONFIG } from '@/lib/manychat-config';
 import { analyzeGuestMessage } from '@/lib/openai-service';
 import { getServiceSupabase } from '@/lib/supabase-client';
-import { notifyDepartment } from '@/lib/telegram-service';
-import { setManyChatCustomField, sendManyChatFlow } from '@/lib/manychat-client';
+import { notifyDepartment, notifyMismatchToReception, sendTelegramMessage } from '@/lib/telegram-service';
+import { setManyChatCustomField, sendManyChatFlow, sendManyChatTextMessage, sendManyChatInteractiveMessage } from '@/lib/manychat-client';
 import { performLiveSearch } from '@/lib/external-apis';
 
 export async function POST(request: Request) {
@@ -55,96 +55,87 @@ export async function POST(request: Request) {
                 sessionData = data;
             } catch (e) { /* Tablo yoksa vs */}
         }
+
+        let hotelSettings: any = { escalation_email: null, escalation_telegram_id: null, minibar_note: null };
+        try {
+            const { data } = await supabase.from('hotel_settings').select('escalation_email, escalation_telegram_id, minibar_note').limit(1).maybeSingle();
+            if (data) hotelSettings = data;
+        } catch(e) { console.warn("Hotel settings DB'den çekilemedi."); }
+        // ------------------------------------------------------------------
+
+        // ----------- KRİTİK KELİME & İNSAN MÜDAHALESİ KONTROLÜ -----------
+        const escalationRegex = /(?:^|\W)(haram|beni arayın|açmıyorlar|şikayet|sikayet|iade|berbat|arıyorum|beğenmedim|ara)(?:$|\W)/i;
+        const isEscalation = escalationRegex.test(incomingText);
+
+        if (isEscalation) {
+            console.log("🚨 İnsan Müdahalesi (Eskalasyon) Kelimesi Yakalandı! Yapay Zeka Durduruluyor.");
+            
+            const escalationEmail = hotelSettings.escalation_email;
+            const escalationTelegram = hotelSettings.escalation_telegram_id;
+
+            const waitMsg = "Talebinizi aldık. Konunun hassasiyeti sebebiyle durumu anında otel yönetimine aktarıyoruz, lütfen kısa bir süre bekleyiniz.";
+            
+            if (subscriberId && subscriberId !== "unknown") {
+                await sendManyChatTextMessage(subscriberId, waitMsg);
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, waitMsg);
+            }
+
+            // Telegram Bildirimi (F/O Panelinden Girilen ID'ye Gidiyor)
+            if (escalationTelegram) {
+                const alertMsg = `🚨 <b>ACİL İNSAN MÜDAHALESİ GEREKİYOR (OTOMATİK ASİSTAN DURDURULDU)</b> 🚨\n\n<b>Oda:</b> ${roomNo}\n<b>İsim:</b> ${guestName}\n\n<b>Müşterinin Yazdığı:</b>\n<i>${incomingText}</i>\n\nLütfen duruma ivedilikle müdahale ediniz.`;
+                const botToken = process.env.TELEGRAM_MANAGER_BOT_TOKEN || process.env.TELEGRAM_GUEST_BOT_TOKEN || "";
+                await sendTelegramMessage(botToken, escalationTelegram, alertMsg);
+            }
+
+            // E-Posta Bildirimi
+            // Şu aşamada mail entegrasyonu (Resend/Nodemailer) olmadığından konsola log düşülüyor
+            if (escalationEmail) {
+                console.log(`[ESCALATION EMAIL SEND TRIGGER] -> To: ${escalationEmail} | Msg: ${incomingText}`);
+            }
+
+            return NextResponse.json({ success: true, action: "ESCALATION_TRIGGERED", reply_text: waitMsg });
+        }
         // ------------------------------------------------------------------
 
         // 2. OpenAI Niyet Sınıflandırması (Intent Classification)
         console.log("🧠 Yapay Zeka motoru cümleyi analiz ediyor...");
         const aiAnalysis = await analyzeGuestMessage(incomingText, isAudio, {
-            roomNo: roomNo,
             guestName: guestName,
-            agencies: agenciesPayload
+            roomNo: roomNo,
+            minibarNote: hotelSettings.minibar_note // Pass minibar rules to AI
         });
-        console.log("📊 Yapay Zeka Sonucu:", aiAnalysis);
-
-        // ------------------------------------------------------------------
-        // YENİ EKLEME: EĞER KULLANICI MOCK ONAYI BEKLİYORSA (TEST PROJESİ İÇİN)
-        // ------------------------------------------------------------------
-        if (sessionData && sessionData.status === 'AWAITING_MOCK_APPROVAL') {
-            const isConfirmed = aiAnalysis.intent === 'CONFIRMATION' || 
-                                incomingText.toLowerCase().includes('evet') || 
-                                incomingText.toLowerCase().includes('tamam') || 
-                                incomingText.toLowerCase().includes('olur') ||
-                                incomingText === '1';
-                                
-            if (isConfirmed) {
-                const proceedSsg = "Harika! Sayın Mehmet Kaya (Oda: 102), demo modunda işlemlerinize sizinle devam etmekten memnuniyet duyarım. İsteğinizi ilgili departmana hızlıca iletiyoruz.";
-                if (subscriberId && subscriberId !== "unknown") {
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, proceedSsg);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, proceedSsg);
-                    await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
-                }
-
-                if (subscriberId && subscriberId !== "unknown") {
-                    await supabase.from('guest_sessions').delete().eq('subscriber_id', subscriberId);
-                }
-
-                const ticketId = `HTL-${Math.floor(Math.random() * 100000)}`;
-                try {
-                    await supabase.from('active_tickets').insert({
-                        ticket_id: ticketId,
-                        status: 'PENDING',
-                        department: sessionData.pending_department || 'Resepsiyon',
-                        guest_name: 'Mehmet Kaya',
-                        room_no: '102',
-                        subscriber_id: subscriberId,
-                        channel: channel,
-                        guest_language: sessionData.language || 'tr',
-                        original_message: sessionData.pending_request || 'Bilinmiyor',
-                        turkish_translation: sessionData.turkish_translation || sessionData.pending_request || 'Bilinmiyor',
-                        image_url: incomingUrl,
-                        reply_immediate_lang: "Talebinizi aldık, hemen ilgileniyorum.",
-                        reply_later_lang: "Talebinizi aldım, sonrasında ilgileneceğim.",
-                        timeout_minutes: 15
-                    });
-                } catch(e) { console.error("Ticket DB Insert Error (Mock):", e); }
-                
-                const mockDeptChatId = process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_DEPT_CHAT_ID_TBD" : null;
-                if (mockDeptChatId) {
-                    await notifyDepartment(
-                        mockDeptChatId, 
-                        ticketId, 
-                        '102', 
-                        'Mehmet Kaya', 
-                        sessionData.pending_request || 'Bilinmiyor', 
-                        sessionData.turkish_translation || sessionData.pending_request || 'Bilinmiyor',
-                        false,
-                        incomingUrl
-                    );
-                }
-
-                return NextResponse.json({ success: true, action: "MOCK_PROCEED", ticket_id: ticketId, reply_text: proceedSsg });
-            } else {
-                const cancelMsg = "Peki, işleminizi şimdilik iptal ediyorum. Başka bir sorunuz veya talebiniz olursa buradayım.";
-                if (subscriberId && subscriberId !== "unknown") {
-                    await supabase.from('guest_sessions').delete().eq('subscriber_id', subscriberId);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, cancelMsg);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, cancelMsg);
-                    await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
-                }
-                return NextResponse.json({ success: true, action: "MOCK_CANCELLED", reply_text: cancelMsg });
-            }
-        }
+        
+        console.log("📊 Yapay Zeka Sonucu:", JSON.stringify(aiAnalysis, null, 2));
 
         // 3. Duruma Göre İş Akışı (Orkestrasyon)
 
-        // DURUM A: Sadece Soru, Selamlama, Rezervasyon ve Dış Sorgular ise (Direkt AI cevaplasın)
         const isAwaitingInfo = sessionData && sessionData.status === 'AWAITING_INFO';
-        if (!isAwaitingInfo && (aiAnalysis.intent === "QUESTION" || aiAnalysis.intent === "GREETING" || aiAnalysis.intent === "RESERVATION" || aiAnalysis.intent === "EXTERNAL_QUERY")) {
+        const directIntents = ["QUESTION", "GREETING", "RESERVATION", "EXTERNAL_QUERY", "CANCEL", "CONFIRMATION", "DENIAL"];
+        
+        // EĞER AWAITING_INFO beklentisindeysek, ama gelen niyet bir Soru ya da Dış İstekse (Yastık isteyip sonra 
+        // "kurlar nedir" diye sorulması gibi), bekleyen işlemi iptal edip soruya cevap vermeliyiz. (SADECE ODA ve İSİM olmayan durumlar)
+        let overrideToDirect = false;
+        if (isAwaitingInfo && ["QUESTION", "EXTERNAL_QUERY", "CANCEL"].includes(aiAnalysis.intent)) {
+            overrideToDirect = true;
+            // Eski session'ı temizle
+            if (subscriberId !== "unknown") {
+                await supabase.from('guest_sessions').delete().eq('subscriber_id', subscriberId);
+            }
+        }
+
+        // DURUM A: Sadece Soru, Selamlama, Rezervasyon, Dış Sorgu, vb...
+        if ((!isAwaitingInfo || overrideToDirect) && directIntents.includes(aiAnalysis.intent)) {
             
-            // YENİ EKLEME: EXTERNAL_QUERY ise Perplexity Dış Arama Motorunu Çalıştır
-            if (aiAnalysis.intent === "EXTERNAL_QUERY" && roomNo !== "Bilinmiyor" && roomNo !== null) {
+            // Eğer GREETING gibi basit şeylerse, info extraction'ları resetleyebiliriz ama gerek kalmıyor zaten DurumA'dayız.
+            const currentRoomNo = aiAnalysis.extracted_room_no || roomNo;
+            
+            if (aiAnalysis.intent === "EXTERNAL_QUERY") {
+                // Konaklayıp konaklamadığı önemsiz kılınarak, botun "Kurları verebilirim" hissi vermesini engellemek isterseniz:
+                // Şimdilik konaklayan misafir (oda numarası olan) VEYA oda no zorunlu değil deyip Perplexity'e atıyoruz.
+                // Müşterinin "ben burdayım" demesine rağmen oda veremediği için Perplexity çalışmıyordu.
+                // Bu yüzden, "EXTERNAL_QUERY" ise HER ZAMAN Perplexity çalışsın.
                 console.log("🌐 Dış arama (Perplexity) başlatılıyor...");
-                const liveQuery = `Misafir şu soruyu sordu: "${incomingText}". Lütfen en güncel veriyi internett araştırarak yanıtla. Soru döviz kurları veya merkez bankasıyla ilgiliyse 'https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+page+site+area/bugun' verisini dikkate alarak cevap ver. Yanıtı misafirin dilinde ('${aiAnalysis.language}') çok kibar, profesyonel ve sadece tek paragraf (net bilgi) olacak şekilde ver.`;
+                const liveQuery = `Misafir şu soruyu sordu: "${incomingText}". Lütfen en güncel veriyi internetten araştırarak yanıtla. Soru altın fiyatları, döviz kurları veya merkez bankasıyla ilgiliyse 'https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+page+site+area/bugun' verisini dikkate alarak cevap ver. Yanıtı misafirin dilinde ('${aiAnalysis.language}') çok kibar, profesyonel ve sadece tek paragraf (net bilgi) olacak şekilde ver. Oda Numarası var mı boşver, sadece cevapla.`;
                 const liveAnswer = await performLiveSearch(liveQuery);
                 if (liveAnswer) {
                     aiAnalysis.ai_safe_reply = liveAnswer;
@@ -152,13 +143,12 @@ export async function POST(request: Request) {
             }
 
             if (subscriberId && subscriberId !== "unknown") {
-                console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan mesaj gönderiliyor...`);
+                console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan metin gönderiliyor (ASENKRON SORUNU ÇÖZÜMÜ)...`);
+                // Manychat Send Flow Custom Field Gecikme Sıkıntısı Yüzünden Doğrudan Text API kullanıyoruz:
+                await sendManyChatTextMessage(subscriberId, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
+                
+                // N8N logları için yine de field'ları güncelleyelim ama Flow Tetiklemeyelim (opsiyonel)
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
-                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
-                const flowId = channel === 'whatsapp' 
-                    ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap 
-                    : MANYCHAT_CONFIG.contentIds.instagram.noLink;
-                await sendManyChatFlow(subscriberId, flowId);
             }
             return NextResponse.json({
                 success: true, action: "AI_REPLY_DIRECTLY", reply_text: aiAnalysis.ai_safe_reply
@@ -168,7 +158,7 @@ export async function POST(request: Request) {
         // DURUM B: Oda Talebi / Şikayet VEYA AWAITING_INFO durumunda devam eden talep
         if (
             aiAnalysis.intent === "REQUEST" || aiAnalysis.intent === "COMPLAINT" || 
-            (sessionData && sessionData.status === 'AWAITING_INFO')
+            (isAwaitingInfo && !overrideToDirect)
         ) {
             
             // Eğer session'dan geliyorsa orijinal olayı hatırlayalım
@@ -207,9 +197,8 @@ export async function POST(request: Request) {
                         turkish_translation: aiAnalysis.turkish_translation || currentRequestMsg
                     }, { onConflict: 'subscriber_id' });
 
+                    await sendManyChatTextMessage(subscriberId, missingInfoReply);
                     await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, missingInfoReply);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, missingInfoReply);
-                    await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
                 }
 
                 return NextResponse.json({ success: true, action: "MISSING_GUEST_INFO", reply_text: missingInfoReply });
@@ -217,44 +206,55 @@ export async function POST(request: Request) {
 
             // IN-HOUSE LISTESI ÜZERİNDEN DOĞRULAMA (Oda No ve İsim)
             let isVerified = false;
-            try {
-                // Sadece oda numarasıyla kayıt arayalım (Basit Doğrulama)
-                const { data: inhouseMatch } = await supabase.from('in_house_guests')
-                    .select('*')
-                    .eq('room_number', finalRoomNo)
-                    .limit(1)
-                    .maybeSingle();
+            
+            // Eğer misafir "Demo Tipi" (yani 102 Mehmet Kaya) fallback kullanıyorsa direkt true yap
+            if (finalRoomNo === "102" && finalGuestName && finalGuestName.includes("Mehmet")) {
+                isVerified = true;
+            } else {
+                try {
+                    // Sadece oda numarasıyla kayıt arayalım (Basit Doğrulama)
+                    const { data: inhouseMatch } = await supabase.from('in_house_guests')
+                        .select('*')
+                        .eq('room_number', finalRoomNo)
+                        .limit(1)
+                        .maybeSingle();
 
-                if (inhouseMatch) {
-                    isVerified = true;
-                }
-            } catch (e) { console.error("Inhouse DB doğrulama hatası:", e); }
-
-            if (!isVerified) {
-                // Doğrulama başarısızsa adama sor ama session'ı da AWAITING_MOCK_APPROVAL'da tut ki örnek kullanıcı kabul etsin.
-                const failedVerifyReply = "Sistemdeki (in-house) konaklama kayıtlarıyla maalesef eşleşme sağlayamadık. Demo / test sürümü olduğu için, sanki içeride konaklıyormuşsunuz gibi sizi 102 nolu odada Mehmet Kaya olarak kabul edip taleplerinize cevap vermemi ister misiniz?\n\n1️⃣ Evet\n2️⃣ Hayır";
-                
-                if (subscriberId && subscriberId !== "unknown") {
-                    await supabase.from('guest_sessions').upsert({
-                        subscriber_id: subscriberId,
-                        status: 'AWAITING_MOCK_APPROVAL',
-                        pending_request: currentRequestMsg,
-                        pending_intent: currentIntent,
-                        pending_department: currentDept,
-                        language: currentLang,
-                        turkish_translation: currentTranslation
-                    }, { onConflict: 'subscriber_id' });
-
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, failedVerifyReply);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, failedVerifyReply);
-                    await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
-                }
-                return NextResponse.json({ success: true, action: "ASK_MOCK_APPROVAL", reply_text: failedVerifyReply });
+                    if (inhouseMatch) {
+                        isVerified = true;
+                    }
+                } catch (e) { console.error("Inhouse DB doğrulama hatası:", e); }
             }
 
-            // DOĞRULAMA BAAŞARILIYSA -> Session'ı temizle, SÜRECİ BAŞLAT (Departmana yönlendir)
+            if (!isVerified) {
+                // ACİL DURUM BİLDİRİMİ: Sistemde olmayan oda ve isim ile talep oluşturmaya çalışıldı
+                const alertChatId = process.env.TELEGRAM_MANAGER_CHAT_ID || (process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_RECEPTION_CHAT_ID_TBD" : null);
+                if (alertChatId) {
+                    try {
+                        await notifyMismatchToReception(alertChatId, finalRoomNo, finalGuestName || "Belirtilmedi", incomingText);
+                    } catch (err) {
+                        console.error("Mismatch bildirim hatası:", err);
+                    }
+                }
+
+                // Doğrulama başarısızsa FALLBACK butonları sun
+                const mismatchHoldMsg = aiAnalysis.reply_mismatch_lang || "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz.";
+                const failedFallbackReply = `${mismatchHoldMsg}\n\n(Test Oteli Notu: Sistemdeki kayıtlarda eşleşme bulunamadı. Demo Hesabı '102 Mehmet Kaya' ile devam etmek ister misiniz?)`;
+                
+                if (subscriberId && subscriberId !== "unknown") {
+                    // Oturum kaydını silmeyelim ki bir sonraki "Evet" veya butonda "102 Mehmet Kaya" girdiğinde devam edebilsin!
+                    
+                    // Demo Fallback butonu ile gönderiyoruz:
+                    await sendManyChatInteractiveMessage(subscriberId, failedFallbackReply, ["102 Mehmet Kaya", "İptal"]);
+                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, failedFallbackReply);
+                }
+                return NextResponse.json({ success: true, action: "VERIFICATION_FAILED_FALLBACK", reply_text: failedFallbackReply });
+            }
+
+            // DOĞRULAMA BAŞARILIYSA -> Session'ı temizle, SÜRECİ BAŞLAT (Departmana yönlendir)
             if (subscriberId && subscriberId !== "unknown") {
                 await supabase.from('guest_sessions').delete().eq('subscriber_id', subscriberId);
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.oda_no, finalRoomNo);
+                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.misafir_adi, finalGuestName);
             }
 
             const ticketId = `HTL-${Math.floor(Math.random() * 100000)}`;
@@ -307,9 +307,8 @@ export async function POST(request: Request) {
             const guestAcknowledgeMsg = aiAnalysis.reply_routing_lang || "İsteğinizi ilgili departmana hızlıca iletiyoruz.";
 
             if (subscriberId && subscriberId !== "unknown") {
+                await sendManyChatTextMessage(subscriberId, guestAcknowledgeMsg);
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, guestAcknowledgeMsg);
-                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.n8n_cevap, guestAcknowledgeMsg);
-                await sendManyChatFlow(subscriberId, channel === 'whatsapp' ? MANYCHAT_CONFIG.contentIds.whatsapp.normalCevap : MANYCHAT_CONFIG.contentIds.instagram.noLink); 
             }
 
             return NextResponse.json({ success: true, action: "ROUTE_TO_DEPARTMENT", ticket_id: ticketId, reply_text: guestAcknowledgeMsg });

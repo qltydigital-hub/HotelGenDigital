@@ -1,16 +1,85 @@
 "use client";
-import React, { useState } from 'react';
-import { Settings, FileText, UploadCloud, Utensils, Coffee, Clock, LogOut, CheckSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, FileText, UploadCloud, Utensils, Coffee, Clock, LogOut, CheckSquare, Loader2, Save } from 'lucide-react';
 import Link from 'next/link';
+import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
 export default function FandBSettings() {
     const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+    const [isUploadingObj, setIsUploadingObj] = useState<Record<string, boolean>>({});
+    const [minibarNote, setMinibarNote] = useState("");
+    const [isSavingNote, setIsSavingNote] = useState(false);
 
-    const handleGenericUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        // Load AI Settings Note
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.data && data.data.minibar_note) {
+                    setMinibarNote(data.data.minibar_note);
+                }
+            })
+            .catch(err => console.error("Ayar çekilemedi", err));
+
+        const loadUploadTimes = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('hotel_documents')
+                    .select('doc_type, created_at')
+                    .eq('department', 'FB')
+                    .order('created_at', { ascending: false });
+                    
+                if (data && !error) {
+                    const times: Record<string, string> = {};
+                    for (const doc of data) {
+                        if (!times[doc.doc_type]) {
+                            const d = new Date(doc.created_at);
+                            times[doc.doc_type] = `${d.toLocaleDateString('tr-TR')} - ${d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                        }
+                    }
+                    setUploadTimes(times);
+                }
+            } catch(e) { console.warn("Doküman tarihleri yüklenemedi", e); }
+        };
+        loadUploadTimes();
+    }, []);
+
+    const saveMinibarNote = async () => {
+        setIsSavingNote(true);
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minibar_note: minibarNote })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert("Yapay zeka için minibar kuralları başarıyla kaydedildi!");
+            } else {
+                alert("Veritabanı (Supabase) 'minibar_note' sütunu bulunamadı hatası: " + data.error);
+            }
+        } catch (error) {
+            alert("Bağlantı hatası.");
+        } finally {
+            setIsSavingNote(false);
+        }
+    };
+
+    const handleGenericUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const now = new Date();
-            const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
-            setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+            const file = e.target.files[0];
+            setIsUploadingObj(prev => ({ ...prev, [key]: true }));
+
+            const result = await uploadDocumentToSupabase(file, 'FB', key);
+
+            if (result.success) {
+                const now = new Date();
+                const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+            } else {
+                alert(`Dosya yüklenirken hata oluştu: ${result.error}`);
+            }
+            setIsUploadingObj(prev => ({ ...prev, [key]: false }));
         }
     };
     return (
@@ -50,10 +119,10 @@ export default function FandBSettings() {
                         
                         <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['menus'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['menus'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-orange-400'}`} />
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['menus'] ? 'text-emerald-400' : 'text-orange-400'}`}>{uploadTimes['menus'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
+                                {isUploadingObj['menus'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['menus'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-orange-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['menus'] ? 'text-emerald-400' : 'text-orange-400'}`}>{isUploadingObj['menus'] ? 'Yükleniyor...' : (uploadTimes['menus'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['menus'] ? '' : 'veya sürükleyin'}</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('menus', e)} />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('menus', e)} disabled={isUploadingObj['menus']} />
                         </label>
                         {uploadTimes['menus'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['menus']}</div>
@@ -70,10 +139,10 @@ export default function FandBSettings() {
                         
                         <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['hours'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['hours'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['hours'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{uploadTimes['hours'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
+                                {isUploadingObj['hours'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['hours'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['hours'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{isUploadingObj['hours'] ? 'Yükleniyor...' : (uploadTimes['hours'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['hours'] ? '' : 'veya sürükleyin'}</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('hours', e)} />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('hours', e)} disabled={isUploadingObj['hours']} />
                         </label>
                         {uploadTimes['hours'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['hours']}</div>
@@ -90,14 +159,34 @@ export default function FandBSettings() {
                         
                         <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['roomservice'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['roomservice'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-400'}`} />
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['roomservice'] ? 'text-emerald-400' : 'text-emerald-400'}`}>{uploadTimes['roomservice'] ? 'Yeniden Yükle' : 'Tıklayın'}</span> veya sürükleyin</p>
+                                {isUploadingObj['roomservice'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['roomservice'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-emerald-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['roomservice'] ? 'text-emerald-400' : 'text-emerald-400'}`}>{isUploadingObj['roomservice'] ? 'Yükleniyor...' : (uploadTimes['roomservice'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['roomservice'] ? '' : 'veya sürükleyin'}</p>
                             </div>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('roomservice', e)} />
+                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('roomservice', e)} disabled={isUploadingObj['roomservice']} />
                         </label>
                         {uploadTimes['roomservice'] && (
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['roomservice']}</div>
                         )}
+                        
+                        {/* YAPAY ZEKA MİNİBAR NOTU ALANI */}
+                        <div className="mt-6 pt-6 border-t border-slate-700/50">
+                            <h3 className="text-sm font-bold text-emerald-300 mb-2">🤖 Yapay Zeka Minibar / Oda Servisi Yanıt Kuralı</h3>
+                            <p className="text-xs text-slate-400 mb-3">Müşteriler minibar, ücretsiz su veya oda servisi içeriğini sorduğunda yapay zekanın <b>ekstra maliyetler ve kurallar hakkında</b> vereceği doğrudan bilgiyi buraya giriniz.</p>
+                            <textarea
+                                value={minibarNote}
+                                onChange={(e) => setMinibarNote(e.target.value)}
+                                placeholder="Örn: İlk dolum ücretsizdir (Kola ve Sular hariç). 2. dolum talep edilirse ücretlidir..."
+                                className="w-full h-24 bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none focus:border-emerald-500"
+                            ></textarea>
+                            <button 
+                                onClick={saveMinibarNote}
+                                disabled={isSavingNote}
+                                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2 w-full justify-center"
+                            >
+                                {isSavingNote ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />}
+                                {isSavingNote ? 'Kaydediliyor...' : 'Yapay Zeka Kuralını Kaydet'}
+                            </button>
+                        </div>
                     </div>
 
                 </div>

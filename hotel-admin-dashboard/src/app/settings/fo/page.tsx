@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink } from 'lucide-react';
+import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink, AlertTriangle, Save } from 'lucide-react';
 import Link from 'next/link';
-import { uploadDocumentToSupabase } from '../../../lib/supabase-client';
+import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
 // Mock Data Type
 type InhouseGuest = {
@@ -39,6 +39,105 @@ export default function FrontOfficeSettings() {
     const [offerMap, setOfferMap] = useState(true);
     const [remind247, setRemind247] = useState(true);
     const [offerInfo, setOfferInfo] = useState(true);
+    const [konseptTipi, setKonseptTipi] = useState("Oda Kahvaltı (BB)");
+    
+    // Eskalasyon Değişkenleri
+    const [escalationEmail, setEscalationEmail] = useState("");
+    const [escalationTelegram, setEscalationTelegram] = useState("");
+    const [isSavingEscalation, setIsSavingEscalation] = useState(false);
+
+    // Ayarları LocalStorage'dan Oku ve API'den Çek
+    useEffect(() => {
+        const sm = localStorage.getItem('fo_offerMap');
+        const sr = localStorage.getItem('fo_remind247');
+        const si = localStorage.getItem('fo_offerInfo');
+        const kt = localStorage.getItem('fo_konseptTipi');
+        
+        if (sm !== null) setOfferMap(sm === 'true');
+        if (sr !== null) setRemind247(sr === 'true');
+        if (si !== null) setOfferInfo(si === 'true');
+        if (kt !== null) setKonseptTipi(kt);
+
+        // API'den Eskalasyon ayarlarını getir
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.data) {
+                    if(data.data.escalation_email) setEscalationEmail(data.data.escalation_email);
+                    if(data.data.escalation_telegram_id) setEscalationTelegram(data.data.escalation_telegram_id);
+                }
+            })
+            .catch(err => console.error("Eskalasyon ayarları çekilemedi:", err));
+
+        // DB'den departmana ait son doküman yükleme tarihlerini (created_at) getir (En YENİLER)
+        const loadUploadTimes = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('hotel_documents')
+                    .select('doc_type, created_at')
+                    .eq('department', 'FO')
+                    .order('created_at', { ascending: false });
+                    
+                if (data && !error) {
+                    const times: Record<string, string> = {};
+                    for (const doc of data) {
+                        if (!times[doc.doc_type]) {
+                            const d = new Date(doc.created_at);
+                            times[doc.doc_type] = `${d.toLocaleDateString('tr-TR')} - ${d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                        }
+                    }
+                    setUploadTimes(times);
+                }
+            } catch(e) { console.warn("Doküman tarihleri yüklenemedi", e); }
+        };
+        loadUploadTimes();
+    }, []);
+
+    const saveEscalationSettings = async () => {
+        setIsSavingEscalation(true);
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    escalation_email: escalationEmail,
+                    escalation_telegram_id: escalationTelegram
+                })
+            });
+            const data = await res.json();
+            if(!data.success) {
+                alert("Hata oluştu! Lütfen veritabanı şemasında (Supabase) 'escalation_email' ve 'escalation_telegram_id' sütunlarının bulunduğundan emin olun. Detay: " + data.error);
+            } else {
+                alert("İnsan müdahalesi ayarları başarıyla kaydedildi.");
+            }
+        } catch (error) {
+            alert("Bağlantı hatası.");
+        } finally {
+            setIsSavingEscalation(false);
+        }
+    };
+
+    // Ayarları Değiştir & LocalStorage'a Kaydet
+    const handleToggleMap = () => {
+        const val = !offerMap;
+        setOfferMap(val);
+        localStorage.setItem('fo_offerMap', String(val));
+    };
+    const handleToggleRemind = () => {
+        const val = !remind247;
+        setRemind247(val);
+        localStorage.setItem('fo_remind247', String(val));
+    };
+    const handleToggleInfo = () => {
+        const val = !offerInfo;
+        setOfferInfo(val);
+        localStorage.setItem('fo_offerInfo', String(val));
+    };
+
+    const handleKonseptTipiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setKonseptTipi(e.target.value);
+        localStorage.setItem('fo_konseptTipi', e.target.value);
+    };
 
     // Agencies State
     const [agencies, setAgencies] = useState<any[]>([]);
@@ -343,7 +442,7 @@ export default function FrontOfficeSettings() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Map Toggle */}
                         <div 
-                            onClick={() => setOfferMap(!offerMap)}
+                            onClick={handleToggleMap}
                             className={`flex flex-col p-5 rounded-2xl border-2 transition-all cursor-pointer ${offerMap ? 'bg-purple-900/20 border-purple-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
                         >
                             <div className="flex items-center justify-between mb-3">
@@ -357,7 +456,7 @@ export default function FrontOfficeSettings() {
 
                         {/* 24/7 Toggle */}
                         <div 
-                            onClick={() => setRemind247(!remind247)}
+                            onClick={handleToggleRemind}
                             className={`flex flex-col p-5 rounded-2xl border-2 transition-all cursor-pointer ${remind247 ? 'bg-purple-900/20 border-purple-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
                         >
                             <div className="flex items-center justify-between mb-3">
@@ -371,7 +470,7 @@ export default function FrontOfficeSettings() {
 
                         {/* Info Toggle */}
                         <div 
-                            onClick={() => setOfferInfo(!offerInfo)}
+                            onClick={handleToggleInfo}
                             className={`flex flex-col p-5 rounded-2xl border-2 transition-all cursor-pointer ${offerInfo ? 'bg-purple-900/20 border-purple-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
                         >
                             <div className="flex items-center justify-between mb-3">
@@ -387,15 +486,15 @@ export default function FrontOfficeSettings() {
 
                 {/* --- NEW FEATURE: AGENCY LINKS & RESERVATION SETTINGS --- */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                    <div className="flex items-center gap-4 mb-6">
-                        <Banknote className="w-8 h-8 text-emerald-400" />
-                        <div>
-                            <h2 className="text-2xl font-bold">Rezervasyon & Acenta Linkleri</h2>
-                            <p className="text-slate-400 text-sm mt-1">Yapay zekanın rezervasyon yapmak isteyen kullanıcılara önereceği direkt satış siteleriniz ve acenta sayfalarınız.</p>
+                        <div className="flex items-center gap-4 mb-6">
+                            <Banknote className="w-8 h-8 text-emerald-400" />
+                            <div>
+                                <h2 className="text-2xl font-bold">Rezervasyon & Acenta Linkleri</h2>
+                                <p className="text-slate-400 text-sm mt-1">Yapay zekanın rezervasyon yapmak isteyen kullanıcılara önereceği direkt satış siteleriniz ve acenta sayfalarınız.</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden mb-6">
+                        <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden mb-6">
                         <table className="w-full text-left text-sm text-slate-300">
                             <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 uppercase text-xs">
                                 <tr>
@@ -454,6 +553,54 @@ export default function FrontOfficeSettings() {
                     </p>
                 </div>
 
+                {/* --- NEW FEATURE: ESCALATION & HUMAN INTERVENTION --- */}
+                <div className="bg-slate-900/50 border border-red-900/50 rounded-3xl p-6 relative overflow-hidden group hover:border-red-500/50 transition-all">
+                    <div className="flex items-center gap-4 mb-6">
+                        <AlertTriangle className="w-8 h-8 text-red-500" />
+                        <div>
+                            <h2 className="text-2xl font-bold text-red-400">İnsan Müdahalesi (Eskalasyon) Ayarları</h2>
+                            <p className="text-slate-400 text-sm mt-1">Kullanıcı mesajında şikayet, öfke vb. kritik kelimeler geçerse yapay zeka devreden çıkarılarak acil bildirim atılır.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-300 mb-2">Acil Bildirim E-Posta Adresi</label>
+                            <input 
+                                type="email" 
+                                value={escalationEmail}
+                                onChange={(e) => setEscalationEmail(e.target.value)}
+                                placeholder="ornek@oteladi.com"
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-red-500 outline-none"
+                            />
+                            <p className="text-xs text-slate-500 mt-2">Kritik durumlarda şikayet logu ve mesaj özeti bu maile gönderilir.</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-300 mb-2">Acil Bildirim Telegram / WP ID</label>
+                            <input 
+                                type="text" 
+                                value={escalationTelegram}
+                                onChange={(e) => setEscalationTelegram(e.target.value)}
+                                placeholder="123456789"
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-red-500 outline-none"
+                            />
+                            <p className="text-xs text-slate-500 mt-2">Kritik durumlarda yapay zeka mesaj yerine bu personele anlık Telegram bildirimi atar.</p>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-6">
+                        <span className="text-xs text-slate-400 italic bg-red-900/20 px-3 py-1 rounded-lg">Kritik Kelimeler: haram, beni arayın, şikayet, iade, berbat, ara...</span>
+                        <button 
+                            onClick={saveEscalationSettings}
+                            disabled={isSavingEscalation}
+                            className="px-6 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-sm font-bold transition-all text-white border border-red-500 disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {isSavingEscalation ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
+                            {isSavingEscalation ? 'Kaydediliyor...' : 'Eskalasyon Ayarlarını Kaydet'}
+                        </button>
+                    </div>
+                </div>
+
                 {/* Eski Yükleme Modülleri (Konsept, Fact Sheet vb.) Grid Halinde Altta */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {/* Konsept Yükleme */}
@@ -462,7 +609,20 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['konsept'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <FileText className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['konsept'] ? 'text-emerald-400' : ''}`}>Konsept Dosyası</h2>
-                            <p className="text-slate-500 text-xs mb-4">Yaz/Kış sezonu, özel etkinlik konseptleri.</p>
+                            <p className="text-slate-500 text-xs mb-3">Yaz/Kış sezonu, özel etkinlik konseptleri.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: PDF, Word, Excel)</span></p>
+                            
+                            <select 
+                                value={konseptTipi}
+                                onChange={handleKonseptTipiChange}
+                                className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-2 mb-4 focus:ring-1 focus:ring-blue-500 outline-none"
+                            >
+                                <option value="Sadece Oda (RO)">Sadece Oda (RO)</option>
+                                <option value="Oda Kahvaltı (BB)">Oda Kahvaltı (BB)</option>
+                                <option value="Yarım Pansiyon (HB)">Yarım Pansiyon (HB)</option>
+                                <option value="Tam Pansiyon (FB)">Tam Pansiyon (FB)</option>
+                                <option value="Her Şey Dahil (AI)">Her Şey Dahil (AI)</option>
+                                <option value="Ultra Her Şey Dahil (UAI)">Ultra Her Şey Dahil (UAI)</option>
+                            </select>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['konsept'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['konsept'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['konsept'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
@@ -481,7 +641,7 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['factsheet'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <FileSpreadsheet className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['factsheet'] ? 'text-emerald-400' : ''}`}>Fact Sheet</h2>
-                            <p className="text-slate-500 text-xs mb-4">Otel fiziki özellik dökümanı.</p>
+                            <p className="text-slate-500 text-xs mb-4">Otel fiziki özellik dökümanı.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: PDF, Word)</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['factsheet'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['factsheet'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['factsheet'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
@@ -499,8 +659,8 @@ export default function FrontOfficeSettings() {
                     <div className={`border rounded-3xl p-6 relative group transition-all flex flex-col justify-between ${uploadTimes['prices'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>
                         <div>
                             {uploadTimes['prices'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <Banknote className="w-6 h-6 text-slate-400 mb-3" />}
-                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['prices'] ? 'text-emerald-400' : ''}`}>Fiyat Listesi</h2>
-                            <p className="text-slate-500 text-xs mb-4">Önbüro harici hizmet fiyatlandırmaları.</p>
+                            <h2 className={`text-lg font-bold mb-2 ${uploadTimes['prices'] ? 'text-emerald-400' : ''}`}>Fiyat Listesi (Konaklama Ücreti)</h2>
+                            <p className="text-slate-500 text-xs mb-4">Oda konaklama ve genel ücretlendirmeler.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: Excel, PDF)</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['prices'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['prices'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['prices'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
@@ -519,7 +679,7 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['daypass'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <Sun className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['daypass'] ? 'text-emerald-400' : ''}`}>Day-Pass Fiyatları</h2>
-                            <p className="text-slate-500 text-xs mb-4">Günübirlik misafir kabul şartları.</p>
+                            <p className="text-slate-500 text-xs mb-4">Günübirlik misafir kabul şartları.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: Excel, PDF)</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['daypass'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['daypass'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['daypass'] ? 'text-emerald-400' : 'text-slate-500'}`} />}

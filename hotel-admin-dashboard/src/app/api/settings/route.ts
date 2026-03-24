@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
         if (!data) {
             // Eğer hiç ayar yoksa varsayılanı dön
-            return NextResponse.json({ success: true, data: { department_timeout_minutes: 15 } });
+            return NextResponse.json({ success: true, data: { department_timeout_minutes: 15, escalation_email: '', escalation_telegram_id: '', minibar_note: '' } });
         }
 
         return NextResponse.json({ success: true, data: data });
@@ -31,11 +31,13 @@ export async function POST(request: Request) {
         const supabase = getServiceSupabase();
         const body = await request.json();
         
-        const { department_timeout_minutes } = body;
+        const { department_timeout_minutes, escalation_email, escalation_telegram_id, minibar_note } = body;
 
-        if (!department_timeout_minutes || department_timeout_minutes < 1 || department_timeout_minutes > 30) {
-            return NextResponse.json({ success: false, error: 'Süre 1 ile 30 dakika arasında olmalıdır.' }, { status: 400 });
-        }
+        let updatePayload: any = { updated_at: new Date().toISOString() };
+        if (department_timeout_minutes) updatePayload.department_timeout_minutes = parseInt(department_timeout_minutes, 10);
+        if (escalation_email !== undefined) updatePayload.escalation_email = escalation_email;
+        if (escalation_telegram_id !== undefined) updatePayload.escalation_telegram_id = escalation_telegram_id;
+        if (minibar_note !== undefined) updatePayload.minibar_note = minibar_note;
 
         // Önce kayıt var mı kontrol et
         const { data: existingData } = await supabase.from('hotel_settings').select('id').limit(1).maybeSingle();
@@ -44,16 +46,13 @@ export async function POST(request: Request) {
 
         if (existingData) {
             // Güncelle
-            const result = await supabase.from('hotel_settings').update({
-                department_timeout_minutes: parseInt(department_timeout_minutes, 10),
-                updated_at: new Date().toISOString()
-            }).eq('id', existingData.id).select().single();
+            const result = await supabase.from('hotel_settings').update(updatePayload).eq('id', existingData.id).select().single();
             data = result.data;
             error = result.error;
         } else {
-            // Yeni oluştur
+            // Yeni oluştur (eksik null hatası vermesin diye db yapısına göre ekler)
             const result = await supabase.from('hotel_settings').insert({
-                department_timeout_minutes: parseInt(department_timeout_minutes, 10)
+                ...updatePayload
             }).select().single();
             data = result.data;
             error = result.error;

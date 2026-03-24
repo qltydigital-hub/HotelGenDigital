@@ -4,7 +4,7 @@ const GUEST_BOT_TOKEN = process.env.TELEGRAM_GUEST_BOT_TOKEN;
 const MANAGER_BOT_TOKEN = process.env.TELEGRAM_MANAGER_BOT_TOKEN;
 
 // Telegram API'sine HTTP POST isteği atan çekirdek fonksiyon
-async function sendTelegramMessage(token: string, chatId: string, text: string, replyMarkup?: any) {
+export async function sendTelegramMessage(token: string, chatId: string, text: string, replyMarkup?: any) {
     if (!token || !chatId) {
         console.warn("Telegram Token veya ChatId eksik! Mesaj gönderilmedi:", text);
         return false;
@@ -103,4 +103,20 @@ export async function escalateToManagement(
 
     // SLA İhlallerini Yönetici botundan gönderelim
     return await sendTelegramMessage(MANAGER_BOT_TOKEN || "", managerChatId, text);
+}
+
+/**
+ * Misafir oda numarası ve ismini verdiğinde, in-house sistemde eşleşme bulunamazsa
+ * Resepsiyona anında acil durum bildirimi gönderilir.
+ */
+export async function notifyMismatchToReception(
+    managerChatId: string,
+    providedRoomNo: string,
+    providedGuestName: string,
+    message: string
+) {
+    const text = `🚨 <b>ACİL DOĞRULAMA UYARISI</b> 🚨\n\nSistemde kaydı bulunmayan biri otel içinden talepte bulunmaya çalıştı!\n\n<b>Beyan Edilen Oda:</b> ${providedRoomNo}\n<b>Beyan Edilen İsim:</b> ${providedGuestName}\n\n<b>Gelen Mesaj:</b>\n<i>${message}</i>\n\nLütfen bu durumu acilen kontrol ediniz.`;
+
+    // Yönetici/Resepsiyon botundan gönderelim
+    return await sendTelegramMessage(MANAGER_BOT_TOKEN || GUEST_BOT_TOKEN || "", managerChatId, text);
 }

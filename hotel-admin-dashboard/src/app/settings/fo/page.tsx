@@ -609,7 +609,7 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['konsept'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <FileText className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['konsept'] ? 'text-emerald-400' : ''}`}>Konsept Dosyası</h2>
-                            <p className="text-slate-500 text-xs mb-3">Yaz/Kış sezonu, özel etkinlik konseptleri.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: PDF, Word, Excel)</span></p>
+                            <p className="text-slate-500 text-xs mb-3">Yaz/Kış sezonu, özel etkinlik konseptleri.<br/><span className="text-blue-400 font-semibold mt-1 inline-block">Format: PDF, Word, Excel</span></p>
                             
                             <select 
                                 value={konseptTipi}
@@ -629,11 +629,11 @@ export default function FrontOfficeSettings() {
                             <span className={`text-xs font-bold ${uploadTimes['konsept'] ? 'text-emerald-400' : 'text-slate-400'}`}>
                                 {isUploadingObj['konsept'] ? 'Yükleniyor...' : (uploadTimes['konsept'] ? 'Yeniden Yükle' : 'Dosya Yükle')}
                             </span>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('konsept', e)} disabled={isUploadingObj['konsept']} />
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => handleGenericUpload('konsept', e)} disabled={isUploadingObj['konsept']} />
                         </label>
-                        {uploadTimes['konsept'] && (
-                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['konsept']}</div>
-                        )}
+                        <div className={`mt-4 text-xs font-semibold text-center p-2 rounded-lg ${uploadTimes['konsept'] ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800/50 text-slate-400'}`}>
+                            Tarih: {uploadTimes['konsept'] || 'Henüz yüklenmedi'}
+                        </div>
                     </div>
 
                     {/* Fact Sheet Yükleme */}
@@ -641,18 +641,18 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['factsheet'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <FileSpreadsheet className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['factsheet'] ? 'text-emerald-400' : ''}`}>Fact Sheet</h2>
-                            <p className="text-slate-500 text-xs mb-4">Otel fiziki özellik dökümanı.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: PDF, Word)</span></p>
+                            <p className="text-slate-500 text-xs mb-4">Otel fiziki özellik dökümanı.<br/><span className="text-blue-400 font-semibold mt-1 inline-block">Format: PDF, Word</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['factsheet'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['factsheet'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['factsheet'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
                             <span className={`text-xs font-bold ${uploadTimes['factsheet'] ? 'text-emerald-400' : 'text-slate-400'}`}>
                                 {isUploadingObj['factsheet'] ? 'Yükleniyor...' : (uploadTimes['factsheet'] ? 'Yeniden Yükle' : 'Dosya Yükle')}
                             </span>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('factsheet', e)} disabled={isUploadingObj['factsheet']} />
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={(e) => handleGenericUpload('factsheet', e)} disabled={isUploadingObj['factsheet']} />
                         </label>
-                        {uploadTimes['factsheet'] && (
-                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['factsheet']}</div>
-                        )}
+                        <div className={`mt-4 text-xs font-semibold text-center p-2 rounded-lg ${uploadTimes['factsheet'] ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800/50 text-slate-400'}`}>
+                            Tarih: {uploadTimes['factsheet'] || 'Henüz yüklenmedi'}
+                        </div>
                     </div>
 
                     {/* Fiyat Listesi Yükleme */}
@@ -660,18 +660,18 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['prices'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <Banknote className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['prices'] ? 'text-emerald-400' : ''}`}>Fiyat Listesi (Konaklama Ücreti)</h2>
-                            <p className="text-slate-500 text-xs mb-4">Oda konaklama ve genel ücretlendirmeler.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: Excel, PDF)</span></p>
+                            <p className="text-slate-500 text-xs mb-4">Oda konaklama ve genel ücretlendirmeler.<br/><span className="text-blue-400 font-semibold mt-1 inline-block">Format: Excel, PDF</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['prices'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['prices'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['prices'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
                             <span className={`text-xs font-bold ${uploadTimes['prices'] ? 'text-emerald-400' : 'text-slate-400'}`}>
                                 {isUploadingObj['prices'] ? 'Yükleniyor...' : (uploadTimes['prices'] ? 'Yeniden Yükle' : 'Dosya Yükle')}
                             </span>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('prices', e)} disabled={isUploadingObj['prices']} />
+                            <input type="file" className="hidden" accept=".pdf,.xls,.xlsx" onChange={(e) => handleGenericUpload('prices', e)} disabled={isUploadingObj['prices']} />
                         </label>
-                        {uploadTimes['prices'] && (
-                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['prices']}</div>
-                        )}
+                        <div className={`mt-4 text-xs font-semibold text-center p-2 rounded-lg ${uploadTimes['prices'] ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800/50 text-slate-400'}`}>
+                            Tarih: {uploadTimes['prices'] || 'Henüz yüklenmedi'}
+                        </div>
                     </div>
 
                     {/* Daypass Yükleme */}
@@ -679,18 +679,18 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['daypass'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <Sun className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['daypass'] ? 'text-emerald-400' : ''}`}>Day-Pass Fiyatları</h2>
-                            <p className="text-slate-500 text-xs mb-4">Günübirlik misafir kabul şartları.<br/><span className="text-slate-400 font-medium mt-1 inline-block">(Formatlar: Excel, PDF)</span></p>
+                            <p className="text-slate-500 text-xs mb-4">Günübirlik kullanım listesi ve kabul şartları.<br/><span className="text-blue-400 font-semibold mt-1 inline-block">Format: Excel, PDF</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['daypass'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['daypass'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['daypass'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
                             <span className={`text-xs font-bold ${uploadTimes['daypass'] ? 'text-emerald-400' : 'text-slate-400'}`}>
                                 {isUploadingObj['daypass'] ? 'Yükleniyor...' : (uploadTimes['daypass'] ? 'Yeniden Yükle' : 'Dosya Yükle')}
                             </span>
-                            <input type="file" className="hidden" onChange={(e) => handleGenericUpload('daypass', e)} disabled={isUploadingObj['daypass']} />
+                            <input type="file" className="hidden" accept=".pdf,.xls,.xlsx" onChange={(e) => handleGenericUpload('daypass', e)} disabled={isUploadingObj['daypass']} />
                         </label>
-                        {uploadTimes['daypass'] && (
-                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['daypass']}</div>
-                        )}
+                        <div className={`mt-4 text-xs font-semibold text-center p-2 rounded-lg ${uploadTimes['daypass'] ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800/50 text-slate-400'}`}>
+                            Tarih: {uploadTimes['daypass'] || 'Henüz yüklenmedi'}
+                        </div>
                     </div>
 
                     {/* Hotel Kroki Yükleme */}
@@ -698,18 +698,18 @@ export default function FrontOfficeSettings() {
                         <div>
                             {uploadTimes['map'] ? <CheckSquare className="w-6 h-6 text-emerald-400 mb-3" /> : <MapIcon className="w-6 h-6 text-slate-400 mb-3" />}
                             <h2 className={`text-lg font-bold mb-2 ${uploadTimes['map'] ? 'text-emerald-400' : ''}`}>Otel Krokisi / Harita</h2>
-                            <p className="text-slate-500 text-xs mb-4">Misafirlere otomatik sunulacak olan görsel kroki. (JPG, PNG)</p>
+                            <p className="text-slate-500 text-xs mb-4">Misafirlere otomatik sunulacak olan görsel kroki.<br/><span className="text-blue-400 font-semibold mt-1 inline-block">Format: JPG, PNG, WEBP</span></p>
                         </div>
                         <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadTimes['map'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 hover:bg-slate-800/50'}`}>
                             {isUploadingObj['map'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['map'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
                             <span className={`text-xs font-bold ${uploadTimes['map'] ? 'text-emerald-400' : 'text-slate-400'}`}>
                                 {isUploadingObj['map'] ? 'Yükleniyor...' : (uploadTimes['map'] ? 'Yeniden Yükle' : 'Görsel Yükle')}
                             </span>
-                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleGenericUpload('map', e)} disabled={isUploadingObj['map']} />
+                            <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleGenericUpload('map', e)} disabled={isUploadingObj['map']} />
                         </label>
-                        {uploadTimes['map'] && (
-                            <div className="mt-3 text-[10px] text-emerald-400 font-medium">Son Yükleme: <br/>{uploadTimes['map']}</div>
-                        )}
+                        <div className={`mt-4 text-xs font-semibold text-center p-2 rounded-lg ${uploadTimes['map'] ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800/50 text-slate-400'}`}>
+                            Tarih: {uploadTimes['map'] || 'Henüz yüklenmedi'}
+                        </div>
                     </div>
                 </div>
             </div>

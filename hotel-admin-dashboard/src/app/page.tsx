@@ -69,6 +69,8 @@ function PresentationFunnelContent() {
       router.push('/settings/hk');
     } else if (cleanUser === 'SPA' && cleanPass === '1234') {
       router.push('/settings/spa');
+    } else if (cleanUser === 'T/S' && cleanPass === '1234') {
+      router.push('/settings/ts');
     } else {
       setError(`Geçersiz departman ("${username}") veya hatalı şifre.`);
     }
@@ -365,8 +367,26 @@ function PresentationFunnelContent() {
                       <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Departman Kodu</label>
                         <div className="relative">
-                          <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500" placeholder="Örn: F/O, F/B, vb." />
+                          <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                          <select 
+                            value={username} 
+                            onChange={e => setUsername(e.target.value)} 
+                            required 
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-10 text-white focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
+                          >
+                            <option value="" disabled>Lütfen Departman Seçin</option>
+                            <option value="F/O">F/O - Önbüro</option>
+                            <option value="F/B">F/B - Yiyecek & İçecek</option>
+                            <option value="H/K">H/K - Housekeeping</option>
+                            <option value="G/R">G/R - Misafir İlişkileri</option>
+                            <option value="T/S">T/S - Teknik Servis</option>
+                            <option value="SPA">SPA - Spa & Sağlık</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                       <div>

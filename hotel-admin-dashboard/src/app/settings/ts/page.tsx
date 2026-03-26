@@ -139,7 +139,14 @@ export default function TechnicalServiceDashboard() {
                                 type="date" 
                                 value={date} 
                                 onChange={e => setDate(e.target.value)}
-                                className="pl-12 pr-4 py-3.5 bg-slate-950/80 border-2 border-blue-900/50 focus:border-cyan-500 rounded-2xl text-blue-100 font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/20 transition-all cursor-pointer shadow-inner w-full sm:w-[220px]"
+                                onClick={(e) => {
+                                    try {
+                                        if (typeof (e.target as any).showPicker === 'function') {
+                                            (e.target as any).showPicker();
+                                        }
+                                    } catch (err) {}
+                                }}
+                                className="pl-12 pr-4 py-3.5 bg-slate-950/80 border-2 border-blue-900/50 focus:border-cyan-500 rounded-2xl text-blue-100 font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/20 transition-all cursor-pointer shadow-inner w-full sm:w-[220px] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
                             />
                         </div>
                         <button onClick={fetchTickets} className="p-3.5 bg-blue-900/20 hover:bg-blue-800/40 border border-blue-800/50 rounded-2xl transition-colors shadow-sm group">

@@ -6,6 +6,8 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const department = searchParams.get('department') || 'Teknik Servis'; // Default to Teknik
         const date = searchParams.get('date');
+        const startDateParam = searchParams.get('startDate');
+        const endDateParam = searchParams.get('endDate');
 
         const supabase = getServiceSupabase();
         
@@ -17,7 +19,17 @@ export async function GET(request: Request) {
             .or('department.ilike.%teknik%,department.ilike.%technical%,department.eq.T/S')
             .order('created_at', { ascending: false });
 
-        if (date) {
+        if (startDateParam && endDateParam) {
+            const startDate = new Date(startDateParam);
+            startDate.setHours(0, 0, 0, 0);
+            
+            const endDate = new Date(endDateParam);
+            endDate.setHours(23, 59, 59, 999);
+            
+            query = query
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString());
+        } else if (date) {
             // date matches YYYY-MM-DD
             const startDate = new Date(date);
             startDate.setHours(0, 0, 0, 0);

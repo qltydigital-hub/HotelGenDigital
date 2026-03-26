@@ -24,7 +24,10 @@ interface Ticket {
 export default function TechnicalServiceDashboard() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
-    const [date, setDate] = useState<string>(
+    const [startDate, setStartDate] = useState<string>(
+        new Date().toISOString().split('T')[0] // today's date
+    );
+    const [endDate, setEndDate] = useState<string>(
         new Date().toISOString().split('T')[0] // today's date
     );
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export default function TechnicalServiceDashboard() {
     const fetchTickets = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/tickets?department=Teknik Servis&date=${date}`);
+            const res = await fetch(`/api/tickets?department=Teknik Servis&startDate=${startDate}&endDate=${endDate}`);
             const data = await res.json();
             if (data.success) {
                 setTickets(data.data);
@@ -57,7 +60,7 @@ export default function TechnicalServiceDashboard() {
         // Auto refresh every 30 seconds
         const interval = setInterval(fetchTickets, 30000);
         return () => clearInterval(interval);
-    }, [date, user, router]);
+    }, [startDate, endDate, user, router]);
 
     const handleLogout = async () => {
         await logout();
@@ -133,21 +136,40 @@ export default function TechnicalServiceDashboard() {
                 {/* Controls Bar */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-10 bg-slate-900/40 p-4 border border-blue-900/30 rounded-3xl shadow-lg backdrop-blur-sm">
                     <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <div className="relative flex items-center">
-                            <CalendarDays className="absolute left-4 w-5 h-5 text-blue-500 pointer-events-none" />
-                            <input 
-                                type="date" 
-                                value={date} 
-                                onChange={e => setDate(e.target.value)}
-                                onClick={(e) => {
-                                    try {
-                                        if (typeof (e.target as any).showPicker === 'function') {
-                                            (e.target as any).showPicker();
-                                        }
-                                    } catch (err) {}
-                                }}
-                                className="pl-12 pr-4 py-3.5 bg-slate-950/80 border-2 border-blue-900/50 focus:border-cyan-500 rounded-2xl text-blue-100 font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/20 transition-all cursor-pointer shadow-inner w-full sm:w-[220px] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
-                            />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <div className="relative flex items-center">
+                                <CalendarDays className="absolute left-4 w-5 h-5 text-blue-500 pointer-events-none" />
+                                <input 
+                                    type="date" 
+                                    value={startDate} 
+                                    onChange={e => setStartDate(e.target.value)}
+                                    onClick={(e) => {
+                                        try {
+                                            if (typeof (e.target as any).showPicker === 'function') {
+                                                (e.target as any).showPicker();
+                                            }
+                                        } catch (err) {}
+                                    }}
+                                    className="pl-12 pr-4 py-3.5 bg-slate-950/80 border-2 border-blue-900/50 focus:border-cyan-500 rounded-2xl text-blue-100 font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/20 transition-all cursor-pointer shadow-inner w-full sm:w-[180px] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
+                                />
+                            </div>
+                            <span className="text-blue-500 font-bold">-</span>
+                            <div className="relative flex items-center">
+                                <CalendarDays className="absolute left-4 w-5 h-5 text-blue-500 pointer-events-none" />
+                                <input 
+                                    type="date" 
+                                    value={endDate} 
+                                    onChange={e => setEndDate(e.target.value)}
+                                    onClick={(e) => {
+                                        try {
+                                            if (typeof (e.target as any).showPicker === 'function') {
+                                                (e.target as any).showPicker();
+                                            }
+                                        } catch (err) {}
+                                    }}
+                                    className="pl-12 pr-4 py-3.5 bg-slate-950/80 border-2 border-blue-900/50 focus:border-cyan-500 rounded-2xl text-blue-100 font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/20 transition-all cursor-pointer shadow-inner w-full sm:w-[180px] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
+                                />
+                            </div>
                         </div>
                         <button onClick={fetchTickets} className="p-3.5 bg-blue-900/20 hover:bg-blue-800/40 border border-blue-800/50 rounded-2xl transition-colors shadow-sm group">
                             <RefreshCw className={`w-5 h-5 text-cyan-400 group-hover:text-white transition-colors ${loading ? 'animate-spin' : ''}`} />

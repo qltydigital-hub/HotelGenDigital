@@ -29,17 +29,23 @@ export default function ReceptionDashboard() {
     const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
     const [isUploadingObj, setIsUploadingObj] = useState<Record<string, boolean>>({});
 
-    // Load Local Settings & Document Times
+    const [isSavingAll, setIsSavingAll] = useState(false);
+    const [savedAllMessage, setSavedAllMessage] = useState(false);
+
+    // Load Global Settings & Document Times
     React.useEffect(() => {
-        const it = localStorage.getItem('fo_ibanText');
-        const ita = localStorage.getItem('fo_isIbanTextActive');
-        const iia = localStorage.getItem('fo_isIbanImageActive');
-        const iea = localStorage.getItem('fo_isIbanExcelActive');
-        
-        if (it !== null) setIbanText(it);
-        if (ita !== null) setIsIbanTextActive(ita === 'true');
-        if (iia !== null) setIsIbanImageActive(iia === 'true');
-        if (iea !== null) setIsIbanExcelActive(iea === 'true');
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.data) {
+                    const db = data.data;
+                    if(db.ibanText !== undefined) setIbanText(db.ibanText);
+                    if(db.isIbanTextActive !== undefined) setIsIbanTextActive(db.isIbanTextActive);
+                    if(db.isIbanImageActive !== undefined) setIsIbanImageActive(db.isIbanImageActive);
+                    if(db.isIbanExcelActive !== undefined) setIsIbanExcelActive(db.isIbanExcelActive);
+                }
+            })
+            .catch(err => console.error("Ayarlar çekilemedi:", err));
 
         const loadUploadTimes = async () => {
             try {
@@ -64,25 +70,33 @@ export default function ReceptionDashboard() {
         loadUploadTimes();
     }, []);
 
-    const handleSaveIbanText = () => {
-        localStorage.setItem('fo_ibanText', ibanText);
-        alert('Manuel IBAN bilgileri başarıyla kaydedildi.');
+    const saveAllSettings = async () => {
+        setIsSavingAll(true);
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ibanText, isIbanTextActive, isIbanImageActive, isIbanExcelActive
+                })
+            });
+            const data = await res.json();
+            if(!data.success) {
+                alert("Ayarlar kaydedilirken hata oluştu: " + data.error);
+            } else {
+                setSavedAllMessage(true);
+                setTimeout(() => setSavedAllMessage(false), 3000);
+            }
+        } catch (error) {
+            alert("Bağlantı hatası.");
+        } finally {
+            setIsSavingAll(false);
+        }
     };
-    const toggleIbanTextActive = () => {
-        const val = !isIbanTextActive;
-        setIsIbanTextActive(val);
-        localStorage.setItem('fo_isIbanTextActive', String(val));
-    };
-    const toggleIbanImageActive = () => {
-        const val = !isIbanImageActive;
-        setIsIbanImageActive(val);
-        localStorage.setItem('fo_isIbanImageActive', String(val));
-    };
-    const toggleIbanExcelActive = () => {
-        const val = !isIbanExcelActive;
-        setIsIbanExcelActive(val);
-        localStorage.setItem('fo_isIbanExcelActive', String(val));
-    };
+
+    const toggleIbanTextActive = () => setIsIbanTextActive(!isIbanTextActive);
+    const toggleIbanImageActive = () => setIsIbanImageActive(!isIbanImageActive);
+    const toggleIbanExcelActive = () => setIsIbanExcelActive(!isIbanExcelActive);
 
     const handleGenericUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -283,7 +297,7 @@ export default function ReceptionDashboard() {
                                 placeholder="Örn: TR29 0000 0000 0000 0000 0000 00&#10;Alıcı: My Hotel Turizm A.Ş.&#10;Banka: X Bankası"
                                 className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-3 mb-4 h-28 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
                             />
-                            <button disabled={!isIbanTextActive} onClick={handleSaveIbanText} className="w-full py-3 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold rounded-lg border border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button disabled={!isIbanTextActive || isSavingAll} onClick={saveAllSettings} className="w-full py-3 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold rounded-lg border border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 Metni Kaydet
                             </button>
                         </div>
@@ -341,6 +355,19 @@ export default function ReceptionDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Save All Button */}
+                <div className="mt-8 flex justify-end">
+                    <button onClick={saveAllSettings} disabled={isSavingAll} className="w-full md:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2">
+                        {isSavingAll ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />} 
+                        {isSavingAll ? 'KAYDEDİLİYOR...' : 'TÜM AYARLARI KAYDET'}
+                    </button>
+                </div>
+                {savedAllMessage && (
+                    <div className="mt-4 p-4 bg-emerald-900/20 border border-emerald-800 text-emerald-400 rounded-xl text-center font-bold text-sm animate-in fade-in">
+                        Ayarlarınız başarıyla veritabanına kaydedildi! Artık her yerde geçerlidir.
+                    </div>
+                )}
 
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-slate-900/30 p-6 rounded-2xl border border-blue-900/30">

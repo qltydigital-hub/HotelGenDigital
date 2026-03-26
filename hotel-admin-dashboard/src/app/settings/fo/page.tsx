@@ -52,38 +52,32 @@ export default function FrontOfficeSettings() {
     const [isIbanImageActive, setIsIbanImageActive] = useState(true);
     const [isIbanExcelActive, setIsIbanExcelActive] = useState(true);
 
-    // Ayarları LocalStorage'dan Oku ve API'den Çek
+    // State to show generic save success
+    const [isSavingAll, setIsSavingAll] = useState(false);
+    const [savedAllMessage, setSavedAllMessage] = useState(false);
+
+    // Ayarları API'den (Veritabanından) Çek
     useEffect(() => {
-        const sm = localStorage.getItem('fo_offerMap');
-        const sr = localStorage.getItem('fo_remind247');
-        const si = localStorage.getItem('fo_offerInfo');
-        const kt = localStorage.getItem('fo_konseptTipi');
-        
-        const it = localStorage.getItem('fo_ibanText');
-        const ita = localStorage.getItem('fo_isIbanTextActive');
-        const iia = localStorage.getItem('fo_isIbanImageActive');
-        const iea = localStorage.getItem('fo_isIbanExcelActive');
-        
-        if (sm !== null) setOfferMap(sm === 'true');
-        if (sr !== null) setRemind247(sr === 'true');
-        if (si !== null) setOfferInfo(si === 'true');
-        if (kt !== null) setKonseptTipi(kt);
-
-        if (it !== null) setIbanText(it);
-        if (ita !== null) setIsIbanTextActive(ita === 'true');
-        if (iia !== null) setIsIbanImageActive(iia === 'true');
-        if (iea !== null) setIsIbanExcelActive(iea === 'true');
-
-        // API'den Eskalasyon ayarlarını getir
         fetch('/api/settings')
             .then(res => res.json())
             .then(data => {
                 if(data.success && data.data) {
-                    if(data.data.escalation_email) setEscalationEmail(data.data.escalation_email);
-                    if(data.data.escalation_telegram_id) setEscalationTelegram(data.data.escalation_telegram_id);
+                    const db = data.data;
+                    if(db.escalation_email !== undefined) setEscalationEmail(db.escalation_email);
+                    if(db.escalation_telegram_id !== undefined) setEscalationTelegram(db.escalation_telegram_id);
+                    
+                    if(db.offerMap !== undefined) setOfferMap(db.offerMap);
+                    if(db.remind247 !== undefined) setRemind247(db.remind247);
+                    if(db.offerInfo !== undefined) setOfferInfo(db.offerInfo);
+                    if(db.konseptTipi !== undefined) setKonseptTipi(db.konseptTipi);
+
+                    if(db.ibanText !== undefined) setIbanText(db.ibanText);
+                    if(db.isIbanTextActive !== undefined) setIsIbanTextActive(db.isIbanTextActive);
+                    if(db.isIbanImageActive !== undefined) setIsIbanImageActive(db.isIbanImageActive);
+                    if(db.isIbanExcelActive !== undefined) setIsIbanExcelActive(db.isIbanExcelActive);
                 }
             })
-            .catch(err => console.error("Eskalasyon ayarları çekilemedi:", err));
+            .catch(err => console.error("Ayarlar çekilemedi:", err));
 
         // DB'den departmana ait son doküman yükleme tarihlerini (created_at) getir (En YENİLER)
         const loadUploadTimes = async () => {
@@ -109,71 +103,42 @@ export default function FrontOfficeSettings() {
         loadUploadTimes();
     }, []);
 
-    const saveEscalationSettings = async () => {
-        setIsSavingEscalation(true);
+    const saveAllSettings = async () => {
+        setIsSavingAll(true);
         try {
             const res = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    offerMap, remind247, offerInfo, konseptTipi,
+                    ibanText, isIbanTextActive, isIbanImageActive, isIbanExcelActive,
                     escalation_email: escalationEmail,
                     escalation_telegram_id: escalationTelegram
                 })
             });
             const data = await res.json();
             if(!data.success) {
-                alert("Hata oluştu! Lütfen veritabanı şemasında (Supabase) 'escalation_email' ve 'escalation_telegram_id' sütunlarının bulunduğundan emin olun. Detay: " + data.error);
+                alert("Ayarlar kaydedilirken hata oluştu: " + data.error);
             } else {
-                alert("İnsan müdahalesi ayarları başarıyla kaydedildi.");
+                setSavedAllMessage(true);
+                setTimeout(() => setSavedAllMessage(false), 3000);
             }
         } catch (error) {
             alert("Bağlantı hatası.");
         } finally {
-            setIsSavingEscalation(false);
+            setIsSavingAll(false);
         }
     };
 
-    // Ayarları Değiştir & LocalStorage'a Kaydet
-    const handleToggleMap = () => {
-        const val = !offerMap;
-        setOfferMap(val);
-        localStorage.setItem('fo_offerMap', String(val));
-    };
-    const handleToggleRemind = () => {
-        const val = !remind247;
-        setRemind247(val);
-        localStorage.setItem('fo_remind247', String(val));
-    };
-    const handleToggleInfo = () => {
-        const val = !offerInfo;
-        setOfferInfo(val);
-        localStorage.setItem('fo_offerInfo', String(val));
-    };
-
-    const handleKonseptTipiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setKonseptTipi(e.target.value);
-        localStorage.setItem('fo_konseptTipi', e.target.value);
-    };
-
-    const handleSaveIbanText = () => {
-        localStorage.setItem('fo_ibanText', ibanText);
-        alert('Manuel IBAN bilgileri başarıyla kaydedildi.');
-    };
-    const toggleIbanTextActive = () => {
-        const val = !isIbanTextActive;
-        setIsIbanTextActive(val);
-        localStorage.setItem('fo_isIbanTextActive', String(val));
-    };
-    const toggleIbanImageActive = () => {
-        const val = !isIbanImageActive;
-        setIsIbanImageActive(val);
-        localStorage.setItem('fo_isIbanImageActive', String(val));
-    };
-    const toggleIbanExcelActive = () => {
-        const val = !isIbanExcelActive;
-        setIsIbanExcelActive(val);
-        localStorage.setItem('fo_isIbanExcelActive', String(val));
-    };
+    // UI Togglers
+    const handleToggleMap = () => setOfferMap(!offerMap);
+    const handleToggleRemind = () => setRemind247(!remind247);
+    const handleToggleInfo = () => setOfferInfo(!offerInfo);
+    const handleKonseptTipiChange = (e: React.ChangeEvent<HTMLSelectElement>) => setKonseptTipi(e.target.value);
+    
+    const toggleIbanTextActive = () => setIsIbanTextActive(!isIbanTextActive);
+    const toggleIbanImageActive = () => setIsIbanImageActive(!isIbanImageActive);
+    const toggleIbanExcelActive = () => setIsIbanExcelActive(!isIbanExcelActive);
 
     // Agencies State
     const [agencies, setAgencies] = useState<any[]>([]);
@@ -357,6 +322,15 @@ export default function FrontOfficeSettings() {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <button onClick={saveAllSettings} disabled={isSavingAll} className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                            {isSavingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 
+                            {isSavingAll ? 'KAYDEDİLİYOR...' : 'TÜM AYARLARI KAYDET'}
+                        </button>
+                        {savedAllMessage && (
+                            <span className="hidden md:flex items-center gap-2 text-sm font-bold text-emerald-400 bg-emerald-900/20 px-4 py-3 rounded-xl border border-emerald-500/30 animate-pulse">
+                                Kaydedildi
+                            </span>
+                        )}
                         <Link href="/?login=settings" className="w-full sm:w-auto px-6 py-3 bg-red-900/40 hover:bg-red-800/60 rounded-xl font-bold transition-all border border-red-700/50 text-red-200 text-sm flex items-center justify-center gap-2">
                             <LogOut className="w-4 h-4" /> Çıkış Yap
                         </Link>
@@ -616,7 +590,7 @@ export default function FrontOfficeSettings() {
                                 placeholder="Örn: TR29 0000 0000 0000 0000 0000 00&#10;Alıcı: My Hotel Turizm A.Ş.&#10;Banka: X Bankası"
                                 className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-2 mb-3 h-24 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
                             />
-                            <button disabled={!isIbanTextActive} onClick={handleSaveIbanText} className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold rounded-lg border border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button disabled={!isIbanTextActive || isSavingAll} onClick={saveAllSettings} className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold rounded-lg border border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 Metni Kaydet
                             </button>
                         </div>
@@ -713,12 +687,12 @@ export default function FrontOfficeSettings() {
                     <div className="flex justify-between items-center mt-6">
                         <span className="text-xs text-slate-400 italic bg-red-900/20 px-3 py-1 rounded-lg">Kritik Kelimeler: haram, beni arayın, şikayet, iade, berbat, ara...</span>
                         <button 
-                            onClick={saveEscalationSettings}
-                            disabled={isSavingEscalation}
+                            onClick={saveAllSettings}
+                            disabled={isSavingAll}
                             className="px-6 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-sm font-bold transition-all text-white border border-red-500 disabled:opacity-50 flex items-center gap-2"
                         >
-                            {isSavingEscalation ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
-                            {isSavingEscalation ? 'Kaydediliyor...' : 'Eskalasyon Ayarlarını Kaydet'}
+                            {isSavingAll ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
+                            {isSavingAll ? 'Kaydediliyor...' : 'Eskalasyon Ayarlarını Kaydet'}
                         </button>
                     </div>
                 </div>

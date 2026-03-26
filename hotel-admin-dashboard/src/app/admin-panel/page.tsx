@@ -85,13 +85,16 @@ export default function AdminPanel() {
 
   const handleSave = async () => {
     try {
-      await fetch('/api/departments', {
+      const resp = await fetch('/api/departments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ departments }),
       });
+      if (!resp.ok) {
+        throw new Error('API Hatası: ' + resp.status);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {

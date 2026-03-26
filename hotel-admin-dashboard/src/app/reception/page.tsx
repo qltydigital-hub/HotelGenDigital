@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import {
     Upload, FileSpreadsheet, CheckCircle, AlertCircle, RefreshCw,
-    UserCircle, Hotel, Bell, Home
+    UserCircle, Hotel, Bell, Home, Banknote, Edit2, Map as MapIcon, Loader2, UploadCloud
 } from 'lucide-react';
 import Link from 'next/link';
+import { uploadDocumentToSupabase, supabase } from '@/lib/supabase-client';
 
 const InfoIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -19,6 +20,87 @@ export default function ReceptionDashboard() {
     const [file, setFile] = useState<File | null>(null);
     const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
+
+    // --- IBAN Settings States ---
+    const [ibanText, setIbanText] = useState("");
+    const [isIbanTextActive, setIsIbanTextActive] = useState(true);
+    const [isIbanImageActive, setIsIbanImageActive] = useState(true);
+    const [isIbanExcelActive, setIsIbanExcelActive] = useState(true);
+    const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+    const [isUploadingObj, setIsUploadingObj] = useState<Record<string, boolean>>({});
+
+    // Load Local Settings & Document Times
+    React.useEffect(() => {
+        const it = localStorage.getItem('fo_ibanText');
+        const ita = localStorage.getItem('fo_isIbanTextActive');
+        const iia = localStorage.getItem('fo_isIbanImageActive');
+        const iea = localStorage.getItem('fo_isIbanExcelActive');
+        
+        if (it !== null) setIbanText(it);
+        if (ita !== null) setIsIbanTextActive(ita === 'true');
+        if (iia !== null) setIsIbanImageActive(iia === 'true');
+        if (iea !== null) setIsIbanExcelActive(iea === 'true');
+
+        const loadUploadTimes = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('hotel_documents')
+                    .select('doc_type, created_at')
+                    .eq('department', 'FO')
+                    .order('created_at', { ascending: false });
+                    
+                if (data && !error) {
+                    const times: Record<string, string> = {};
+                    for (const doc of data) {
+                        if (!times[doc.doc_type]) {
+                            const d = new Date(doc.created_at);
+                            times[doc.doc_type] = `${d.toLocaleDateString('tr-TR')} - ${d.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                        }
+                    }
+                    setUploadTimes(times);
+                }
+            } catch(e) { console.warn("Doküman tarihleri yüklenemedi", e); }
+        };
+        loadUploadTimes();
+    }, []);
+
+    const handleSaveIbanText = () => {
+        localStorage.setItem('fo_ibanText', ibanText);
+        alert('Manuel IBAN bilgileri başarıyla kaydedildi.');
+    };
+    const toggleIbanTextActive = () => {
+        const val = !isIbanTextActive;
+        setIsIbanTextActive(val);
+        localStorage.setItem('fo_isIbanTextActive', String(val));
+    };
+    const toggleIbanImageActive = () => {
+        const val = !isIbanImageActive;
+        setIsIbanImageActive(val);
+        localStorage.setItem('fo_isIbanImageActive', String(val));
+    };
+    const toggleIbanExcelActive = () => {
+        const val = !isIbanExcelActive;
+        setIsIbanExcelActive(val);
+        localStorage.setItem('fo_isIbanExcelActive', String(val));
+    };
+
+    const handleGenericUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            setIsUploadingObj(prev => ({ ...prev, [key]: true }));
+            
+            const result = await uploadDocumentToSupabase(file, 'FO', key);
+
+            if (result.success) {
+                const now = new Date();
+                const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
+                setUploadTimes(prev => ({ ...prev, [key]: timeString }));
+            } else {
+                alert(`Dosya yüklenirken hata oluştu: ${result.error}`);
+            }
+            setIsUploadingObj(prev => ({ ...prev, [key]: false }));
+        }
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -171,6 +253,92 @@ export default function ReceptionDashboard() {
                                 SİSTEMİ GÜNCELLE
                             </button>
                         )}
+                    </div>
+                </div>
+
+                {/* --- IBAN & DIRECT PAYMENT SETTINGS --- */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative overflow-hidden group hover:border-blue-500/30 transition-all mt-8">
+                    <div className="flex items-center gap-4 mb-8">
+                        <Banknote className="w-8 h-8 text-blue-400" />
+                        <div>
+                            <h2 className="text-2xl font-bold">Direkt Rezervasyon / Hotel IBAN Bilgileri</h2>
+                            <p className="text-slate-400 text-sm mt-1">Misafirlerinize sunulacak olan otel hesap bilgileriniz. Yapay zeka bu ekranlardaki veriyi baz alarak IBAN iletir.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Manuel IBAN */}
+                        <div className={`p-6 rounded-2xl border-2 transition-all ${isIbanTextActive ? 'bg-slate-950 border-blue-500/50' : 'bg-slate-950 border-slate-800 opacity-70'}`}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-white flex items-center gap-2 text-sm"><Edit2 className="w-4 h-4 text-blue-400"/> Manuel Giriş</h3>
+                                <div onClick={toggleIbanTextActive} className={`w-10 h-6 rounded-full cursor-pointer transition-colors flex items-center px-1 ${isIbanTextActive ? 'bg-blue-500' : 'bg-slate-700'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanTextActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 mb-4 h-8 leading-snug">IBAN, Alıcı Adı ve Banka bilgilerini metin olarak girin.</p>
+                            <textarea 
+                                disabled={!isIbanTextActive}
+                                value={ibanText}
+                                onChange={(e) => setIbanText(e.target.value)}
+                                placeholder="Örn: TR29 0000 0000 0000 0000 0000 00&#10;Alıcı: My Hotel Turizm A.Ş.&#10;Banka: X Bankası"
+                                className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-3 mb-4 h-28 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                            />
+                            <button disabled={!isIbanTextActive} onClick={handleSaveIbanText} className="w-full py-3 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold rounded-lg border border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                Metni Kaydet
+                            </button>
+                        </div>
+
+                        {/* Görsel IBAN */}
+                        <div className={`p-6 rounded-2xl border-2 transition-all flex flex-col justify-between ${isIbanImageActive ? 'bg-slate-950 border-emerald-500/50' : 'bg-slate-950 border-slate-800 opacity-70'}`}>
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-white flex items-center gap-2 text-sm"><MapIcon className="w-4 h-4 text-emerald-400"/> Görsel Yükleme</h3>
+                                    <div onClick={toggleIbanImageActive} className={`w-10 h-6 rounded-full cursor-pointer transition-colors flex items-center px-1 ${isIbanImageActive ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanImageActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-400 mb-4 h-8 leading-snug">Cihazdan hazır bir IBAN tasarım görseli veya QR kod yükleyin.</p>
+                            </div>
+                            
+                            <label className={`flex flex-col items-center justify-center w-full py-8 border-2 border-dashed rounded-xl transition-colors ${!isIbanImageActive ? 'cursor-not-allowed border-slate-700' : uploadTimes['iban_image'] ? 'border-emerald-500/50 hover:bg-emerald-900/20 cursor-pointer' : 'border-slate-700 hover:bg-slate-800/50 cursor-pointer'}`}>
+                                {isUploadingObj['iban_image'] ? <Loader2 className="w-6 h-6 mb-2 text-slate-400 animate-spin" /> : <UploadCloud className={`w-6 h-6 mb-2 ${uploadTimes['iban_image'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
+                                <span className={`text-sm font-bold ${uploadTimes['iban_image'] ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                    {isUploadingObj['iban_image'] ? 'Yükleniyor...' : (uploadTimes['iban_image'] ? 'Yeniden Yükle' : 'Görsel Yükle')}
+                                </span>
+                                <input disabled={!isIbanImageActive || isUploadingObj['iban_image']} type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleGenericUpload('iban_image', e)} />
+                            </label>
+                            {uploadTimes['iban_image'] && (
+                                <div className="mt-3 text-xs font-semibold text-center text-emerald-400">
+                                    Tarih: {uploadTimes['iban_image']}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Excel IBAN */}
+                        <div className={`p-6 rounded-2xl border-2 transition-all flex flex-col justify-between ${isIbanExcelActive ? 'bg-slate-950 border-purple-500/50' : 'bg-slate-950 border-slate-800 opacity-70'}`}>
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-white flex items-center gap-2 text-sm"><FileSpreadsheet className="w-4 h-4 text-purple-400"/> Excel Belgesi</h3>
+                                    <div onClick={toggleIbanExcelActive} className={`w-10 h-6 rounded-full cursor-pointer transition-colors flex items-center px-1 ${isIbanExcelActive ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanExcelActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-400 mb-4 h-8 leading-snug">Farklı bankalara ait hesapların (TL/USD/EUR) yer aldığı PDF/Excel yükleyin.</p>
+                            </div>
+                            
+                            <label className={`flex flex-col items-center justify-center w-full py-8 border-2 border-dashed rounded-xl transition-colors ${!isIbanExcelActive ? 'cursor-not-allowed border-slate-700' : uploadTimes['iban_excel'] ? 'border-purple-500/50 hover:bg-purple-900/20 cursor-pointer' : 'border-slate-700 hover:bg-slate-800/50 cursor-pointer'}`}>
+                                {isUploadingObj['iban_excel'] ? <Loader2 className="w-6 h-6 mb-2 text-slate-400 animate-spin" /> : <UploadCloud className={`w-6 h-6 mb-2 ${uploadTimes['iban_excel'] ? 'text-purple-400' : 'text-slate-500'}`} />}
+                                <span className={`text-sm font-bold ${uploadTimes['iban_excel'] ? 'text-purple-400' : 'text-slate-400'}`}>
+                                    {isUploadingObj['iban_excel'] ? 'Yükleniyor...' : (uploadTimes['iban_excel'] ? 'Yeniden Yükle' : 'Dosya Yükle')}
+                                </span>
+                                <input disabled={!isIbanExcelActive || isUploadingObj['iban_excel']} type="file" className="hidden" accept=".pdf,.xls,.xlsx" onChange={(e) => handleGenericUpload('iban_excel', e)} />
+                            </label>
+                            {uploadTimes['iban_excel'] && (
+                                <div className="mt-3 text-xs font-semibold text-center text-purple-400">
+                                    Tarih: {uploadTimes['iban_excel']}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

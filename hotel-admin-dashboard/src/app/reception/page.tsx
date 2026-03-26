@@ -297,7 +297,7 @@ export default function ReceptionDashboard() {
                                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanImageActive ? 'translate-x-4' : 'translate-x-0'}`} />
                                     </div>
                                 </div>
-                                <p className="text-xs text-slate-400 mb-4 h-8 leading-snug">Cihazdan hazır bir IBAN tasarım görseli veya QR kod yükleyin.</p>
+                                <p className="text-xs text-slate-400 mb-4 h-8 leading-snug">Cihazdan hazır bir IBAN görsel tasarımı veya QR kod yükleyin. (Sadece JPEG, PNG, WEBP)</p>
                             </div>
                             
                             <label className={`flex flex-col items-center justify-center w-full py-8 border-2 border-dashed rounded-xl transition-colors ${!isIbanImageActive ? 'cursor-not-allowed border-slate-700' : uploadTimes['iban_image'] ? 'border-emerald-500/50 hover:bg-emerald-900/20 cursor-pointer' : 'border-slate-700 hover:bg-slate-800/50 cursor-pointer'}`}>

@@ -1,7 +1,6 @@
 // src/lib/telegram-service.ts
 
-const GUEST_BOT_TOKEN = process.env.TELEGRAM_GUEST_BOT_TOKEN;
-const MANAGER_BOT_TOKEN = process.env.TELEGRAM_MANAGER_BOT_TOKEN;
+import { getActiveBotTokens } from '@/lib/bot-tokens';
 
 // Telegram API'sine HTTP POST isteği atan çekirdek fonksiyon
 export async function sendTelegramMessage(token: string, chatId: string, text: string, replyMarkup?: any) {
@@ -46,7 +45,8 @@ export async function notifyDepartment(
     message: string,
     turkishTranslation: string,
     isAlerjen: boolean,
-    imageUrl?: string | null
+    imageUrl?: string | null,
+    departmentName?: string
 ) {
     const alerjenWarning = isAlerjen ? "🚨 <b>DİKKAT! ALERJEN ŞÜPHESİ/BİLDİRİMİ! (F&B/GASTRO)</b> 🚨\n\n" : "";
     const text = `${alerjenWarning}🏨 <b>YENİ ODA TALEBİ</b>\n\n<b>Talep ID:</b> #${ticketId}\n<b>Oda No:</b> ${roomNo}\n<b>Misafir:</b> ${guestName}\n\n<b>Talep (Orijinal):</b>\n<i>${message}</i>\n\n<b>Çeviri (Türkçe):</b>\n<b>${turkishTranslation}</b>\n\nLütfen talebi üstlenip süreniz dolmadan aksiyon alınız.`;
@@ -62,10 +62,13 @@ export async function notifyDepartment(
         ]
     };
 
+    const botTokens = await getActiveBotTokens();
+    const targetBotToken = botTokens.getDepartmentBot(departmentName || 'Resepsiyon');
+
     if (imageUrl) {
         // Resimli gönderme
         try {
-            const resp = await fetch(`https://api.telegram.org/bot${GUEST_BOT_TOKEN}/sendPhoto`, {
+            const resp = await fetch(`https://api.telegram.org/bot${targetBotToken}/sendPhoto`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -79,15 +82,15 @@ export async function notifyDepartment(
             const result = await resp.json();
             if (!result.ok) {
                 console.error("Telegram sendPhoto ok null:", result);
-                return await sendTelegramMessage(GUEST_BOT_TOKEN || "", departmentChatId, text + "\n(Görsel Yüklenemedi)", replyMarkup);
+                return await sendTelegramMessage(targetBotToken, departmentChatId, text + "\n(Görsel Yüklenemedi)", replyMarkup);
             }
             return true;
         } catch (e) {
             console.error("Görsel gönderilirken hata oluştu", e);
-            return await sendTelegramMessage(GUEST_BOT_TOKEN || "", departmentChatId, text, replyMarkup);
+            return await sendTelegramMessage(targetBotToken, departmentChatId, text, replyMarkup);
         }
     } else {
-        return await sendTelegramMessage(GUEST_BOT_TOKEN || "", departmentChatId, text, replyMarkup);
+        return await sendTelegramMessage(targetBotToken, departmentChatId, text, replyMarkup);
     }
 }
 
@@ -101,8 +104,10 @@ export async function escalateToManagement(
 ) {
     const text = `⚠️ <b>SLA İHLALİ (ESKALASYON)</b> ⚠️\n\n<b>Talep:</b> #${ticketId}\n<b>Departman:</b> ${departmentName}\n\nBu talep için verilen süre içerisinde departman personeli tarafından aksiyon alınmadı (Yanıt Butonlarına Tıklanmadı). Resepsiyonun acil müdahalesi ve açıklama girmesi zorunludur!`;
 
+    const botTokens = await getActiveBotTokens();
+
     // SLA İhlallerini Yönetici botundan gönderelim
-    return await sendTelegramMessage(MANAGER_BOT_TOKEN || "", managerChatId, text);
+    return await sendTelegramMessage(botTokens.MANAGER_BOT, managerChatId, text);
 }
 
 /**
@@ -117,6 +122,8 @@ export async function notifyMismatchToReception(
 ) {
     const text = `🚨 <b>ACİL DOĞRULAMA UYARISI</b> 🚨\n\nSistemde kaydı bulunmayan biri otel içinden talepte bulunmaya çalıştı!\n\n<b>Beyan Edilen Oda:</b> ${providedRoomNo}\n<b>Beyan Edilen İsim:</b> ${providedGuestName}\n\n<b>Gelen Mesaj:</b>\n<i>${message}</i>\n\nLütfen bu durumu acilen kontrol ediniz.`;
 
+    const botTokens = await getActiveBotTokens();
+
     // Yönetici/Resepsiyon botundan gönderelim
-    return await sendTelegramMessage(MANAGER_BOT_TOKEN || GUEST_BOT_TOKEN || "", managerChatId, text);
+    return await sendTelegramMessage(botTokens.MANAGER_BOT || botTokens.GUEST_BOT, managerChatId, text);
 }

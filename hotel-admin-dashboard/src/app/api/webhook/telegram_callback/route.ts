@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { setManyChatCustomField, sendManyChatFlow } from '@/lib/manychat-client';
 import { MANYCHAT_CONFIG } from '@/lib/manychat-config';
+import { getActiveBotTokens } from '@/lib/bot-tokens';
 
 export async function POST(request: Request) {
     try {
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
             const action = parts[2]; // NOW or LATER
 
             const supabase = getServiceSupabase();
+            const botTokens = await getActiveBotTokens();
 
             // Bileti veritabanından bul
             const { data: ticket, error } = await supabase
@@ -31,13 +33,15 @@ export async function POST(request: Request) {
                 .eq('ticket_id', ticketId)
                 .single();
 
+            const targetBotToken = botTokens.getDepartmentBot(ticket?.department || 'Resepsiyon');
+
             if (error || !ticket) {
                 console.error("Ticket bulunamadı veya hata:", error);
-                return updateTelegramMessage(chatId, messageId, "❌ HATA: Bu bilet sistemde bulunamadı veya daha önce kapanmış.");
+                return updateTelegramMessage(chatId, messageId, targetBotToken, "❌ HATA: Bu bilet sistemde bulunamadı veya daha önce kapanmış.");
             }
 
             if (ticket.status !== 'PENDING') {
-                return updateTelegramMessage(chatId, messageId, `⚠️ Bu talep daha önce ACKNOWLEDGE edildi (Durum: ${ticket.status})`);
+                return updateTelegramMessage(chatId, messageId, targetBotToken, `⚠️ Bu talep daha önce ACKNOWLEDGE edildi (Durum: ${ticket.status})`);
             }
 
             // Durumu güncelle
@@ -60,10 +64,10 @@ export async function POST(request: Request) {
             const actionText = action === 'NOW' ? "Hemen İlgileniyor🚀" : "Sonra İlgilenecek⏳";
             const newText = callbackQuery.message.text + `\n\n✅ <b>ÜSTLENİLDİ</b>\nPersonel: ${staffName}\nDurum: ${actionText}`;
 
-            await updateTelegramMessage(chatId, messageId, newText);
+            await updateTelegramMessage(chatId, messageId, targetBotToken, newText);
 
             // İsteğe bağlı: Telegram'a callback yanıtı gönder (yukarıda popup çıkması için)
-            await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_GUEST_BOT_TOKEN}/answerCallbackQuery`, {
+            await fetch(`https://api.telegram.org/bot${targetBotToken}/answerCallbackQuery`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ callback_query_id: callbackQuery.id, text: "Talebi başarıyla üstlendiniz!" })
@@ -81,10 +85,10 @@ export async function POST(request: Request) {
 }
 
 // Helper: Mesajı butonları silip günceller
-async function updateTelegramMessage(chatId: string, messageId: number, text: string) {
+async function updateTelegramMessage(chatId: string, messageId: number, botToken: string, text: string) {
     if (!chatId || !messageId) return NextResponse.json({ success: false });
     
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_GUEST_BOT_TOKEN}/editMessageText`, {
+    await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

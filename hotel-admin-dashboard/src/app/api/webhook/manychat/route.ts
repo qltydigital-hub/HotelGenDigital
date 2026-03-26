@@ -307,7 +307,8 @@ export async function POST(request: Request) {
                     currentRequestMsg, 
                     currentTranslation || currentRequestMsg,
                     aiAnalysis.is_alerjen,
-                    incomingUrl
+                    incomingUrl,
+                    currentDept
                 );
             }
 

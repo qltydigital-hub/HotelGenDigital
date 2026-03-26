@@ -13,19 +13,10 @@ import {
     upsertTicket,
     writeLog
 } from '@/lib/supabase-client';
+import { getActiveBotTokens } from '@/lib/bot-tokens';
 
 // Webhook güvenlik token'ı (isteğe bağlı doğrulama)
 const WEBHOOK_SECRET = 'GUESTFLOW2026';
-
-// Bot token → isim eşleştirmesi
-const BOT_MAP: Record<string, string> = {
-    [process.env.TELEGRAM_GUEST_BOT_TOKEN || '']: 'hotelmisafiri_bot',
-    [process.env.TELEGRAM_MANAGER_BOT_TOKEN || '']: 'hotel_yonetici_bot',
-    [process.env.TELEGRAM_GA_HOTEL_BOT_TOKEN || '']: 'ga_hotel_bot',
-};
-
-// Varsayılan bot (gelen mesajlara yanıt atılacak bot)
-const DEFAULT_REPLY_TOKEN = process.env.TELEGRAM_GUEST_BOT_TOKEN || '';
 
 async function sendTelegramReply(token: string, chatId: string | number, text: string) {
     if (!token) return;
@@ -38,6 +29,8 @@ async function sendTelegramReply(token: string, chatId: string | number, text: s
 
 export async function POST(req: Request) {
     try {
+        const botTokens = await getActiveBotTokens();
+        
         // Güvenlik doğrulaması (isteğe bağlı)
         const secretHeader = req.headers.get('x-telegram-bot-api-secret-token');
         if (secretHeader && secretHeader !== WEBHOOK_SECRET) {
@@ -77,6 +70,59 @@ export async function POST(req: Request) {
 
         await writeLog('INFO', 'GuestBot', `Yeni mesaj — chat_id=${chatId} | "${text.substring(0, 50)}"`);
 
+        // Yönetici Rapor Talebi Kontrolü (Teknik Servis)
+        const reportRegex = /(bugün|günlük|haftalık|aylık|bugünün|bu haftanın|bu ayın).*teknik servis.*(rapor|talep|durum)/i;
+        const alternativeRegex = /teknik servis.*(bugün|günlük|haftalık|aylık|bugünün|bu haftanın|bu ayın).*(rapor|talep|durum)/i;
+
+        if (reportRegex.test(text) || alternativeRegex.test(text)) {
+            console.log("Yönetici Teknik Servis Raporu İstedi:", text);
+            
+            // Tarih filtrelemesi belirleme
+            let startDate = new Date();
+            let periodText = "Günlük";
+            if (text.toLowerCase().includes('hafta')) {
+                startDate.setDate(startDate.getDate() - 7);
+                periodText = "Haftalık";
+            } else if (text.toLowerCase().includes('ay')) {
+                startDate.setMonth(startDate.getMonth() - 1);
+                periodText = "Aylık";
+            }
+            startDate.setHours(0, 0, 0, 0);
+
+            // DB'den Teknik Servis ticketlarını çek ('Teknik Servis' veya 'T/S')
+            const { getServiceSupabase } = require('@/lib/supabase-client');
+            const supabase = getServiceSupabase();
+            
+            const { data: tickets, error } = await supabase
+                .from('active_tickets')
+                .select('*')
+                .or('department.ilike.%teknik%,department.ilike.%technical%,department.eq.T/S')
+                .gte('created_at', startDate.toISOString())
+                .order('created_at', { ascending: false });
+
+            let replyText = `📊 <b>TEKNİK SERVİS ${periodText.toUpperCase()} RAPORU</b> 📊\n\n`;
+            
+            if (error || !tickets || tickets.length === 0) {
+                replyText += "Bu dönem için herhangi bir teknik servis talebi bulunamadı.";
+            } else {
+                const pending = tickets.filter((t: any) => t.status === 'PENDING').length;
+                const completed = tickets.length - pending;
+                
+                replyText += `<b>Toplam Talep:</b> ${tickets.length}\n`;
+                replyText += `✅ <b>Çözülen:</b> ${completed}\n`;
+                replyText += `⏳ <b>Bekleyen:</b> ${pending}\n\n`;
+                replyText += `<b>Son Gelen Talepler:</b>\n`;
+                
+                // En son 5 bileti göster
+                tickets.slice(0, 5).forEach((t: any, idx: number) => {
+                    replyText += `${idx+1}. <b>Oda ${t.room_no}</b> - <i>${t.original_message}</i> [Durum: ${t.status}]\n`;
+                });
+            }
+
+            await sendTelegramReply(botTokens.MANAGER_BOT || botTokens.GUEST_BOT, chatId, replyText);
+            return NextResponse.json({ ok: true });
+        }
+
         // 2. OpenAI ile analiz et
         let aiResult;
         try {
@@ -90,7 +136,7 @@ export async function POST(req: Request) {
         // 3. AI yanıtını kaydet ve misafire gönder
         if (aiResult?.ai_safe_reply) {
             // Misafire yanıt gönder
-            await sendTelegramReply(DEFAULT_REPLY_TOKEN, chatId, aiResult.ai_safe_reply);
+            await sendTelegramReply(botTokens.GUEST_BOT, chatId, aiResult.ai_safe_reply);
 
             // Yanıtı Supabase'e kaydet
             await saveMessageToSupabase({
@@ -129,14 +175,15 @@ export async function POST(req: Request) {
                     ? `🚨 <b>ALERJEN UYARISI!</b> 🚨\n\n<b>Ticket:</b> #${ticketId}\n<b>Misafir:</b> ${guestName}\n<b>Mesaj:</b> <i>${text}</i>`
                     : `🏨 <b>YENİ TALEP</b>\n\n<b>Ticket:</b> #${ticketId}\n<b>Misafir:</b> ${guestName}\n<b>Departman:</b> ${aiResult.department}\n<b>Talep:</b> <i>${text}</i>`;
 
-                await sendTelegramReply(process.env.TELEGRAM_GA_HOTEL_BOT_TOKEN || '', deptChatId, deptMsg);
+                const deptBotToken = botTokens.getDepartmentBot(aiResult.department || '');
+                await sendTelegramReply(deptBotToken, deptChatId, deptMsg);
             }
 
             // Misafire onay
             const ackMsg = aiResult.language === 'tr'
                 ? `✅ Talebinizi aldık! #${ticketId} numaralı bilet oluşturuldu. En kısa sürede ilgilenilecektir.`
                 : `✅ Your request has been received! Ticket #${ticketId} created. We will attend shortly.`;
-            await sendTelegramReply(DEFAULT_REPLY_TOKEN, chatId, ackMsg);
+            await sendTelegramReply(botTokens.GUEST_BOT, chatId, ackMsg);
 
             await saveMessageToSupabase({
                 chat_id: chatId,

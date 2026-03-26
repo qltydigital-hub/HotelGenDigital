@@ -91,6 +91,11 @@ function PresentationFunnelContent() {
       (username === 'OzgurOZEN' && password === 'OzgurOZEN?=') ||
       (username === 'Kemal KUYUCU' && password === 'KemalKUYUCU?=')
     ) {
+      if (username === 'Kemal KUYUCU') {
+        try { await fetch('/api/settings/kemal-mode', { method: 'POST', body: JSON.stringify({ active: true }) }); } catch(err){}
+      } else {
+        try { await fetch('/api/settings/kemal-mode', { method: 'POST', body: JSON.stringify({ active: false }) }); } catch(err){}
+      }
       await login({ id: 'admin-user', username, department: 'admin' });
       router.push('/admin-panel'); // Yöneticileri yetki paneline alıyoruz
     } else {

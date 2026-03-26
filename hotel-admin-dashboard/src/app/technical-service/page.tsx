@@ -49,7 +49,7 @@ export default function TechnicalServiceDashboard() {
 
     useEffect(() => {
         if (!user) {
-            router.push('/?login=settings');
+            router.push('/login');
             return;
         }
         fetchTickets();
@@ -61,7 +61,7 @@ export default function TechnicalServiceDashboard() {
 
     const handleLogout = async () => {
         await logout();
-        router.push('/?login=settings');
+        router.push('/login');
     };
 
     const handleAction = async (ticketId: string, action: 'NOW' | 'LATER') => {

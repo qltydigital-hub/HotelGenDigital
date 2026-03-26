@@ -58,6 +58,7 @@ export default function LoginPage() {
                 // Kullanıcının departmanına göre yönlendir
                 if (user.department === 'reception') router.push('/reception');
                 else if (user.department === 'guest-relation') router.push('/guest-relation');
+                else if (user.department === 'technical-service') router.push('/technical-service');
                 else router.push('/dashboard'); // Başka bir departman ise
             } else {
                 setError('Geçersiz kullanıcı adı veya şifre!');
@@ -101,6 +102,7 @@ export default function LoginPage() {
                                     <option value="reception">Resepsiyon (F/O)</option>
                                     <option value="guest-relation">Misafir İlişkileri (G/R)</option>
                                     <option value="housekeeping">Housekeeping (H/K)</option>
+                                    <option value="technical-service">Teknik Servis (T/S)</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                                     <svg className="w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">

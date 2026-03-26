@@ -53,9 +53,9 @@ export async function POST(req: Request) {
         let guestName = `${firstName} ${lastName}`.trim();
         const botName = 'hotelmisafiri_bot'; // Webhook tek endpoint olduğu için varsayılan
 
-        // Apply fallback correction for DB encoding issue
-        if (text) text = removeTurkishAccents(text);
-        if (guestName) guestName = removeTurkishAccents(guestName);
+        // No longer applying accent removal as DB supports UTF-8
+        // if (text) text = removeTurkishAccents(text);
+        // if (guestName) guestName = removeTurkishAccents(guestName);
 
         if (!text || !chatId) {
             return NextResponse.json({ ok: true });

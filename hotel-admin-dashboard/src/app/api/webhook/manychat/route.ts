@@ -18,8 +18,8 @@ export async function POST(request: Request) {
         const subscriberId = payload.subscriber_id || payload.chat_id || payload.contact_id || "unknown";
         let incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message || payload.text;
         
-        // Türkçe DB encoding sorununu çözmek için gelen metinden de aksanları temizle
-        if (incomingText) incomingText = removeTurkishAccents(incomingText);
+        // No longer applying accent removal as DB supports UTF-8
+        // if (incomingText) incomingText = removeTurkishAccents(incomingText);
 
         const isAudio = payload.custom_fields?.[MANYCHAT_CONFIG.fields.cuf_audio_url] ? true : false;
         // ManyChat'ten veya external sistemden gelebilecek olası resim URL'leri

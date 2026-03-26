@@ -3,22 +3,69 @@
 import React, { useState } from 'react';
 import { Lock, Hotel as HotelIcon, ChevronRight, UserCircle, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth, UserProfile } from '@/providers/AuthProvider';
 
 export default function LoginPage() {
     const [department, setDepartment] = useState<'reception' | 'guest-relation'>('reception');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
     const router = useRouter();
+    const { login } = useAuth();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simüle edilmiş giriş kontrolü: admin / 1234
-        if (username.toLowerCase() === 'admin' && password === '1234') {
-            if (department === 'reception') router.push('/reception');
-            else router.push('/guest-relation');
-        } else {
-            setError('Geçersiz kullanıcı adı veya şifre!');
+        setError('');
+        setIsLoading(true);
+
+        try {
+            // DB'den staff_users tablosunu sorguluyoruz.
+            // Sadece seçili departmandakileri de getirebiliriz, şimdilik username e göre getiriyoruz.
+            const { data: users, error: supabaseError } = await supabase
+                .from('staff_users')
+                .select('*')
+                .eq('username', username)
+                .limit(1);
+
+            if (supabaseError) {
+                console.error("Supabase Login Error:", supabaseError.message);
+                throw new Error("Veritabanı bağlantı hatası!");
+            }
+
+            const user = users?.[0];
+
+            if (user && user.password_hash === password) {
+                // Yeni bir oturum token'ı oluştur (Eski açık oturumları geçersiz kılacak)
+                const newSessionToken = Date.now().toString() + Math.random().toString();
+                
+                // Veritabanını yeni token ile güncelle
+                await supabase.from('staff_users')
+                    .update({ session_token: newSessionToken })
+                    .eq('id', user.id);
+
+                const userProfile: UserProfile = {
+                    id: user.id,
+                    username: user.username,
+                    department: user.department,
+                    session_token: newSessionToken
+                };
+                
+                await login(userProfile);
+                
+                // Kullanıcının departmanına göre yönlendir
+                if (user.department === 'reception') router.push('/reception');
+                else if (user.department === 'guest-relation') router.push('/guest-relation');
+                else router.push('/dashboard'); // Başka bir departman ise
+            } else {
+                setError('Geçersiz kullanıcı adı veya şifre!');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Giriş sırasında bir hata oluştu.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -97,10 +144,11 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            className="w-full py-5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-black text-lg rounded-2xl shadow-2xl shadow-blue-600/30 transition-all flex items-center justify-center group"
+                            disabled={isLoading}
+                            className={`w-full py-5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-black text-lg rounded-2xl shadow-2xl shadow-blue-600/30 transition-all flex items-center justify-center group ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            PANELİ AÇ
-                            <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
+                            {isLoading ? 'GİRİŞ YAPILIYOR...' : 'PANELİ AÇ'}
+                            {!isLoading && <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />}
                         </button>
                     </form>
                 </div>

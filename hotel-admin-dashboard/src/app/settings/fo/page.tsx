@@ -46,6 +46,12 @@ export default function FrontOfficeSettings() {
     const [escalationTelegram, setEscalationTelegram] = useState("");
     const [isSavingEscalation, setIsSavingEscalation] = useState(false);
 
+    // IBAN Settings States
+    const [ibanText, setIbanText] = useState("");
+    const [isIbanTextActive, setIsIbanTextActive] = useState(true);
+    const [isIbanImageActive, setIsIbanImageActive] = useState(true);
+    const [isIbanExcelActive, setIsIbanExcelActive] = useState(true);
+
     // Ayarları LocalStorage'dan Oku ve API'den Çek
     useEffect(() => {
         const sm = localStorage.getItem('fo_offerMap');
@@ -53,10 +59,20 @@ export default function FrontOfficeSettings() {
         const si = localStorage.getItem('fo_offerInfo');
         const kt = localStorage.getItem('fo_konseptTipi');
         
+        const it = localStorage.getItem('fo_ibanText');
+        const ita = localStorage.getItem('fo_isIbanTextActive');
+        const iia = localStorage.getItem('fo_isIbanImageActive');
+        const iea = localStorage.getItem('fo_isIbanExcelActive');
+        
         if (sm !== null) setOfferMap(sm === 'true');
         if (sr !== null) setRemind247(sr === 'true');
         if (si !== null) setOfferInfo(si === 'true');
         if (kt !== null) setKonseptTipi(kt);
+
+        if (it !== null) setIbanText(it);
+        if (ita !== null) setIsIbanTextActive(ita === 'true');
+        if (iia !== null) setIsIbanImageActive(iia === 'true');
+        if (iea !== null) setIsIbanExcelActive(iea === 'true');
 
         // API'den Eskalasyon ayarlarını getir
         fetch('/api/settings')
@@ -137,6 +153,26 @@ export default function FrontOfficeSettings() {
     const handleKonseptTipiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setKonseptTipi(e.target.value);
         localStorage.setItem('fo_konseptTipi', e.target.value);
+    };
+
+    const handleSaveIbanText = () => {
+        localStorage.setItem('fo_ibanText', ibanText);
+        alert('Manuel IBAN bilgileri başarıyla kaydedildi.');
+    };
+    const toggleIbanTextActive = () => {
+        const val = !isIbanTextActive;
+        setIsIbanTextActive(val);
+        localStorage.setItem('fo_isIbanTextActive', String(val));
+    };
+    const toggleIbanImageActive = () => {
+        const val = !isIbanImageActive;
+        setIsIbanImageActive(val);
+        localStorage.setItem('fo_isIbanImageActive', String(val));
+    };
+    const toggleIbanExcelActive = () => {
+        const val = !isIbanExcelActive;
+        setIsIbanExcelActive(val);
+        localStorage.setItem('fo_isIbanExcelActive', String(val));
     };
 
     // Agencies State
@@ -551,6 +587,92 @@ export default function FrontOfficeSettings() {
                         * Yapay zeka, bir rezervasyon isteği algıladığında listelediğiniz mevcut acentaları fiyat bilgileriyle karşılaştırıp, 
                         müşteriye <strong>ilk ve özel olarak "Ana Kaynak (Direkt Web)" adresinden satış yapmayı</strong> önerecektir.
                     </p>
+                </div>
+
+                {/* --- NEW FEATURE: IBAN & DIRECT PAYMENT SETTINGS --- */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all mt-8">
+                    <div className="flex items-center gap-4 mb-6">
+                        <Banknote className="w-8 h-8 text-blue-400" />
+                        <div>
+                            <h2 className="text-2xl font-bold">Direkt Rezervasyon / Hesap & IBAN Bilgileri</h2>
+                            <p className="text-slate-400 text-sm mt-1">Acentalara komisyon ödemek istemeyen misafirlerinize sunulacak olan otel hesap bilgileriniz. Misafir ödeme dekontunu ilettiğinde işlem sonuçlanır ve yetkiliye mail düşer.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Manuel IBAN */}
+                        <div className={`p-5 rounded-2xl border-2 transition-all ${isIbanTextActive ? 'bg-slate-950 border-blue-500/50' : 'bg-slate-950 border-slate-800 opacity-70'}`}>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-white flex items-center gap-2"><Edit2 className="w-4 h-4 text-blue-400"/> Manuel Giriş</h3>
+                                <div onClick={toggleIbanTextActive} className={`w-10 h-6 rounded-full cursor-pointer transition-colors flex items-center px-1 ${isIbanTextActive ? 'bg-blue-500' : 'bg-slate-700'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanTextActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 mb-4">IBAN, Alıcı Adı ve Banka bilgilerini metin olarak girin.</p>
+                            <textarea 
+                                disabled={!isIbanTextActive}
+                                value={ibanText}
+                                onChange={(e) => setIbanText(e.target.value)}
+                                placeholder="Örn: TR29 0000 0000 0000 0000 0000 00&#10;Alıcı: My Hotel Turizm A.Ş.&#10;Banka: X Bankası"
+                                className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-2 mb-3 h-24 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                            />
+                            <button disabled={!isIbanTextActive} onClick={handleSaveIbanText} className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold rounded-lg border border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                Metni Kaydet
+                            </button>
+                        </div>
+
+                        {/* Görsel IBAN */}
+                        <div className={`p-5 rounded-2xl border-2 transition-all flex flex-col justify-between ${isIbanImageActive ? 'bg-slate-950 border-emerald-500/50' : 'bg-slate-950 border-slate-800 opacity-70'}`}>
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-bold text-white flex items-center gap-2"><MapIcon className="w-4 h-4 text-emerald-400"/> Görsel Yükleme</h3>
+                                    <div onClick={toggleIbanImageActive} className={`w-10 h-6 rounded-full cursor-pointer transition-colors flex items-center px-1 ${isIbanImageActive ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanImageActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-400 mb-4">Cihazdan hazır bir IBAN tasarım görseli veya QR kod yükleyin.</p>
+                            </div>
+                            
+                            <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl transition-colors ${!isIbanImageActive ? 'cursor-not-allowed border-slate-700' : uploadTimes['iban_image'] ? 'border-emerald-500/50 hover:bg-emerald-900/20 cursor-pointer' : 'border-slate-700 hover:bg-slate-800/50 cursor-pointer'}`}>
+                                {isUploadingObj['iban_image'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['iban_image'] ? 'text-emerald-400' : 'text-slate-500'}`} />}
+                                <span className={`text-xs font-bold ${uploadTimes['iban_image'] ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                    {isUploadingObj['iban_image'] ? 'Yükleniyor...' : (uploadTimes['iban_image'] ? 'Yeniden Yükle' : 'Görsel Yükle')}
+                                </span>
+                                <input disabled={!isIbanImageActive || isUploadingObj['iban_image']} type="file" className="hidden" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleGenericUpload('iban_image', e)} />
+                            </label>
+                            {uploadTimes['iban_image'] && (
+                                <div className="mt-2 text-[10px] font-semibold text-center text-emerald-400">
+                                    Tarih: {uploadTimes['iban_image']}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Excel IBAN */}
+                        <div className={`p-5 rounded-2xl border-2 transition-all flex flex-col justify-between ${isIbanExcelActive ? 'bg-slate-950 border-purple-500/50' : 'bg-slate-950 border-slate-800 opacity-70'}`}>
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-bold text-white flex items-center gap-2"><FileSpreadsheet className="w-4 h-4 text-purple-400"/> Excel Belgesi</h3>
+                                    <div onClick={toggleIbanExcelActive} className={`w-10 h-6 rounded-full cursor-pointer transition-colors flex items-center px-1 ${isIbanExcelActive ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isIbanExcelActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-400 mb-4">Farklı bankalara ait hesapların (TL/USD/EUR) yer aldığı PDF/Excel yükleyin.</p>
+                            </div>
+                            
+                            <label className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl transition-colors ${!isIbanExcelActive ? 'cursor-not-allowed border-slate-700' : uploadTimes['iban_excel'] ? 'border-purple-500/50 hover:bg-purple-900/20 cursor-pointer' : 'border-slate-700 hover:bg-slate-800/50 cursor-pointer'}`}>
+                                {isUploadingObj['iban_excel'] ? <Loader2 className="w-5 h-5 mb-1 text-slate-400 animate-spin" /> : <UploadCloud className={`w-5 h-5 mb-1 ${uploadTimes['iban_excel'] ? 'text-purple-400' : 'text-slate-500'}`} />}
+                                <span className={`text-xs font-bold ${uploadTimes['iban_excel'] ? 'text-purple-400' : 'text-slate-400'}`}>
+                                    {isUploadingObj['iban_excel'] ? 'Yükleniyor...' : (uploadTimes['iban_excel'] ? 'Yeniden Yükle' : 'Dosya Yükle')}
+                                </span>
+                                <input disabled={!isIbanExcelActive || isUploadingObj['iban_excel']} type="file" className="hidden" accept=".pdf,.xls,.xlsx" onChange={(e) => handleGenericUpload('iban_excel', e)} />
+                            </label>
+                            {uploadTimes['iban_excel'] && (
+                                <div className="mt-2 text-[10px] font-semibold text-center text-purple-400">
+                                    Tarih: {uploadTimes['iban_excel']}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* --- NEW FEATURE: ESCALATION & HUMAN INTERVENTION --- */}

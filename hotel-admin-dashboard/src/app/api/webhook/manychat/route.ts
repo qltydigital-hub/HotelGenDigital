@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MANYCHAT_CONFIG } from '@/lib/manychat-config';
-import { analyzeGuestMessage } from '@/lib/openai-service';
+import { analyzeGuestMessage, removeTurkishAccents } from '@/lib/openai-service';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import { notifyDepartment, notifyMismatchToReception, sendTelegramMessage } from '@/lib/telegram-service';
 import { setManyChatCustomField, sendManyChatFlow, sendManyChatTextMessage, sendManyChatInteractiveMessage } from '@/lib/manychat-client';
@@ -16,7 +16,11 @@ export async function POST(request: Request) {
 
         // 1. Gelen Veriyi Al
         const subscriberId = payload.subscriber_id || payload.chat_id || payload.contact_id || "unknown";
-        const incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message || payload.text;
+        let incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message || payload.text;
+        
+        // Türkçe DB encoding sorununu çözmek için gelen metinden de aksanları temizle
+        if (incomingText) incomingText = removeTurkishAccents(incomingText);
+
         const isAudio = payload.custom_fields?.[MANYCHAT_CONFIG.fields.cuf_audio_url] ? true : false;
         // ManyChat'ten veya external sistemden gelebilecek olası resim URL'leri
         const incomingUrl = payload.url || payload.image_url || payload.custom_fields?.image_url || payload.custom_fields?.[MANYCHAT_CONFIG.fields.ai_urun_gorsel_url] || null;

@@ -7,7 +7,7 @@
 //   ngrok http 3000  →  https://xxxx.ngrok.io/api/webhook/telegram
 
 import { NextResponse } from 'next/server';
-import { analyzeGuestMessage } from '@/lib/openai-service';
+import { analyzeGuestMessage, removeTurkishAccents } from '@/lib/openai-service';
 import {
     saveMessageToSupabase,
     upsertTicket,
@@ -47,11 +47,15 @@ export async function POST(req: Request) {
         }
 
         const chatId = String(message.chat?.id || '');
-        const text = message.text || message.caption || '';
+        let text = message.text || message.caption || '';
         const firstName = message.from?.first_name || 'Misafir';
         const lastName = message.from?.last_name || '';
-        const guestName = `${firstName} ${lastName}`.trim();
+        let guestName = `${firstName} ${lastName}`.trim();
         const botName = 'hotelmisafiri_bot'; // Webhook tek endpoint olduğu için varsayılan
+
+        // Apply fallback correction for DB encoding issue
+        if (text) text = removeTurkishAccents(text);
+        if (guestName) guestName = removeTurkishAccents(guestName);
 
         if (!text || !chatId) {
             return NextResponse.json({ ok: true });

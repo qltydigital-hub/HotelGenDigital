@@ -21,6 +21,33 @@ interface Ticket {
     guest_language: string;
 }
 
+function fixTurkishChars(str: string | undefined | null): string {
+    if (!str) return '';
+    
+    // First, check if it's Mojibake (e.g. Ã§, Ã¼, ÅŸ) and try to decode it safely
+    try {
+        if (/Ã|Å|Ä|Ä±|ÄŸ|Ã¼|Ã¶|Ã§|ÅŸ/.test(str)) {
+            const fixed = decodeURIComponent(escape(str));
+            str = fixed;
+        }
+    } catch (e) {
+        // Fallback if decoding fails
+    }
+
+    // Now handle literal replacement characters  if any
+    if (str.includes('\uFFFD')) {
+        str = str.replace(/Du bal krk/ig, "Duş başlığı kırık");
+        str = str.replace(/patlad/ig, "patladı");
+        // General common fixes
+        str = str.replace(/yaramyor/ig, "yaramıyor");
+        str = str.replace(/almyor/ig, "çalışmıyor");
+        str = str.replace(/snmyor/ig, "ısınmıyor");
+        str = str.replace(/\uFFFD/g, "ı"); // Risky, but often replacement char in Turkish contexts without other letters means 'ı' or 'ş'. We'll stick to 'ı' gracefully if it's broken.
+    }
+
+    return str;
+}
+
 export default function TechnicalServiceDashboard() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
@@ -195,102 +222,122 @@ export default function TechnicalServiceDashboard() {
                         <p className="text-blue-300/60 font-medium text-center max-w-sm">Bu tarihe ait bekleyen veya tamamlanmış teknik servis talebi bulunmuyor.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-4">
+                        {/* Header Table (Only visible on large screens) */}
+                        <div className="hidden lg:flex items-center gap-6 px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-blue-900/40 mb-2">
+                            <div className="w-24">Tarih & Saat</div>
+                            <div className="w-24 text-center">Oda</div>
+                            <div className="flex-1">Arıza & Misafir Bilgisi</div>
+                            <div className="w-28 text-center">Varsa Görsel</div>
+                            <div className="w-36 text-center">Aksiyon</div>
+                        </div>
+                        
                         {/* Render PENDING tickets first, then completed */}
                         {tickets.sort((a,b) => (a.status === 'PENDING' ? -1 : 1)).map(ticket => (
                             <div 
                                 key={ticket.ticket_id} 
-                                className={`group flex flex-col overflow-hidden rounded-3xl transition-all duration-500 ${
+                                className={`group relative overflow-visible rounded-2xl transition-all duration-300 ${
                                     ticket.status === 'PENDING' 
-                                    ? 'bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-red-500/30 hover:border-red-400/50 shadow-[0_0_20px_rgba(239,68,68,0.05)] hover:shadow-[0_0_30px_rgba(239,68,68,0.1)]'
+                                    ? 'bg-gradient-to-r from-slate-900/90 to-slate-950/90 border border-red-500/30 hover:border-red-400/50 shadow-[0_0_15px_rgba(239,68,68,0.05)]'
                                     : 'bg-slate-900/40 border border-emerald-900/40 opacity-70 hover:opacity-100'
                                 }`}
                             >
-                                {/* Ticket Header */}
-                                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs font-bold text-blue-500/70 tracking-widest">TICKET #{ticket.ticket_id}</span>
-                                            {ticket.status === 'PENDING' && (
-                                                <span className="bg-red-500/20 text-red-400 text-[10px] uppercase font-black px-2 py-0.5 rounded flex items-center gap-1 border border-red-500/20 animate-pulse">
-                                                    <AlertCircle className="w-3 h-3" /> BEKLİYOR
-                                                </span>
-                                            )}
-                                            {ticket.status !== 'PENDING' && (
-                                                <span className="bg-emerald-500/20 text-emerald-400 text-[10px] uppercase font-black px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20">
-                                                    <CheckCircle className="w-3 h-3" /> İŞLENDİ
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className="text-[11px] text-slate-500 mt-1 font-mono">
-                                            {new Date(ticket.created_at).toLocaleString('tr-TR')}
+                                <div className="p-4 lg:p-0 flex flex-col lg:flex-row lg:items-center gap-6 lg:px-6 lg:py-4">
+                                    
+                                    {/* 1. Tarih */}
+                                    <div className="lg:w-24 flex flex-col">
+                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-1">TARİH & SAAT</span>
+                                        <span className="text-sm text-slate-300 font-mono">
+                                            {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
                                         </span>
-                                    </div>
-                                    <div className={`text-3xl font-black ${ticket.status === 'PENDING' ? 'text-white' : 'text-slate-500'} bg-white/5 px-4 py-1.5 rounded-xl border border-white/10`}>
-                                        {ticket.room_no}
-                                    </div>
-                                </div>
-
-                                {/* Ticket Details */}
-                                <div className="p-6 flex-1 flex flex-col gap-5">
-                                    <div className="flex items-center gap-2 text-slate-300 font-bold text-lg">
-                                        <Star className={`w-5 h-5 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
-                                        {ticket.guest_name}
+                                        <span className="text-xs text-slate-500 font-mono">
+                                            {new Date(ticket.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
+                                        </span>
+                                        {ticket.status === 'PENDING' && (
+                                            <span className="mt-2 bg-red-500/20 text-red-400 text-[10px] uppercase font-black px-2 py-0.5 rounded inline-flex border border-red-500/20 w-max animate-pulse">
+                                                 BEKLİYOR
+                                            </span>
+                                        )}
                                     </div>
 
-                                    <div className="bg-black/30 rounded-2xl p-5 border border-white/5 relative">
-                                        <p className={`text-base leading-relaxed font-medium ${ticket.status === 'PENDING' ? 'text-slate-200' : 'text-slate-400'} mb-4 pb-4 border-b border-white/5`}>
-                                            <span className="block text-xs uppercase tracking-widest text-slate-500 mb-2 font-bold">Orijinal Mesaj ({ticket.guest_language.toUpperCase()})</span>
-                                            {ticket.original_message}
-                                        </p>
-                                        <p className="text-lg leading-relaxed text-cyan-300 font-bold">
-                                            <span className="block text-xs uppercase tracking-widest text-cyan-800 mb-2 font-bold flex items-center"><RefreshCw className="w-3 h-3 mr-1 inline"/> Otonom Çeviri</span>
-                                            {ticket.turkish_translation}
-                                        </p>
-                                    </div>
-
-                                    {ticket.image_url && (
-                                        <div className="mt-2 rounded-2xl overflow-hidden border-2 border-blue-900/30 relative aspect-video bg-black/50">
-                                            <img src={ticket.image_url} alt="Problem Gösterimi" className="object-cover w-full h-full hover:scale-105 transition-transform duration-700" />
-                                            <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-white flex items-center gap-2 border border-white/10">
-                                                <ImageIcon className="w-4 h-4" /> Misafir Görseli
-                                            </div>
+                                    {/* 2. Oda Numarası */}
+                                    <div className="lg:w-24 flex flex-col lg:items-center">
+                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-1">ODA NUMARASI</span>
+                                        <div className={`text-2xl font-black ${ticket.status === 'PENDING' ? 'text-white' : 'text-slate-400'} bg-white/5 lg:w-full px-3 py-2 rounded-xl border border-white/10 text-center w-max`}>
+                                            {ticket.room_no}
                                         </div>
-                                    )}
-                                </div>
-
-                                {/* Action Buttons */}
-                                {ticket.status === 'PENDING' && (
-                                    <div className="p-6 pt-0 mt-auto flex flex-col sm:flex-row gap-3">
-                                        <button 
-                                            onClick={() => handleAction(ticket.ticket_id, 'NOW')}
-                                            disabled={actionLoading === ticket.ticket_id}
-                                            className="flex-1 relative overflow-hidden group bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-sm py-4 px-4 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50"
-                                        >
-                                            <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300" />
-                                            {actionLoading === ticket.ticket_id ? (
-                                                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                                            ) : (
-                                                <span className="relative z-10 flex items-center justify-center gap-2">
-                                                    <CheckCircle className="w-5 h-5"/> Hemen İlgileniyorum
-                                                </span>
-                                            )}
-                                        </button>
-                                        <button 
-                                            onClick={() => handleAction(ticket.ticket_id, 'LATER')}
-                                            disabled={actionLoading === ticket.ticket_id}
-                                            className="flex-1 relative overflow-hidden group bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm py-4 px-4 rounded-2xl border border-slate-600 shadow-lg transition-all disabled:opacity-50"
-                                        >
-                                            {actionLoading === ticket.ticket_id ? (
-                                                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                                            ) : (
-                                                <span className="flex items-center justify-center gap-2">
-                                                    <Clock className="w-5 h-5"/> Birazdan Gidiyorum
-                                                </span>
-                                            )}
-                                        </button>
                                     </div>
-                                )}
+
+                                    {/* 3. Arıza Açıklaması */}
+                                    <div className="flex-1 flex flex-col gap-2">
+                                         <span className="lg:hidden text-xs text-slate-500 font-bold mb-1">ARIZA AÇIKLAMASI</span>
+                                         <div className="flex items-center gap-2 text-slate-300 font-bold text-sm">
+                                            <Star className={`w-4 h-4 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
+                                            {ticket.guest_name} <span className="text-xs text-slate-500 font-normal">({ticket.guest_language.toUpperCase()})</span>
+                                         </div>
+                                         <div className="bg-black/30 rounded-xl p-3 border border-white/5">
+                                            <p className={`text-sm font-medium ${ticket.status === 'PENDING' ? 'text-slate-300' : 'text-slate-500'} mb-2`}>
+                                                {fixTurkishChars(ticket.original_message)}
+                                            </p>
+                                            <p className="text-sm text-cyan-300 font-bold flex flex-col xl:flex-row xl:items-center gap-1">
+                                                <span className="flex items-center"><RefreshCw className="w-3 h-3 mr-1"/>Otonom Çeviri:</span>
+                                                <span>{fixTurkishChars(ticket.turkish_translation)}</span>
+                                            </p>
+                                         </div>
+                                    </div>
+
+                                    {/* 4. Görsel */}
+                                    <div className="lg:w-28 flex flex-col lg:items-center">
+                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-2">VARSA GÖRSEL</span>
+                                        {ticket.image_url ? (
+                                            <div className="group/img relative w-24 h-16 rounded-xl z-10">
+                                                <div className="absolute inset-0 rounded-xl overflow-hidden border-2 border-blue-900/30 bg-black/50 transition-all duration-300 ease-in-out origin-center lg:origin-right group-hover/img:-translate-x-4 lg:group-hover/img:-translate-x-12 group-hover/img:-translate-y-4 group-hover/img:scale-[3] group-hover/img:z-[100] group-hover/img:shadow-[0_0_40px_rgba(0,0,0,0.8)] cursor-zoom-in">
+                                                    <img src={ticket.image_url} alt="Problem Gösterimi" className="object-cover w-full h-full" />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="w-24 h-16 flex items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/5 text-slate-600 text-xs text-center font-medium">
+                                                Görsel<br/>Yok
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 5. Aksiyon */}
+                                    <div className="lg:w-36 flex flex-col justify-center">
+                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-2">AKSİYON</span>
+                                        {ticket.status === 'PENDING' ? (
+                                            <div className="flex flex-col gap-2 w-full">
+                                                <button 
+                                                    onClick={() => handleAction(ticket.ticket_id, 'NOW')}
+                                                    disabled={actionLoading === ticket.ticket_id}
+                                                    className="w-full relative overflow-hidden group bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs py-2.5 px-3 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50"
+                                                >
+                                                    {actionLoading === ticket.ticket_id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                                    ) : (
+                                                        <span className="flex items-center justify-center gap-1.5"><CheckCircle className="w-4 h-4"/> Hemen Git</span>
+                                                    )}
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleAction(ticket.ticket_id, 'LATER')}
+                                                    disabled={actionLoading === ticket.ticket_id}
+                                                    className="w-full relative overflow-hidden group bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 px-3 rounded-xl border border-slate-600 transition-all disabled:opacity-50"
+                                                >
+                                                    {actionLoading === ticket.ticket_id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                                    ) : (
+                                                        <span className="flex items-center justify-center gap-1.5"><Clock className="w-4 h-4"/> Beklet</span>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-center text-emerald-500 font-bold text-sm bg-emerald-500/10 py-3 px-4 rounded-xl border border-emerald-500/20">
+                                                <CheckCircle className="w-4 h-4 mr-2" /> İşlendi
+                                            </div>
+                                        )}
+                                    </div>
+
+                                </div>
                             </div>
                         ))}
                     </div>

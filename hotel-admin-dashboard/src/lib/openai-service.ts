@@ -1,9 +1,9 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { HOTEL_KNOWLEDGE_BASE } from './hotel-data';
 
-// Standart konfigürasyon (OpenAI)
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+// Anthropic / Claude konfigürasyonu
+const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export type IntentType = "QUESTION" | "REQUEST" | "COMPLAINT" | "CANCEL" | "GREETING" | "RESERVATION" | "CONFIRMATION" | "DENIAL" | "EXTERNAL_QUERY";
@@ -40,6 +40,7 @@ export function removeTurkishAccents(str: string | null | undefined): string {
 
 /**
  * Gelen mesajın AI tarafından analiz edildiği "AKILLI MOTOR" katmanı.
+ * Model: claude-sonnet-4-5 (Anthropic)
  */
 export async function analyzeGuestMessage(
     message: string, 
@@ -109,24 +110,27 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
 - 'reply_immediate_lang': "Talebinizi aldık, hemen ilgileniyorum." çevirisi
 - 'reply_mismatch_lang': "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz." çevirisi
 
-Çıktı sadece parse edilebilir JSON objesi olmalıdır! Başka hiçbir metin dönme.
+Çıktı sadece parse edilebilir JSON objesi olmalıdır! Başka hiçbir metin dönme. JSON dışında açıklama, markdown bloğu ya da başa/sona eklenen karakter KESİNLİKLE olmasın.
 `;
 
     try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+        const response = await anthropic.messages.create({
+            model: "claude-sonnet-4-5",
+            max_tokens: 1024,
+            system: systemPrompt,
             messages: [
-                { role: "system", content: systemPrompt },
                 { role: "user", content: `Misafir Mesajı: "${message}"` }
             ],
-            response_format: { type: "json_object" },
-            temperature: 0.1,
         });
 
-        const aiResText = response.choices[0].message.content;
-        const result: AIAnalysisResult = JSON.parse(aiResText || "{}");
+        const aiResText = response.content[0].type === 'text' ? response.content[0].text : '';
+
+        // Claude bazen ```json ... ``` bloğu döner, temizle
+        const cleaned = aiResText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+        const result: AIAnalysisResult = JSON.parse(cleaned || "{}");
         
-        // Türkçe karakterleri "i, c, s, g, o, u" formatına çevir
+        // Türkçe karakterleri "i, c, s, g, o, u" formatına çevir (DB encoding uyumu)
         if (result.turkish_translation) result.turkish_translation = removeTurkishAccents(result.turkish_translation);
         if (result.summary) result.summary = removeTurkishAccents(result.summary);
         if (result.extracted_guest_name) result.extracted_guest_name = removeTurkishAccents(result.extracted_guest_name);
@@ -138,7 +142,7 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
 
         return result;
     } catch (error) {
-        console.error("OpenAI Analiz Hatası:", error);
+        console.error("Claude Analiz Hatası:", error);
         return {
             intent: "QUESTION",
             department: "Resepsiyon",
@@ -157,4 +161,3 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
         };
     }
 }
-

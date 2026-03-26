@@ -34,15 +34,81 @@ function fixTurkishChars(str: string | undefined | null): string {
         // Fallback if decoding fails
     }
 
-    // Now handle literal replacement characters  if any
+    // Now handle literal replacement characters (\uFFFD) if any
     if (str.includes('\uFFFD')) {
-        str = str.replace(/Du bal krk/ig, "Duş başlığı kırık");
-        str = str.replace(/patlad/ig, "patladı");
-        // General common fixes
-        str = str.replace(/yaramyor/ig, "yaramıyor");
-        str = str.replace(/almyor/ig, "çalışmıyor");
-        str = str.replace(/snmyor/ig, "ısınmıyor");
-        str = str.replace(/\uFFFD/g, "ı"); // Risky, but often replacement char in Turkish contexts without other letters means 'ı' or 'ş'. We'll stick to 'ı' gracefully if it's broken.
+        // Name fixes
+        str = str.replace(/Y\uFFFBlmaz/g, "Yılmaz");
+        str = str.replace(/M\uFFFBu\uFFFDller/g, "Müller");
+        str = str.replace(/M\uFFFDller/g, "Müller");
+
+        // Action/verb fixes
+        str = str.replace(/so\uFFFDutmuyor/ig, "soğutmuyor");
+        str = str.replace(/\uFFFDal\uFFFD\uFFFD\uFFFDyor/ig, "çalışıyor");
+        str = str.replace(/\uFFFDal\uFFFDm\uFFFDyor/ig, "çalışmıyor");
+        str = str.replace(/\uFFFDal\uFFFDr/ig, "çalışır");
+        str = str.replace(/a\uFFFD\uFFFDlm\uFFFDyor/ig, "açılmıyor");
+        str = str.replace(/a\uFFFD\uFFFDlmyor/ig, "açılmıyor");
+        str = str.replace(/a\uFFFD\uFFFDo/ig, "açıyo");
+        str = str.replace(/a\uFFFDo/ig, "açıyo");
+        str = str.replace(/kapat\uFFFDlm\uFFFDyor/ig, "kapatılmıyor");
+        str = str.replace(/s\uFFFDzd\uFFFDr\uFFFDyor/ig, "sızdırıyor");
+        str = str.replace(/ak\uFFFDr\uFFFDr/ig, "akıtır");
+        str = str.replace(/ak\uFFFDyor/ig, "akıyor");
+        str = str.replace(/ak\uFFFDto/ig, "akıto");
+        str = str.replace(/patlad\uFFFD/ig, "patladı");
+        str = str.replace(/d\uFFFD\uFFFDt\uFFFD/ig, "düştü");
+        str = str.replace(/k\uFFFDr\uFFFDld\uFFFD/ig, "kırıldı");
+        str = str.replace(/k\uFFFDr\uFFFDo/ig, "kırıko");
+        str = str.replace(/yaram\uFFFDyor/ig, "yaramıyor");
+        str = str.replace(/\uFFFDs\uFFFDnm\uFFFDyor/ig, "ısınmıyor");
+        str = str.replace(/\uFFFDs\uFFFDto/ig, "ısıto");
+        
+        // Adjectives and common words
+        str = str.replace(/\uFFFDok/ig, "çok");
+        str = str.replace(/s\uFFFDcak/ig, "sıcak");
+        str = str.replace(/s\uFFFD\uFFFDcak/ig, "sıcak");
+        str = str.replace(/s\uFFFDc\uFFFDak/ig, "sıcak");
+        str = str.replace(/so\uFFFDuk/ig, "soğuk");
+        str = str.replace(/g\uFFFDr\uFFFDlt\uFFFDl\uFFFD/ig, "gürültülü");
+        str = str.replace(/k\uFFFDr\uFFFDo/ig, "kırık");
+        str = str.replace(/k\uFFFDr\uFFFDk/ig, "kırık");
+        str = str.replace(/bozuk/ig, "bozuk"); // Bozuk is usually fine, no turkish chars but just in case
+        str = str.replace(/a\uFFFDr\uFFFD/ig, "aşırı");
+        str = str.replace(/k\uFFFDt\uFFFD/ig, "kötü");
+        
+        // Nouns
+        str = str.replace(/du\uFFFD/ig, "duş");
+        str = str.replace(/ba\uFFFDl\uFFFD\uFFFDo/ig, "başlığı");
+        str = str.replace(/ba\uFFFDl\uFFFD\uFFFD\uFFFD/ig, "başlığı");
+        str = str.replace(/ba\uFFFDl\uFFFDk/ig, "başlık");
+        str = str.replace(/i\uFFFDi/ig, "içi");
+        str = str.replace(/i\uFFFDinde/ig, "içinde");
+        str = str.replace(/\uFFFDz\uFFFDr/ig, "özür");
+        str = str.replace(/te\uFFFDekk\uFFFDr/ig, "teşekkür");
+        str = str.replace(/\uFFFDikayet/ig, "şikayet");
+        str = str.replace(/i\uFFFDin/ig, "için");
+        str = str.replace(/sa\uFFFD/ig, "saç");
+        str = str.replace(/\uFFFDarj/ig, "şarj");
+        str = str.replace(/fi\uFFFD/ig, "fiş");
+        str = str.replace(/priz/ig, "priz");
+        str = str.replace(/d\uFFFD\uFFFDme/ig, "düğme");
+        str = str.replace(/d\uFFFD\uFFFDo/ig, "düğme");
+        str = str.replace(/ampul/ig, "ampul");
+        str = str.replace(/klozet/ig, "klozet");
+        str = str.replace(/televizyon/ig, "televizyon");
+        str = str.replace(/klima/ig, "klima");
+        
+        // More specific fallback replacements where context is clear based on common errors
+        // "al\uFFFDmyor" might just be "al\uFFFDmyor" with one \uFFFD for "çı"
+        str = str.replace(/a\uFFFDlmyor/ig, "açılmıyor");
+        str = str.replace(/a\uFFFDlm\uFFFDyor/ig, "açılmıyor");
+        str = str.replace(/\uFFFDl\uFFFDm\uFFFDyor/ig, "çalışmıyor"); 
+        str = str.replace(/\uFFFDal\uFFFDm\uFFFDyor/ig, "çalışmıyor"); 
+
+        // At the end, let's gracefully replace the remaining \uFFFD characters with something
+        // Just leaving them might be better or replacing with '?'
+        // However, many times missing char is just 'ı' or 'ş'. We won't try to guess blindly though
+        // so as not to corrupt names further.
     }
 
     return str;
@@ -211,7 +277,7 @@ export default function TechnicalServiceDashboard() {
 
                 {/* Content Area */}
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 gap-4 animate-pulse">
+                    <div className="flex flex-col items-center justify-center h-64 gap-4">
                         <Loader2 className="w-12 h-12 text-cyan-500 animate-spin" />
                         <span className="text-blue-400 font-medium">Talepler Getiriliyor...</span>
                     </div>
@@ -222,124 +288,148 @@ export default function TechnicalServiceDashboard() {
                         <p className="text-blue-300/60 font-medium text-center max-w-sm">Bu tarihe ait bekleyen veya tamamlanmış teknik servis talebi bulunmuyor.</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4">
-                        {/* Header Table (Only visible on large screens) */}
-                        <div className="hidden lg:flex items-center gap-6 px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-blue-900/40 mb-2">
-                            <div className="w-24">Tarih & Saat</div>
-                            <div className="w-24 text-center">Oda</div>
-                            <div className="flex-1">Arıza & Misafir Bilgisi</div>
-                            <div className="w-28 text-center">Varsa Görsel</div>
-                            <div className="w-36 text-center">Aksiyon</div>
-                        </div>
-                        
-                        {/* Render PENDING tickets first, then completed */}
-                        {tickets.sort((a,b) => (a.status === 'PENDING' ? -1 : 1)).map(ticket => (
-                            <div 
-                                key={ticket.ticket_id} 
-                                className={`group relative overflow-visible rounded-2xl transition-all duration-300 ${
-                                    ticket.status === 'PENDING' 
-                                    ? 'bg-gradient-to-r from-slate-900/90 to-slate-950/90 border border-red-500/30 hover:border-red-400/50 shadow-[0_0_15px_rgba(239,68,68,0.05)]'
-                                    : 'bg-slate-900/40 border border-emerald-900/40 opacity-70 hover:opacity-100'
-                                }`}
-                            >
-                                <div className="p-4 lg:p-0 flex flex-col lg:flex-row lg:items-center gap-6 lg:px-6 lg:py-4">
-                                    
-                                    {/* 1. Tarih */}
-                                    <div className="lg:w-24 flex flex-col">
-                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-1">TARİH & SAAT</span>
-                                        <span className="text-sm text-slate-300 font-mono">
-                                            {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
-                                        </span>
-                                        <span className="text-xs text-slate-500 font-mono">
-                                            {new Date(ticket.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
-                                        </span>
-                                        {ticket.status === 'PENDING' && (
-                                            <span className="mt-2 bg-red-500/20 text-red-400 text-[10px] uppercase font-black px-2 py-0.5 rounded inline-flex border border-red-500/20 w-max animate-pulse">
-                                                 BEKLİYOR
-                                            </span>
-                                        )}
-                                    </div>
+                    <div className="w-full overflow-x-auto rounded-2xl border border-blue-900/30 bg-slate-900/30 backdrop-blur-sm">
+                        {/* Table Header */}
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="border-b border-blue-900/50">
+                                    <th className="text-left px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Tarih & Saat</th>
+                                    <th className="text-center px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-24">Oda No</th>
+                                    <th className="text-left px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Arıza Açıklaması</th>
+                                    <th className="text-center px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Varsa Görsel</th>
+                                    <th className="text-center px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Aksiyon</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tickets.sort((a, b) => (a.status === 'PENDING' ? -1 : 1)).map((ticket, index) => (
+                                    <tr
+                                        key={ticket.ticket_id}
+                                        className={`border-b border-blue-900/20 last:border-0 transition-all duration-200 ${
+                                            ticket.status === 'PENDING'
+                                                ? 'bg-red-950/10 hover:bg-red-950/20'
+                                                : 'opacity-60 hover:opacity-100 bg-emerald-950/5 hover:bg-emerald-950/10'
+                                        }`}
+                                    >
+                                        {/* Tarih & Saat */}
+                                        <td className="px-5 py-4 align-middle">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-sm font-mono text-slate-300 font-semibold">
+                                                    {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
+                                                </span>
+                                                <span className="text-xs font-mono text-slate-500">
+                                                    {new Date(ticket.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {ticket.status === 'PENDING' && (
+                                                    <span className="mt-1 inline-flex items-center gap-1 bg-red-500/20 text-red-400 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-red-500/30 w-max animate-pulse">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block"></span>
+                                                        BEKLİYOR
+                                                    </span>
+                                                )}
+                                                {ticket.status !== 'PENDING' && (
+                                                    <span className="mt-1 inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-emerald-500/20 w-max">
+                                                        İŞLENDİ
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
 
-                                    {/* 2. Oda Numarası */}
-                                    <div className="lg:w-24 flex flex-col lg:items-center">
-                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-1">ODA NUMARASI</span>
-                                        <div className={`text-2xl font-black ${ticket.status === 'PENDING' ? 'text-white' : 'text-slate-400'} bg-white/5 lg:w-full px-3 py-2 rounded-xl border border-white/10 text-center w-max`}>
-                                            {ticket.room_no}
-                                        </div>
-                                    </div>
-
-                                    {/* 3. Arıza Açıklaması */}
-                                    <div className="flex-1 flex flex-col gap-2">
-                                         <span className="lg:hidden text-xs text-slate-500 font-bold mb-1">ARIZA AÇIKLAMASI</span>
-                                         <div className="flex items-center gap-2 text-slate-300 font-bold text-sm">
-                                            <Star className={`w-4 h-4 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
-                                            {ticket.guest_name} <span className="text-xs text-slate-500 font-normal">({ticket.guest_language.toUpperCase()})</span>
-                                         </div>
-                                         <div className="bg-black/30 rounded-xl p-3 border border-white/5">
-                                            <p className={`text-sm font-medium ${ticket.status === 'PENDING' ? 'text-slate-300' : 'text-slate-500'} mb-2`}>
-                                                {fixTurkishChars(ticket.original_message)}
-                                            </p>
-                                            <p className="text-sm text-cyan-300 font-bold flex flex-col xl:flex-row xl:items-center gap-1">
-                                                <span className="flex items-center"><RefreshCw className="w-3 h-3 mr-1"/>Otonom Çeviri:</span>
-                                                <span>{fixTurkishChars(ticket.turkish_translation)}</span>
-                                            </p>
-                                         </div>
-                                    </div>
-
-                                    {/* 4. Görsel */}
-                                    <div className="lg:w-28 flex flex-col lg:items-center">
-                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-2">VARSA GÖRSEL</span>
-                                        {ticket.image_url ? (
-                                            <div className="group/img relative w-24 h-16 rounded-xl z-10">
-                                                <div className="absolute inset-0 rounded-xl overflow-hidden border-2 border-blue-900/30 bg-black/50 transition-all duration-300 ease-in-out origin-center lg:origin-right group-hover/img:-translate-x-4 lg:group-hover/img:-translate-x-12 group-hover/img:-translate-y-4 group-hover/img:scale-[3] group-hover/img:z-[100] group-hover/img:shadow-[0_0_40px_rgba(0,0,0,0.8)] cursor-zoom-in">
-                                                    <img src={ticket.image_url} alt="Problem Gösterimi" className="object-cover w-full h-full" />
+                                        {/* Oda No */}
+                                        <td className="px-5 py-4 align-middle">
+                                            <div className="flex justify-center">
+                                                <div className={`text-3xl font-black ${ticket.status === 'PENDING' ? 'text-white' : 'text-slate-500'} bg-white/5 w-20 py-2 rounded-xl border border-white/10 text-center tabular-nums`}>
+                                                    {ticket.room_no}
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="w-24 h-16 flex items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/5 text-slate-600 text-xs text-center font-medium">
-                                                Görsel<br/>Yok
-                                            </div>
-                                        )}
-                                    </div>
+                                        </td>
 
-                                    {/* 5. Aksiyon */}
-                                    <div className="lg:w-36 flex flex-col justify-center">
-                                        <span className="lg:hidden text-xs text-slate-500 font-bold mb-2">AKSİYON</span>
-                                        {ticket.status === 'PENDING' ? (
-                                            <div className="flex flex-col gap-2 w-full">
-                                                <button 
-                                                    onClick={() => handleAction(ticket.ticket_id, 'NOW')}
-                                                    disabled={actionLoading === ticket.ticket_id}
-                                                    className="w-full relative overflow-hidden group bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs py-2.5 px-3 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50"
-                                                >
-                                                    {actionLoading === ticket.ticket_id ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                                                    ) : (
-                                                        <span className="flex items-center justify-center gap-1.5"><CheckCircle className="w-4 h-4"/> Hemen Git</span>
-                                                    )}
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleAction(ticket.ticket_id, 'LATER')}
-                                                    disabled={actionLoading === ticket.ticket_id}
-                                                    className="w-full relative overflow-hidden group bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 px-3 rounded-xl border border-slate-600 transition-all disabled:opacity-50"
-                                                >
-                                                    {actionLoading === ticket.ticket_id ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                                                    ) : (
-                                                        <span className="flex items-center justify-center gap-1.5"><Clock className="w-4 h-4"/> Beklet</span>
-                                                    )}
-                                                </button>
+                                        {/* Arıza Açıklaması */}
+                                        <td className="px-5 py-4 align-middle">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Star className={`w-3.5 h-3.5 flex-shrink-0 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
+                                                    <span className="text-sm font-bold text-slate-200">{ticket.guest_name}</span>
+                                                    <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                                                        {ticket.guest_language.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <div className="rounded-xl bg-black/30 border border-white/5 p-3 space-y-1.5">
+                                                    <p className={`text-sm ${ticket.status === 'PENDING' ? 'text-slate-300' : 'text-slate-500'}`}>
+                                                        {fixTurkishChars(ticket.original_message)}
+                                                    </p>
+                                                    <div className="flex items-start gap-1.5 pt-1 border-t border-white/5">
+                                                        <RefreshCw className="w-3 h-3 text-cyan-500 mt-0.5 flex-shrink-0" />
+                                                        <p className="text-sm text-cyan-300 font-semibold leading-snug">
+                                                            {fixTurkishChars(ticket.turkish_translation)}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <div className="flex items-center justify-center text-emerald-500 font-bold text-sm bg-emerald-500/10 py-3 px-4 rounded-xl border border-emerald-500/20">
-                                                <CheckCircle className="w-4 h-4 mr-2" /> İşlendi
-                                            </div>
-                                        )}
-                                    </div>
+                                        </td>
 
-                                </div>
-                            </div>
-                        ))}
+                                        {/* Görsel */}
+                                        <td className="px-5 py-4 align-middle">
+                                            <div className="flex justify-center">
+                                                {ticket.image_url ? (
+                                                    <div className="group/img relative w-24 h-16 rounded-xl overflow-visible">
+                                                        <div className="absolute inset-0 rounded-xl overflow-hidden border-2 border-blue-800/40 bg-black/50 transition-all duration-300 ease-in-out
+                                                            group-hover/img:scale-[3.5] group-hover/img:-translate-y-8 group-hover/img:-translate-x-8
+                                                            group-hover/img:z-[100] group-hover/img:shadow-[0_0_50px_rgba(0,0,0,0.9)]
+                                                            group-hover/img:rounded-2xl cursor-zoom-in z-10">
+                                                            <img src={ticket.image_url} alt="Arıza Görseli" className="object-cover w-full h-full" />
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-24 h-16 flex flex-col items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/3 text-slate-600 text-[11px] text-center font-medium gap-1">
+                                                        <ImageIcon className="w-4 h-4" />
+                                                        <span>Yok</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        {/* Aksiyon */}
+                                        <td className="px-5 py-4 align-middle">
+                                            <div className="flex justify-center">
+                                                {ticket.status === 'PENDING' ? (
+                                                    <div className="flex flex-col gap-2 w-full max-w-[140px]">
+                                                        <button
+                                                            onClick={() => handleAction(ticket.ticket_id, 'NOW')}
+                                                            disabled={actionLoading === ticket.ticket_id}
+                                                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs py-2.5 px-3 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.25)] transition-all disabled:opacity-50 active:scale-95"
+                                                        >
+                                                            {actionLoading === ticket.ticket_id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                                            ) : (
+                                                                <span className="flex items-center justify-center gap-1.5">
+                                                                    <CheckCircle className="w-3.5 h-3.5" /> Hemen Git
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleAction(ticket.ticket_id, 'LATER')}
+                                                            disabled={actionLoading === ticket.ticket_id}
+                                                            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 px-3 rounded-xl border border-slate-600/60 transition-all disabled:opacity-50 active:scale-95"
+                                                        >
+                                                            {actionLoading === ticket.ticket_id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                                            ) : (
+                                                                <span className="flex items-center justify-center gap-1.5">
+                                                                    <Clock className="w-3.5 h-3.5" /> Beklet
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-center gap-2 text-emerald-400 font-bold text-sm bg-emerald-500/10 py-2.5 px-4 rounded-xl border border-emerald-500/20 w-full max-w-[140px]">
+                                                        <CheckCircle className="w-4 h-4" /> İşlendi
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </main>

@@ -59,7 +59,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (user) {
             try {
                 // Eğer kullanıcı KENDİSİ çıkış yapıyorsa (sistem atmıyorsa), DB'deki tokeni iptal et ki her yerde kapansın!
-                if (clearGlobalSession) {
+                if (clearGlobalSession && user.department !== 'settings' && user.department !== 'admin') {
                     await supabase.from('staff_users')
                         .update({ session_token: null })
                         .eq('id', user.id);
@@ -77,11 +77,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const forceLogoutFromEverywhere = useCallback(async () => {
         if (!user) return;
         try {
-            // DB deki tokeni degistiriyoruz ki kontrol eden her cihaz (kendi dahil) atilsin
-            const newToken = Date.now().toString() + Math.random().toString();
-            await supabase.from('staff_users')
-                .update({ session_token: newToken })
-                .eq('id', user.id);
+            if (user.department !== 'settings' && user.department !== 'admin') {
+                // DB deki tokeni degistiriyoruz ki kontrol eden her cihaz (kendi dahil) atilsin
+                const newToken = Date.now().toString() + Math.random().toString();
+                await supabase.from('staff_users')
+                    .update({ session_token: newToken })
+                    .eq('id', user.id);
+            }
             await writeLog('INFO', 'AUTH', `${user.username} tüm oturumları sistemden kapattı.`);
         } catch (e) {
             console.error('Force logout error:', e);
@@ -92,6 +94,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Timer bazlı otomatik DB token kontrolü
     useEffect(() => {
         if (!user || pathname === '/login') return;
+        if (user.department === 'settings' || user.department === 'admin') return; // Skip DB token checks for static admin setups
 
         const checkSession = async () => {
             try {

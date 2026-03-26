@@ -22,10 +22,12 @@ import {
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/providers/AuthProvider';
 
 function PresentationFunnelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   // Start on login screen if URL has ?login=settings
   const initialSlide = searchParams.get('login') === 'settings' ? 6 : 0;
@@ -54,35 +56,42 @@ function PresentationFunnelContent() {
     }
   };
 
-  const handleSettingsLogin = (e: React.FormEvent) => {
+  const handleSettingsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanUser = username.trim().toUpperCase();
     const cleanPass = password.trim();
 
     if (cleanUser === 'F/O' && cleanPass === '1234') {
+      await login({ id: 'settings-fo', username: 'F/O (Veri Ekibi)', department: 'settings' });
       router.push('/settings/fo');
     } else if (cleanUser === 'F/B' && cleanPass === '1234') {
+      await login({ id: 'settings-fb', username: 'F/B (Veri Ekibi)', department: 'settings' });
       router.push('/settings/fb');
     } else if (cleanUser === 'G/R' && cleanPass === '1234') {
+      await login({ id: 'settings-gr', username: 'G/R (Veri Ekibi)', department: 'settings' });
       router.push('/settings/gr');
     } else if (cleanUser === 'H/K' && cleanPass === '1234') {
+      await login({ id: 'settings-hk', username: 'H/K (Veri Ekibi)', department: 'settings' });
       router.push('/settings/hk');
     } else if (cleanUser === 'SPA' && cleanPass === '1234') {
+      await login({ id: 'settings-spa', username: 'SPA (Veri Ekibi)', department: 'settings' });
       router.push('/settings/spa');
     } else if (cleanUser === 'T/S' && cleanPass === '1234') {
+      await login({ id: 'settings-ts', username: 'T/S (Veri Ekibi)', department: 'settings' });
       router.push('/settings/ts');
     } else {
       setError(`Geçersiz departman ("${username}") veya hatalı şifre.`);
     }
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (
       (username === 'OzgurOZEN' && password === 'OzgurOZEN?=') ||
       (username === 'Kemal KUYUCU' && password === 'KemalKUYUCU?=')
     ) {
+      await login({ id: 'admin-user', username, department: 'admin' });
       router.push('/admin-panel'); // Yöneticileri yetki paneline alıyoruz
     } else {
       setError('Yetkisiz giriş veya hatalı şifre.');

@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase-client';
 import { useAuth, UserProfile } from '@/providers/AuthProvider';
 
 export default function LoginPage() {
-    const [department, setDepartment] = useState<'reception' | 'guest-relation'>('reception');
+    const [department, setDepartment] = useState<string>('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -88,30 +88,25 @@ export default function LoginPage() {
                 <div className="glass-card p-10 bg-slate-900/80 border border-blue-900/50 backdrop-blur-xl">
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div>
-                            <label className="block text-base font-black text-blue-400 uppercase tracking-widest mb-6 text-center drop-shadow-[0_0_10px_rgba(37,99,235,0.5)]">Departman Seç</label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setDepartment('reception')}
-                                    className={`py-4 rounded-2xl flex flex-col items-center justify-center border-2 transition-all ${department === 'reception'
-                                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg shadow-blue-500/10'
-                                        : 'bg-slate-800/50 border-slate-700 text-blue-300 hover:border-slate-600'
-                                        }`}
+                            <label className="block text-xs font-black text-blue-400 uppercase tracking-widest mb-3">Departman Seç</label>
+                            <div className="relative group mb-4">
+                                <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors pointer-events-none" />
+                                <select
+                                    value={department}
+                                    onChange={(e) => setDepartment(e.target.value)}
+                                    className="w-full bg-slate-800 border-2 border-slate-700 text-white rounded-2xl pl-12 pr-10 py-4 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium appearance-none cursor-pointer"
+                                    required
                                 >
-                                    <UserCircle className="w-6 h-6 mb-2" />
-                                    <span className="text-xs font-bold">Resepsiyon</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setDepartment('guest-relation')}
-                                    className={`py-4 rounded-2xl flex flex-col items-center justify-center border-2 transition-all ${department === 'guest-relation'
-                                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg shadow-blue-500/10'
-                                        : 'bg-slate-800/50 border-slate-700 text-blue-300 hover:border-slate-600'
-                                        }`}
-                                >
-                                    <Users className="w-6 h-6 mb-2" />
-                                    <span className="text-xs font-bold">Guest Relation</span>
-                                </button>
+                                    <option value="" disabled>Lütfen Departman Seçin</option>
+                                    <option value="reception">Resepsiyon (F/O)</option>
+                                    <option value="guest-relation">Misafir İlişkileri (G/R)</option>
+                                    <option value="housekeeping">Housekeeping (H/K)</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                    <svg className="w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 

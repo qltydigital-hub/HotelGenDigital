@@ -38,22 +38,34 @@ function fixTurkishChars(str: string | undefined | null): string {
     if (str.includes('\uFFFD')) {
         // Name fixes
         str = str.replace(/Y\uFFFBlmaz/g, "Yılmaz");
+        str = str.replace(/Y\uFFFDlmaz/g, "Yılmaz");
+        str = str.replace(/Ylmaz/g, "Yılmaz");
         str = str.replace(/M\uFFFBu\uFFFDller/g, "Müller");
         str = str.replace(/M\uFFFDller/g, "Müller");
 
         // Action/verb fixes
         str = str.replace(/so\uFFFDutmuyor/ig, "soğutmuyor");
+        str = str.replace(/soutmuyor/ig, "soğutmuyor");
+        str = str.replace(/soutmuyor/ig, "soğutmuyor");
         str = str.replace(/\uFFFDal\uFFFD\uFFFD\uFFFDyor/ig, "çalışıyor");
+        str = str.replace(/al\uFFFD\uFFFDyor/ig, "çalışıyor");
+        str = str.replace(/alyor/ig, "çalışıyor");
         str = str.replace(/\uFFFDal\uFFFDm\uFFFDyor/ig, "çalışmıyor");
-        str = str.replace(/\uFFFDal\uFFFDr/ig, "çalışır");
+        str = str.replace(/almyor/ig, "çalışmıyor");
         str = str.replace(/a\uFFFD\uFFFDlm\uFFFDyor/ig, "açılmıyor");
-        str = str.replace(/a\uFFFD\uFFFDlmyor/ig, "açılmıyor");
-        str = str.replace(/a\uFFFD\uFFFDo/ig, "açıyo");
-        str = str.replace(/a\uFFFDo/ig, "açıyo");
+        str = str.replace(/aclmyor/ig, "açılmıyor");
+        str = str.replace(/almyor/ig, "açılmıyor");
+        str = str.replace(/almyor/ig, "açılmıyor");
+        str = str.replace(/a\uFFFD\uFFFDo/ig, "açıyor");
+        str = str.replace(/ayo/ig, "açıyor");
         str = str.replace(/kapat\uFFFDlm\uFFFDyor/ig, "kapatılmıyor");
         str = str.replace(/s\uFFFDzd\uFFFDr\uFFFDyor/ig, "sızdırıyor");
         str = str.replace(/ak\uFFFDr\uFFFDr/ig, "akıtır");
         str = str.replace(/ak\uFFFDyor/ig, "akıyor");
+        str = str.replace(/akyor/ig, "akıyor");
+        str = str.replace(/almyor/ig, "çalışmıyor");
+        str = str.replace(/almyor/ig, "çalışmıyor");
+        str = str.replace(/alr/ig, "çalışır");
         str = str.replace(/ak\uFFFDto/ig, "akıto");
         str = str.replace(/patlad\uFFFD/ig, "patladı");
         str = str.replace(/d\uFFFD\uFFFDt\uFFFD/ig, "düştü");
@@ -65,7 +77,9 @@ function fixTurkishChars(str: string | undefined | null): string {
         
         // Adjectives and common words
         str = str.replace(/\uFFFDok/ig, "çok");
+        str = str.replace(/ok/ig, "çok");
         str = str.replace(/s\uFFFDcak/ig, "sıcak");
+        str = str.replace(/scak/ig, "sıcak");
         str = str.replace(/s\uFFFD\uFFFDcak/ig, "sıcak");
         str = str.replace(/s\uFFFDc\uFFFDak/ig, "sıcak");
         str = str.replace(/so\uFFFDuk/ig, "soğuk");
@@ -83,10 +97,12 @@ function fixTurkishChars(str: string | undefined | null): string {
         str = str.replace(/ba\uFFFDl\uFFFDk/ig, "başlık");
         str = str.replace(/i\uFFFDi/ig, "içi");
         str = str.replace(/i\uFFFDinde/ig, "içinde");
-        str = str.replace(/\uFFFDz\uFFFDr/ig, "özür");
-        str = str.replace(/te\uFFFDekk\uFFFDr/ig, "teşekkür");
-        str = str.replace(/\uFFFDikayet/ig, "şikayet");
+        str = str.replace(/iin/ig, "için");
         str = str.replace(/i\uFFFDin/ig, "için");
+        str = str.replace(/ikayet/ig, "şikayet");
+        str = str.replace(/\uFFFDikayet/ig, "şikayet");
+        str = str.replace(/teekkr/ig, "teşekkür");
+        str = str.replace(/te\uFFFDekk\uFFFDr/ig, "teşekkür");
         str = str.replace(/sa\uFFFD/ig, "saç");
         str = str.replace(/\uFFFDarj/ig, "şarj");
         str = str.replace(/fi\uFFFD/ig, "fiş");
@@ -347,7 +363,7 @@ export default function TechnicalServiceDashboard() {
                                             <div className="flex flex-col gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <Star className={`w-3.5 h-3.5 flex-shrink-0 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
-                                                    <span className="text-sm font-bold text-slate-200">{ticket.guest_name}</span>
+                                                    <span className="text-sm font-bold text-slate-200">{fixTurkishChars(ticket.guest_name)}</span>
                                                     <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
                                                         {ticket.guest_language.toUpperCase()}
                                                     </span>

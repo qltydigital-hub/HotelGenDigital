@@ -130,7 +130,9 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
 
         const result: AIAnalysisResult = JSON.parse(cleaned || "{}");
         
-        // Türkçe karakterleri "i, c, s, g, o, u" formatına çevir (DB encoding uyumu)
+        // No longer stripping Turkish accents as DB supports UTF-8
+        // If needed for specific legacy systems, use removeTurkishAccents sparingly
+        /*
         if (result.turkish_translation) result.turkish_translation = removeTurkishAccents(result.turkish_translation);
         if (result.summary) result.summary = removeTurkishAccents(result.summary);
         if (result.extracted_guest_name) result.extracted_guest_name = removeTurkishAccents(result.extracted_guest_name);
@@ -139,6 +141,7 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
         if (result.reply_immediate_lang) result.reply_immediate_lang = removeTurkishAccents(result.reply_immediate_lang);
         if (result.reply_later_lang) result.reply_later_lang = removeTurkishAccents(result.reply_later_lang);
         if (result.reply_mismatch_lang) result.reply_mismatch_lang = removeTurkishAccents(result.reply_mismatch_lang);
+        */
 
         return result;
     } catch (error) {
@@ -147,15 +150,15 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
             intent: "QUESTION",
             department: "Resepsiyon",
             language: "tr",
-            summary: removeTurkishAccents("Anlasilamayan mesaj / Fallback donuldu."),
+            summary: "Anlasilamayan mesaj / Fallback donuldu.",
             is_alerjen: false,
             needs_reception_cc: true,
-            ai_safe_reply: removeTurkishAccents("Degerli misafirimiz, size su anda sistemlerimizdeki anlik bir yogunluktan dolayi yanit veremiyorum. Lutfen resepsiyonu arayarak destek isteyiniz."),
-            turkish_translation: removeTurkishAccents("Anlasilamayan mesaj"),
-            reply_routing_lang: removeTurkishAccents("Isteginizi ilgili departmana hizlica iletiyoruz."),
-            reply_immediate_lang: removeTurkishAccents("Talebinizi aldik, hemen ilgileniyorum."),
-            reply_later_lang: removeTurkishAccents("Talebinizi aldim, sonrasinda ilgilenecegim."),
-            reply_mismatch_lang: removeTurkishAccents("Bilgilerinizi resepsiyona iletiyorum, lutfen kisa bir sure bekleyiniz."),
+            ai_safe_reply: "Degerli misafirimiz, size su anda sistemlerimizdeki anlik bir yogunluktan dolayi yanit veremiyorum. Lutfen resepsiyonu arayarak destek isteyiniz.",
+            turkish_translation: "Anlasilamayan mesaj",
+            reply_routing_lang: "Isteginizi ilgili departmana hizlica iletiyoruz.",
+            reply_immediate_lang: "Talebinizi aldik, hemen ilgileniyorum.",
+            reply_later_lang: "Talebinizi aldim, sonrasinda ilgilenecegim.",
+            reply_mismatch_lang: "Bilgilerinizi resepsiyona iletiyorum, lutfen kisa bir sure bekleyiniz.",
             extracted_room_no: null,
             extracted_guest_name: null
         };

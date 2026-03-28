@@ -463,7 +463,7 @@ export default function TechnicalServiceDashboard() {
                                         </td>
                                     </tr>
                                 ))
-                            )}
+                            }
                             </tbody>
                         </table>
                     </div>

@@ -344,7 +344,7 @@ export default function FrontOfficeSettings() {
                                 {isUploaded ? <CheckSquare className="w-7 h-7 text-emerald-400" /> : <FileSearch className="w-7 h-7 text-blue-400" />}
                                 <div>
                                     <h2 className={`text-2xl font-bold ${isUploaded ? 'text-emerald-400' : ''}`}>Günlük Inhouse Listesi Yükle (Akıllı Filtreleme)</h2>
-                                    <p className="text-slate-400 text-sm mt-1">Excel veya PDF yüklediğinizde fiyatlar vb. gizli bilgiler otomatik silinir; sadece iletişim ve konaklama özeti listelenir.</p>
+                                    <p className="text-slate-400 text-sm mt-1">Sisteme detaylı Inhouse listesi yüklense dahi KVKK ve güvenlik gereği <strong>sadece; Oda Numarası, İsim Soyisim, Kişi Sayısı ve Giriş-Çıkış Tarihi</strong> alınıyor. İlgili personelin bunu bilmesi yeterlidir.</p>
                                 </div>
                             </div>
                         

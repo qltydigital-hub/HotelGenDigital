@@ -292,34 +292,40 @@ export default function TechnicalServiceDashboard() {
                 </div>
 
                 {/* Content Area */}
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 gap-4">
-                        <Loader2 className="w-12 h-12 text-cyan-500 animate-spin" />
-                        <span className="text-blue-400 font-medium">Talepler Getiriliyor...</span>
-                    </div>
-                ) : tickets.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-80 bg-slate-900/20 border border-blue-900/20 rounded-3xl gap-4">
-                        <ShieldAlert className="w-16 h-16 text-blue-800" />
-                        <h3 className="text-2xl font-bold text-blue-400">Harika! Her Şey Yolunda.</h3>
-                        <p className="text-blue-300/60 font-medium text-center max-w-sm">Bu tarihe ait bekleyen veya tamamlanmış teknik servis talebi bulunmuyor.</p>
-                    </div>
-                ) : (
-                    <div className="w-full overflow-x-auto rounded-2xl border border-blue-900/30 bg-slate-900/30 backdrop-blur-sm">
-                        {/* Table Header */}
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="border-b border-blue-900/50 bg-slate-900/50">
-                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-24">Oda No</th>
-                                    <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-48">İsim Soyisim</th>
-                                    <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Müşteri Talebi</th>
-                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Görsel</th>
-                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-36">Sorumlu Kişi/ID</th>
-                                    <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Tarih & Saat</th>
-                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Durum / İşlem</th>
+                <div className="w-full overflow-x-auto rounded-2xl border border-blue-900/30 bg-slate-900/30 backdrop-blur-sm shadow-xl">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="border-b border-blue-900/50 bg-slate-900/80">
+                                <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-24">Oda No</th>
+                                <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-48">İsim Soyisim</th>
+                                <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Müşteri Talebi</th>
+                                <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Görsel</th>
+                                <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-36">Sorumlu Kişi/ID</th>
+                                <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Tarih & Saat</th>
+                                <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Durum / İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="py-20 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-4">
+                                            <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+                                            <span className="text-blue-400 font-medium">Talepler Getiriliyor...</span>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {tickets.sort((a, b) => (a.status === 'PENDING' ? -1 : 1)).map((ticket, index) => (
+                            ) : tickets.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="py-24 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-4">
+                                            <ShieldAlert className="w-14 h-14 text-blue-800" />
+                                            <h3 className="text-xl font-bold text-blue-400">Harika! Her Şey Yolunda.</h3>
+                                            <p className="text-slate-500 font-medium max-w-sm">Bu tarihe ait bekleyen veya tamamlanmış teknik servis talebi bulunmuyor.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : tickets.sort((a, b) => (a.status === 'PENDING' ? -1 : 1)).map((ticket, index) => (
                                     <tr
                                         key={ticket.ticket_id}
                                         className={`border-b border-blue-900/20 last:border-0 transition-all duration-200 ${
@@ -456,11 +462,11 @@ export default function TechnicalServiceDashboard() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                ))
+                            )}
                             </tbody>
                         </table>
                     </div>
-                )}
             </main>
         </div>
     );

@@ -308,12 +308,14 @@ export default function TechnicalServiceDashboard() {
                         {/* Table Header */}
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr className="border-b border-blue-900/50">
-                                    <th className="text-left px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Tarih & Saat</th>
-                                    <th className="text-center px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-24">Oda No</th>
-                                    <th className="text-left px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Arıza Açıklaması</th>
-                                    <th className="text-center px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Varsa Görsel</th>
-                                    <th className="text-center px-5 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Aksiyon</th>
+                                <tr className="border-b border-blue-900/50 bg-slate-900/50">
+                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-24">Oda No</th>
+                                    <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-48">İsim Soyisim</th>
+                                    <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Müşteri Talebi</th>
+                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-32">Görsel</th>
+                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-36">Sorumlu Kişi/ID</th>
+                                    <th className="text-left px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Tarih & Saat</th>
+                                    <th className="text-center px-4 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest w-40">Durum / İşlem</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -323,58 +325,41 @@ export default function TechnicalServiceDashboard() {
                                         className={`border-b border-blue-900/20 last:border-0 transition-all duration-200 ${
                                             ticket.status === 'PENDING'
                                                 ? 'bg-red-950/10 hover:bg-red-950/20'
-                                                : 'opacity-60 hover:opacity-100 bg-emerald-950/5 hover:bg-emerald-950/10'
+                                                : 'opacity-70 hover:opacity-100 bg-emerald-950/5 hover:bg-emerald-950/10'
                                         }`}
                                     >
-                                        {/* Tarih & Saat */}
-                                        <td className="px-5 py-4 align-middle">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-sm font-mono text-slate-300 font-semibold">
-                                                    {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
-                                                </span>
-                                                <span className="text-xs font-mono text-slate-500">
-                                                    {new Date(ticket.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                                {ticket.status === 'PENDING' && (
-                                                    <span className="mt-1 inline-flex items-center gap-1 bg-red-500/20 text-red-400 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-red-500/30 w-max animate-pulse">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block"></span>
-                                                        BEKLİYOR
-                                                    </span>
-                                                )}
-                                                {ticket.status !== 'PENDING' && (
-                                                    <span className="mt-1 inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-emerald-500/20 w-max">
-                                                        İŞLENDİ
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-
-                                        {/* Oda No */}
-                                        <td className="px-5 py-4 align-middle">
+                                        {/* 1. Oda No */}
+                                        <td className="px-4 py-4 align-middle">
                                             <div className="flex justify-center">
-                                                <div className={`text-3xl font-black ${ticket.status === 'PENDING' ? 'text-white' : 'text-slate-500'} bg-white/5 w-20 py-2 rounded-xl border border-white/10 text-center tabular-nums`}>
+                                                <div className={`text-2xl font-black ${ticket.status === 'PENDING' ? 'text-white' : 'text-slate-400'} bg-slate-800/50 w-20 py-2.5 rounded-xl border border-slate-700/50 text-center tabular-nums shadow-inner`}>
                                                     {ticket.room_no}
                                                 </div>
                                             </div>
                                         </td>
 
-                                        {/* Arıza Açıklaması */}
-                                        <td className="px-5 py-4 align-middle">
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Star className={`w-3.5 h-3.5 flex-shrink-0 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
+                                        {/* 2. İsim Soyisim */}
+                                        <td className="px-4 py-4 align-middle">
+                                            <div className="flex items-center gap-2">
+                                                <Star className={`w-4 h-4 flex-shrink-0 ${ticket.status === 'PENDING' ? 'text-cyan-400' : 'text-slate-600'}`} />
+                                                <div className="flex flex-col">
                                                     <span className="text-sm font-bold text-slate-200">{fixTurkishChars(ticket.guest_name)}</span>
-                                                    <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-                                                        {ticket.guest_language.toUpperCase()}
+                                                    <span className="text-[10px] text-slate-500 font-semibold uppercase mt-0.5 w-fit bg-slate-800/50 px-2 py-0.5 rounded border border-slate-700">
+                                                        Dil: {ticket.guest_language}
                                                     </span>
                                                 </div>
-                                                <div className="rounded-xl bg-black/30 border border-white/5 p-3 space-y-1.5">
+                                            </div>
+                                        </td>
+
+                                        {/* 3. Müşteri Talebi */}
+                                        <td className="px-4 py-4 align-middle">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="rounded-xl bg-slate-950/50 border border-slate-800/50 p-3 space-y-2">
                                                     <p className={`text-sm ${ticket.status === 'PENDING' ? 'text-slate-300' : 'text-slate-500'}`}>
                                                         {fixTurkishChars(ticket.original_message)}
                                                     </p>
-                                                    <div className="flex items-start gap-1.5 pt-1 border-t border-white/5">
-                                                        <RefreshCw className="w-3 h-3 text-cyan-500 mt-0.5 flex-shrink-0" />
-                                                        <p className="text-sm text-cyan-300 font-semibold leading-snug">
+                                                    <div className="flex items-start gap-2 pt-2 border-t border-slate-800/50">
+                                                        <RefreshCw className="w-3.5 h-3.5 text-cyan-500/70 mt-0.5 flex-shrink-0" />
+                                                        <p className="text-[13px] text-cyan-300/90 font-medium leading-snug">
                                                             {fixTurkishChars(ticket.turkish_translation)}
                                                         </p>
                                                     </div>
@@ -382,36 +367,64 @@ export default function TechnicalServiceDashboard() {
                                             </div>
                                         </td>
 
-                                        {/* Görsel */}
-                                        <td className="px-5 py-4 align-middle">
+                                        {/* 4. Vars Görsel */}
+                                        <td className="px-4 py-4 align-middle">
                                             <div className="flex justify-center">
                                                 {ticket.image_url ? (
-                                                    <div className="group/img relative w-24 h-16 rounded-xl overflow-visible">
-                                                        <div className="absolute inset-0 rounded-xl overflow-hidden border-2 border-blue-800/40 bg-black/50 transition-all duration-300 ease-in-out
-                                                            group-hover/img:scale-[3.5] group-hover/img:-translate-y-8 group-hover/img:-translate-x-8
-                                                            group-hover/img:z-[100] group-hover/img:shadow-[0_0_50px_rgba(0,0,0,0.9)]
-                                                            group-hover/img:rounded-2xl cursor-zoom-in z-10">
+                                                    <div className="group/img relative w-16 h-16 rounded-xl overflow-visible">
+                                                        <div className="absolute inset-0 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 transition-all duration-300 ease-in-out
+                                                            group-hover/img:scale-[4] group-hover/img:-translate-y-12
+                                                            group-hover/img:z-[100] group-hover/img:shadow-[0_0_50px_rgba(0,0,0,0.8)]
+                                                            group-hover/img:border-cyan-500/50 group-hover/img:rounded-lg cursor-zoom-in z-10">
                                                             <img src={ticket.image_url} alt="Arıza Görseli" className="object-cover w-full h-full" />
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-24 h-16 flex flex-col items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/3 text-slate-600 text-[11px] text-center font-medium gap-1">
-                                                        <ImageIcon className="w-4 h-4" />
-                                                        <span>Yok</span>
+                                                    <div className="w-16 h-16 flex flex-col items-center justify-center border border-dashed border-slate-700/50 rounded-xl bg-slate-900/30 text-slate-600 text-[10px] text-center font-medium gap-1">
+                                                        <ImageIcon className="w-4 h-4 text-slate-700" />
+                                                        Yok
                                                     </div>
                                                 )}
                                             </div>
                                         </td>
 
-                                        {/* Aksiyon */}
-                                        <td className="px-5 py-4 align-middle">
+                                        {/* 5. Sorumlu ID / Kişi */}
+                                        <td className="px-4 py-4 align-middle">
+                                            <div className="flex justify-center">
+                                                {ticket.status !== 'PENDING' ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="text-xs font-bold text-slate-300 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+                                                            {user?.username || 'T/S Uzmanı'}
+                                                        </span>
+                                                        <span className="text-[10px] text-emerald-500/70 mt-1 font-semibold uppercase">Yanıtladı</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-600 italic font-medium">-</span>
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        {/* 6. Tarih Saati Saniyesi */}
+                                        <td className="px-4 py-4 align-middle">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-sm font-mono text-slate-300 font-semibold">
+                                                    {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
+                                                </span>
+                                                <span className="text-[13px] font-mono text-slate-400">
+                                                    {new Date(ticket.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        {/* 7. Aksiyon / İşlem */}
+                                        <td className="px-4 py-4 align-middle">
                                             <div className="flex justify-center">
                                                 {ticket.status === 'PENDING' ? (
                                                     <div className="flex flex-col gap-2 w-full max-w-[140px]">
                                                         <button
                                                             onClick={() => handleAction(ticket.ticket_id, 'NOW')}
                                                             disabled={actionLoading === ticket.ticket_id}
-                                                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs py-2.5 px-3 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.25)] transition-all disabled:opacity-50 active:scale-95"
+                                                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs py-2 px-3 rounded-lg shadow-md transition-all disabled:opacity-50 active:scale-95 border border-emerald-400/20"
                                                         >
                                                             {actionLoading === ticket.ticket_id ? (
                                                                 <Loader2 className="w-4 h-4 animate-spin mx-auto" />
@@ -424,7 +437,7 @@ export default function TechnicalServiceDashboard() {
                                                         <button
                                                             onClick={() => handleAction(ticket.ticket_id, 'LATER')}
                                                             disabled={actionLoading === ticket.ticket_id}
-                                                            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 px-3 rounded-xl border border-slate-600/60 transition-all disabled:opacity-50 active:scale-95"
+                                                            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 px-3 rounded-lg border border-slate-600 transition-all disabled:opacity-50 active:scale-95"
                                                         >
                                                             {actionLoading === ticket.ticket_id ? (
                                                                 <Loader2 className="w-4 h-4 animate-spin mx-auto" />
@@ -436,7 +449,7 @@ export default function TechnicalServiceDashboard() {
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center justify-center gap-2 text-emerald-400 font-bold text-sm bg-emerald-500/10 py-2.5 px-4 rounded-xl border border-emerald-500/20 w-full max-w-[140px]">
+                                                    <div className="flex items-center justify-center gap-2 text-emerald-400 font-bold text-xs bg-emerald-500/10 py-2.5 px-3 rounded-lg border border-emerald-500/20 w-full max-w-[140px]">
                                                         <CheckCircle className="w-4 h-4" /> İşlendi
                                                     </div>
                                                 )}

@@ -156,26 +156,6 @@ export default function GuestRelationSettings() {
                         )}
                     </div>
 
-                    {/* VIP Listesi */}
-                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all md:col-span-2 ${uploadTimes['vip'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-yellow-500/30'}`}>
-                        <div className="flex items-center gap-4 mb-4">
-                            {uploadTimes['vip'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Star className="w-6 h-6 text-yellow-400" />}
-                            <h2 className={`text-xl font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : ''}`}>VIP & Sadakat Misafir Listeleri</h2>
-                        </div>
-                        <p className="text-slate-400 text-sm mb-6">Özel hizmet alması gereken Repeat Guest veya VIP misafirlerin odaya giriş kuralları (Meyve sepeti, Şarap vs).<br/><span className="text-blue-400 font-semibold mt-1 inline-block">Format: Excel, Word, PDF</span></p>
-                        
-                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['vip'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                {isUploadingObj['vip'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />}
-                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{isUploadingObj['vip'] ? 'Yükleniyor...' : (uploadTimes['vip'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['vip'] ? '' : 'veya sürükleyin'}</p>
-                            </div>
-                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => handleGenericUpload('vip', e)} disabled={isUploadingObj['vip']} />
-                        </label>
-                        {uploadTimes['vip'] && (
-                            <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['vip']}</div>
-                        )}
-                    </div>
-
                     {/* --- YENİ EKLENEN: ÖZEL ORGANİZASYON & PAVILION --- */}
                     <div className="md:col-span-2 bg-slate-900/50 border border-purple-500/30 rounded-3xl p-6 relative group hover:border-purple-500/60 transition-all flex flex-col xl:flex-row gap-8">
                         {/* Sol Kısım: Ayarlar & Açıklama */}
@@ -248,6 +228,34 @@ export default function GuestRelationSettings() {
                             </div>
                             <p className="text-[11px] text-slate-500 mt-4 italic text-center">Not: Misafir yapay zekadan özel organizasyon talep ettiğinde yukarıdaki listeye otomatik yansır ve ID'nize bildirim iletilir.</p>
                         </div>
+                    </div>
+
+                    {/* VIP Listesi (Moved to bottom) */}
+                    <div className={`border rounded-3xl p-6 relative overflow-hidden group transition-all md:col-span-2 ${uploadTimes['vip'] ? 'bg-emerald-900/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-800 hover:border-yellow-500/30'}`}>
+                        <div className="flex items-center gap-4 mb-4">
+                            {uploadTimes['vip'] ? <CheckSquare className="w-6 h-6 text-emerald-400" /> : <Star className="w-6 h-6 text-yellow-400" />}
+                            <h2 className={`text-xl font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : ''}`}>AI Öncelikli: VIP & Sadakat (Repeat) Misafir Öğrenme Alanı</h2>
+                        </div>
+                        
+                        <div className="bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl mb-6">
+                            <p className="text-slate-300 text-sm leading-relaxed">
+                                <strong className="text-blue-400">Amacı:</strong> Yapay zeka asistanının misafirlerle yazışırken sıradan bir misafir ile VIP/Repeat bir misafiri birbirinden ayırabilmesini sağlar.
+                                <br/><br/>
+                                Buraya yükleyeceğiniz listede adı geçen bir misafir, asistana mesaj attığında yapay zeka onu anında tanır. Sıradan bir karşılama yapmak yerine; <em>"Ahmet Bey tekrar hoş geldiniz, sadık misafirimiz olduğunuz için odanıza şarap ve meyve sepeti ikramımızın hazır edileceğini bildirmek isterim."</em> tarzı otelinizin belirlediği özel ve prestijli kurallara göre kişiselleştirilmiş cevap verir.
+                            </p>
+                            <span className="text-blue-400 font-semibold mt-3 inline-block text-xs">Desteklenen Format: Excel, Word, PDF</span>
+                        </div>
+                        
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors group ${uploadTimes['vip'] ? 'border-emerald-500/50 hover:bg-emerald-900/20' : 'border-slate-700 bg-slate-950/50 hover:bg-slate-800/50'}`}>
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                {isUploadingObj['vip'] ? <Loader2 className="w-8 h-8 mb-2 animate-spin text-slate-400" /> : <UploadCloud className={`w-8 h-8 mb-2 transition-colors ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-slate-500 group-hover:text-yellow-400'}`} />}
+                                <p className="mb-2 text-sm text-slate-400"><span className={`font-bold ${uploadTimes['vip'] ? 'text-emerald-400' : 'text-yellow-400'}`}>{isUploadingObj['vip'] ? 'Yükleniyor...' : (uploadTimes['vip'] ? 'Yeniden Yükle' : 'Tıklayın')}</span> {isUploadingObj['vip'] ? '' : 'veya sürükleyin'}</p>
+                            </div>
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => handleGenericUpload('vip', e)} disabled={isUploadingObj['vip']} />
+                        </label>
+                        {uploadTimes['vip'] && (
+                            <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['vip']}</div>
+                        )}
                     </div>
                 </div>
             </div>

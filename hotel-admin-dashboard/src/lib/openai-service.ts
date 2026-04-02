@@ -115,7 +115,7 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
 
     try {
         const response = await anthropic.messages.create({
-            model: "claude-sonnet-4-5",
+            model: "claude-3-5-sonnet-20241022",
             max_tokens: 1024,
             system: systemPrompt,
             messages: [
@@ -153,7 +153,7 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
             summary: "Anlasilamayan mesaj / Fallback donuldu.",
             is_alerjen: false,
             needs_reception_cc: true,
-            ai_safe_reply: "Degerli misafirimiz, size su anda sistemlerimizdeki anlik bir yogunluktan dolayi yanit veremiyorum. Lutfen resepsiyonu arayarak destek isteyiniz.",
+            ai_safe_reply: "Degerli misafirimiz, size daha iyi yardimci olabilmek adina talebinizi resepsiyon ekibimize iletiyorum. Acil durumlar ve detayli bilgi icin resepsiyonumuzu her zaman arayabilirsiniz.",
             turkish_translation: "Anlasilamayan mesaj",
             reply_routing_lang: "Isteginizi ilgili departmana hizlica iletiyoruz.",
             reply_immediate_lang: "Talebinizi aldik, hemen ilgileniyorum.",

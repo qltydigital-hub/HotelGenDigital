@@ -1,9 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { HOTEL_KNOWLEDGE_BASE } from './hotel-data';
 
-// Anthropic / Claude konfigürasyonu
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+// OpenAI konfigürasyonu
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 export type IntentType = "QUESTION" | "REQUEST" | "COMPLAINT" | "CANCEL" | "GREETING" | "RESERVATION" | "CONFIRMATION" | "DENIAL" | "EXTERNAL_QUERY";
@@ -114,18 +114,19 @@ DEPARTMAN: Housekeeping, Teknik Servis, F&B, Resepsiyon, Guest Relation, Rezerva
 `;
 
     try {
-        const response = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
             max_tokens: 1024,
-            system: systemPrompt,
             messages: [
+                { role: "system", content: systemPrompt },
                 { role: "user", content: `Misafir Mesajı: "${message}"` }
             ],
+            response_format: { type: "json_object" }
         });
 
-        const aiResText = response.content[0].type === 'text' ? response.content[0].text : '';
+        const aiResText = response.choices[0]?.message?.content || '{}';
 
-        // Claude bazen ```json ... ``` bloğu döner, temizle
+        // Gpt-4o json dönerken ekstra block koyabiliyor, emin olmak için temizleyelim
         const cleaned = aiResText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
 
         const result: AIAnalysisResult = JSON.parse(cleaned || "{}");

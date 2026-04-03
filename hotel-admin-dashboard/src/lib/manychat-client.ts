@@ -2,11 +2,7 @@
 import { MANYCHAT_CONFIG } from './manychat-config';
 
 const getBaseUrl = (channel?: string) => {
-    switch(channel?.toLowerCase()) {
-        case 'instagram': return 'https://api.manychat.com/ig';
-        case 'whatsapp': return 'https://api.manychat.com/wa';
-        default: return 'https://api.manychat.com/fb';
-    }
+    return 'https://api.manychat.com/fb';
 };
 
 export async function setManyChatCustomField(subscriberId: string | number, fieldId: number, fieldValue: string | number | boolean) {

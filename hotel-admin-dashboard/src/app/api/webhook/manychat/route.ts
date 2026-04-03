@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { after } from 'next/server';
+
 import { MANYCHAT_CONFIG } from '@/lib/manychat-config';
 import { analyzeGuestMessage, removeTurkishAccents } from '@/lib/openai-service';
 import { getServiceSupabase } from '@/lib/supabase-client';
@@ -12,17 +12,10 @@ export async function POST(request: Request) {
         const payload = await request.json();
         const requestUrl = request.url;
         
-        // 🚀 MANYCHAT 10SN ZAMAN AŞIMI ÇÖZÜMÜ:
-        // İsteği anında 200 OK ile bitiyoruz, asıl işlemi Vercel/Next arka planında yapıyoruz.
-        after(async () => {
-            try {
-                await processWebhookBackground(requestUrl, payload);
-            } catch (err) {
-                console.error("Arka plan ManyChat işlem hatası:", err);
-            }
-        });
-
-        return NextResponse.json({ success: true, status: "processing_in_background" });
+        // Vercel serverless freeze issue: Background tasks might be killed silently.
+        // We will execute synchronously. ChatGPT 4o is fast enough to answer within ManyChat's 10s timeout.
+        const result = await processWebhookBackground(requestUrl, payload);
+        return result || NextResponse.json({ success: true });
     } catch (e) {
         console.error("Webhook istek okuma hatası:", e);
         return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });

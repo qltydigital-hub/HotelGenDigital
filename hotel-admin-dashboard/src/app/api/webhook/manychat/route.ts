@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { MANYCHAT_CONFIG } from '@/lib/manychat-config';
 import { analyzeGuestMessage, removeTurkishAccents } from '@/lib/openai-service';
 import { getServiceSupabase } from '@/lib/supabase-client';
@@ -9,14 +10,35 @@ import { performLiveSearch } from '@/lib/external-apis';
 export async function POST(request: Request) {
     try {
         const payload = await request.json();
-        console.log("📨 ManyChat / n8n Webhook Alındı");
+        const requestUrl = request.url;
+        
+        // 🚀 MANYCHAT 10SN ZAMAN AŞIMI ÇÖZÜMÜ:
+        // İsteği anında 200 OK ile bitiyoruz, asıl işlemi Vercel/Next arka planında yapıyoruz.
+        after(async () => {
+            try {
+                await processWebhookBackground(requestUrl, payload);
+            } catch (err) {
+                console.error("Arka plan ManyChat işlem hatası:", err);
+            }
+        });
 
-        const url = new URL(request.url);
+        return NextResponse.json({ success: true, status: "processing_in_background" });
+    } catch (e) {
+        console.error("Webhook istek okuma hatası:", e);
+        return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+    }
+}
+
+async function processWebhookBackground(requestUrl: string, payload: any) {
+    try {
+        console.log("📨 ManyChat / n8n Webhook Arka Planda İşleniyor...");
+
+        const url = new URL(requestUrl);
         const channel = url.searchParams.get('channel') || 'instagram'; // ?channel=whatsapp veya instagram
 
         // 1. Gelen Veriyi Al
         const subscriberId = payload.subscriber_id || payload.chat_id || payload.contact_id || "unknown";
-        let incomingText = payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text] || payload.message || payload.text;
+        let incomingText = payload.message || payload.text || payload.custom_fields?.[MANYCHAT_CONFIG.fields.pending_text];
         
         // No longer applying accent removal as DB supports UTF-8
         // if (incomingText) incomingText = removeTurkishAccents(incomingText);
@@ -126,7 +148,10 @@ export async function POST(request: Request) {
         // EĞER AWAITING_INFO beklentisindeysek, ama gelen niyet bir Soru ya da Dış İstekse (Yastık isteyip sonra 
         // "kurlar nedir" diye sorulması gibi), bekleyen işlemi iptal edip soruya cevap vermeliyiz. (SADECE ODA ve İSİM olmayan durumlar)
         let overrideToDirect = false;
-        if (isAwaitingInfo && ["QUESTION", "EXTERNAL_QUERY", "CANCEL"].includes(aiAnalysis.intent)) {
+        // AI isim veya oda numarası yakaladıysa bu bir iptal/direkt soru DEĞİLDİR, misafir bilgi veriyordur, session silinmemeli.
+        const isProvidingInfo = !!(aiAnalysis.extracted_room_no || aiAnalysis.extracted_guest_name);
+        
+        if (isAwaitingInfo && !isProvidingInfo && ["QUESTION", "EXTERNAL_QUERY", "CANCEL", "GREETING", "CONFIRMATION", "DENIAL"].includes(aiAnalysis.intent)) {
             overrideToDirect = true;
             // Eski session'ı temizle
             if (subscriberId !== "unknown") {

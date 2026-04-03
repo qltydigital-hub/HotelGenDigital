@@ -108,7 +108,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             const waitMsg = "Talebinizi aldık. Konunun hassasiyeti sebebiyle durumu anında otel yönetimine aktarıyoruz, lütfen kısa bir süre bekleyiniz.";
             
             if (subscriberId && subscriberId !== "unknown") {
-                await sendManyChatTextMessage(subscriberId, waitMsg);
+                await sendManyChatTextMessage(subscriberId, waitMsg, channel);
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, waitMsg);
             }
 
@@ -181,7 +181,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             if (subscriberId && subscriberId !== "unknown") {
                 console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan metin gönderiliyor (ASENKRON SORUNU ÇÖZÜMÜ)...`);
                 // Manychat Send Flow Custom Field Gecikme Sıkıntısı Yüzünden Doğrudan Text API kullanıyoruz:
-                await sendManyChatTextMessage(subscriberId, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
+                await sendManyChatTextMessage(subscriberId, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.", channel);
                 
                 // N8N logları için yine de field'ları güncelleyelim ama Flow Tetiklemeyelim (opsiyonel)
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
@@ -233,7 +233,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                         turkish_translation: aiAnalysis.turkish_translation || currentRequestMsg
                     }, { onConflict: 'subscriber_id' });
 
-                    await sendManyChatTextMessage(subscriberId, missingInfoReply);
+                    await sendManyChatTextMessage(subscriberId, missingInfoReply, channel);
                     await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, missingInfoReply);
                 }
 
@@ -280,7 +280,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                     // Oturum kaydını silmeyelim ki bir sonraki "Evet" veya butonda "102 Mehmet Kaya" girdiğinde devam edebilsin!
                     
                     // Demo Fallback butonu ile gönderiyoruz:
-                    await sendManyChatInteractiveMessage(subscriberId, failedFallbackReply, ["102 Mehmet Kaya", "İptal"]);
+                    await sendManyChatInteractiveMessage(subscriberId, failedFallbackReply, ["102 Mehmet Kaya", "İptal"], channel);
                     await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, failedFallbackReply);
                 }
                 return NextResponse.json({ success: true, action: "VERIFICATION_FAILED_FALLBACK", reply_text: failedFallbackReply });
@@ -344,7 +344,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             const guestAcknowledgeMsg = aiAnalysis.reply_routing_lang || "İsteğinizi ilgili departmana hızlıca iletiyoruz.";
 
             if (subscriberId && subscriberId !== "unknown") {
-                await sendManyChatTextMessage(subscriberId, guestAcknowledgeMsg);
+                await sendManyChatTextMessage(subscriberId, guestAcknowledgeMsg, channel);
                 await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, guestAcknowledgeMsg);
             }
 

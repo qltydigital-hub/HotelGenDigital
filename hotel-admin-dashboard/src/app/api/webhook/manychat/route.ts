@@ -100,10 +100,9 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
 
             const waitMsg = "Talebinizi aldık. Konunun hassasiyeti sebebiyle durumu anında otel yönetimine aktarıyoruz, lütfen kısa bir süre bekleyiniz.";
             
-            if (subscriberId && subscriberId !== "unknown") {
-                await sendManyChatTextMessage(subscriberId, waitMsg, channel);
-                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, waitMsg);
-            }
+            // Not: ManyChat API (sendManyChatTextMessage) Inbox Seat hatası verdiği için kaldırıldı.
+            // Bunun yerine ManyChat flow'unda External Request içindeki "Response Mapping" kullanılmalıdır.
+            // "$.reply_text" -> n8n_cevap, "$.status" -> n8n_status olarak maplendiğinde sorunsuz çalışır.
 
             // Telegram Bildirimi (F/O Panelinden Girilen ID'ye Gidiyor)
             if (escalationTelegram) {
@@ -118,7 +117,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                 console.log(`[ESCALATION EMAIL SEND TRIGGER] -> To: ${escalationEmail} | Msg: ${incomingText}`);
             }
 
-            return NextResponse.json({ success: true, action: "ESCALATION_TRIGGERED", reply_text: waitMsg });
+            return NextResponse.json({ success: true, action: "ESCALATION_TRIGGERED", reply_text: waitMsg, status: "completed_escalation" });
         }
         // ------------------------------------------------------------------
 
@@ -172,15 +171,14 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             }
 
             if (subscriberId && subscriberId !== "unknown") {
-                console.log(`📲 ManyChat (${channel}) kullanıcısına doğrudan metin gönderiliyor (ASENKRON SORUNU ÇÖZÜMÜ)...`);
-                // Manychat Send Flow Custom Field Gecikme Sıkıntısı Yüzünden Doğrudan Text API kullanıyoruz:
-                await sendManyChatTextMessage(subscriberId, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.", channel);
-                
-                // N8N logları için yine de field'ları güncelleyelim ama Flow Tetiklemeyelim (opsiyonel)
-                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.");
+                // ManyChat API call kaldırıldı. Yanıtı HTTP üzerinden döneceğiz.
+                console.log(`📲 ManyChat (${channel}) HTTP senkron yanıtı sunuluyor...`);
             }
             return NextResponse.json({
-                success: true, action: "AI_REPLY_DIRECTLY", reply_text: aiAnalysis.ai_safe_reply
+                success: true, 
+                action: "AI_REPLY_DIRECTLY", 
+                reply_text: aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.",
+                status: "completed"
             });
         }
 
@@ -226,11 +224,10 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                         turkish_translation: aiAnalysis.turkish_translation || currentRequestMsg
                     }, { onConflict: 'subscriber_id' });
 
-                    await sendManyChatTextMessage(subscriberId, missingInfoReply, channel);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, missingInfoReply);
+                    // API mesaji kaldirildi. Map işleminden çekilecek.
                 }
 
-                return NextResponse.json({ success: true, action: "MISSING_GUEST_INFO", reply_text: missingInfoReply });
+                return NextResponse.json({ success: true, action: "MISSING_GUEST_INFO", reply_text: missingInfoReply, status: "completed_waiting_info" });
             }
 
             // IN-HOUSE LISTESI ÜZERİNDEN DOĞRULAMA (Oda No ve İsim)
@@ -272,11 +269,10 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                 if (subscriberId && subscriberId !== "unknown") {
                     // Oturum kaydını silmeyelim ki bir sonraki "Evet" veya butonda "102 Mehmet Kaya" girdiğinde devam edebilsin!
                     
-                    // Demo Fallback butonu ile gönderiyoruz:
-                    await sendManyChatInteractiveMessage(subscriberId, failedFallbackReply, ["102 Mehmet Kaya", "İptal"], channel);
-                    await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, failedFallbackReply);
+                    // Fallback JSON payload üzerinden sağlanacak:
+                    // Kullanıcı Flow içinde if 'status' === 'completed_fallback_ask' ise butonu kendi UI'ı ile göstersin.
                 }
-                return NextResponse.json({ success: true, action: "VERIFICATION_FAILED_FALLBACK", reply_text: failedFallbackReply });
+                return NextResponse.json({ success: true, action: "VERIFICATION_FAILED_FALLBACK", reply_text: failedFallbackReply, status: "completed_fallback_ask" });
             }
 
             // DOĞRULAMA BAŞARILIYSA -> Session'ı temizle, SÜRECİ BAŞLAT (Departmana yönlendir)
@@ -337,11 +333,10 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             const guestAcknowledgeMsg = aiAnalysis.reply_routing_lang || "İsteğinizi ilgili departmana hızlıca iletiyoruz.";
 
             if (subscriberId && subscriberId !== "unknown") {
-                await sendManyChatTextMessage(subscriberId, guestAcknowledgeMsg, channel);
-                await setManyChatCustomField(subscriberId, MANYCHAT_CONFIG.fields.ai_cevap, guestAcknowledgeMsg);
+                // API Messages disabled.
             }
 
-            return NextResponse.json({ success: true, action: "ROUTE_TO_DEPARTMENT", ticket_id: ticketId, reply_text: guestAcknowledgeMsg });
+            return NextResponse.json({ success: true, action: "ROUTE_TO_DEPARTMENT", ticket_id: ticketId, reply_text: guestAcknowledgeMsg, status: "completed" });
         }
 
         // Varsayılan / Yakalanamayan durum

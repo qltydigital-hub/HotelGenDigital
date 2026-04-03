@@ -2,6 +2,8 @@
 import { MANYCHAT_CONFIG } from './manychat-config';
 
 const getBaseUrl = (channel?: string) => {
+    if (channel === 'instagram') return 'https://api.manychat.com/ig';
+    if (channel === 'whatsapp') return 'https://api.manychat.com/wa';
     return 'https://api.manychat.com/fb';
 };
 

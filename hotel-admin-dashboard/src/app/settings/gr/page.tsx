@@ -11,6 +11,11 @@ export default function GuestRelationSettings() {
     // Özel Organizasyon (Special Org) State
     const [specialOrgTelegramId, setSpecialOrgTelegramId] = useState("");
     const [isSavingOrg, setIsSavingOrg] = useState(false);
+
+    // Alerji Sorumlusu State
+    const [allergyContactEmail, setAllergyContactEmail] = useState("");
+    const [allergyContactId, setAllergyContactId] = useState("");
+    const [isSavingAllergy, setIsSavingAllergy] = useState(false);
     
     // Mock Veriler
     const mockSpecialRequests = [
@@ -26,8 +31,10 @@ export default function GuestRelationSettings() {
              try {
                  const res = await fetch('/api/settings');
                  const data = await res.json();
-                 if(data.success && data.data.special_org_telegram_id) {
-                     setSpecialOrgTelegramId(data.data.special_org_telegram_id);
+                 if(data.success) {
+                     if(data.data.special_org_telegram_id) setSpecialOrgTelegramId(data.data.special_org_telegram_id);
+                     if(data.data.allergy_contact_email) setAllergyContactEmail(data.data.allergy_contact_email);
+                     if(data.data.allergy_contact_id) setAllergyContactId(data.data.allergy_contact_id);
                  }
              } catch(e) {}
         };
@@ -69,6 +76,25 @@ export default function GuestRelationSettings() {
             console.error(error);
         } finally {
             setIsSavingOrg(false);
+        }
+    };
+
+    const saveAllergyContact = async () => {
+        setIsSavingAllergy(true);
+        try {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    allergy_contact_email: allergyContactEmail,
+                    allergy_contact_id: allergyContactId
+                })
+            });
+            alert("Alerji Bildirim Sorumlusu başarıyla kaydedildi/güncellendi.");
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsSavingAllergy(false);
         }
     };
 
@@ -269,6 +295,42 @@ export default function GuestRelationSettings() {
                                     <h2 className="text-2xl font-bold text-white">Aktif Alerjik Misafirler Panosu</h2>
                                 </div>
                                 <p className="text-sm text-slate-400 leading-relaxed mb-6">Misafirlerin restoran rezervasyonu veya oda siparişi esnasında yapay zeka asistanına ilettiği <strong>alerji / sağlık bildirimleri</strong> burada anlık olarak raporlanır. Lütfen listeyi güncel tutun ve operasyona iletin.</p>
+                                
+                                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 mt-4">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Bildirim Gidecek Sorumlu Personel</span>
+                                    <p className="text-[11px] text-rose-400/80 mb-4 italic">Sistem alerjen riski saptadığında aşağıdaki e-posta ve mesaja acil uyarı gönderir:</p>
+                                    
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-[10px] text-slate-500 font-bold uppercase">Sorumlu E-Posta Adresi</label>
+                                            <input 
+                                                type="email" 
+                                                value={allergyContactEmail}
+                                                onChange={(e) => setAllergyContactEmail(e.target.value)}
+                                                placeholder="Örn: saglik@hotel.com"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-500 font-bold uppercase">Telegram / WP Bildirim ID</label>
+                                            <input 
+                                                type="text" 
+                                                value={allergyContactId}
+                                                onChange={(e) => setAllergyContactId(e.target.value)}
+                                                placeholder="Örn: 98765432"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
+                                            />
+                                        </div>
+                                        <button 
+                                            onClick={saveAllergyContact}
+                                            disabled={isSavingAllergy}
+                                            className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
+                                        >
+                                            {isSavingAllergy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
+                                            Sorumluyu Kaydet / Güncelle
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

@@ -323,6 +323,21 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                     reply_later_lang: aiAnalysis.reply_later_lang || "Talebinizi aldım, sonrasında ilgileneceğim.",
                     timeout_minutes: timeoutMinutes
                 });
+
+                // YENİ: Alerjik misafirleri doğrudan özel SQL tablosuna (Guest Relations Listesi için) kaydet
+                if (aiAnalysis.is_alerjen) {
+                    try {
+                        await supabase.from('guest_allergies').insert({
+                            room_no: finalRoomNo === "Bilinmiyor" ? null : finalRoomNo,
+                            guest_name: finalGuestName === "Misafir" || finalGuestName === "Bilinmiyor" ? null : finalGuestName,
+                            allergy_details: currentTranslation || currentRequestMsg,
+                            status: 'ACTIVE'
+                        });
+                    } catch (allergyErr) {
+                        console.error("Alerji DB Insert Error:", allergyErr);
+                    }
+                }
+
             } catch(e) { console.error("Ticket DB Insert Error:", e); }
 
             const mockDeptChatId = process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_DEPT_CHAT_ID_TBD" : null;

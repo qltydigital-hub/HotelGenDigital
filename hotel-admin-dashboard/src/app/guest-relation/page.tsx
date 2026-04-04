@@ -151,6 +151,57 @@ export default function GuestRelationDashboard() {
                     </div>
                 </div>
 
+                {/* YENİ: Alerjik Misafirler Uyarı Panosu */}
+                <div className="glass-card p-8 bg-slate-900/50 border border-rose-900/50 mt-8 mb-8">
+                    <div className="flex items-center space-x-3 mb-6">
+                        <AlertCircle className="text-rose-400 w-8 h-8" />
+                        <h2 className="text-2xl font-black text-white">Aktif Alerjik Misafirler / Sağlık Bildirimleri</h2>
+                    </div>
+                    <p className="text-sm text-rose-200 mb-6">
+                        Yapay zeka asistanı aracılığıyla restoran rezervasyonu veya yemek siparişi esnasında tespit edilen alerji uyarıları aşağıda canlı olarak listelenir.
+                    </p>
+                    <div className="space-y-4">
+                        <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center bg-rose-500/10 hover:bg-rose-500/20 transition-all border-l-4 border-l-rose-500">
+                            <div>
+                                <h3 className="text-white font-bold text-lg">Oda: 305 - Ali Yılmaz</h3>
+                                <p className="text-md text-rose-300 mt-1 font-medium">Gluten hassasiyeti - Ekmek ve makarna ürünleri tüketemiyor.</p>
+                                <p className="text-xs text-slate-400 mt-2">Bildirim: Bugün 14:20 | Restoran Sorgusu</p>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="px-4 py-2 bg-rose-600 text-white font-bold rounded-lg text-sm shadow-lg shadow-rose-900/50 uppercase tracking-wider">
+                                    DİKKAT EDİLMELİ
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center bg-rose-500/10 hover:bg-rose-500/20 transition-all border-l-4 border-l-rose-500">
+                            <div>
+                                <h3 className="text-white font-bold text-lg">Oda: 412 - Zeynep Demir</h3>
+                                <p className="text-md text-rose-300 mt-1 font-medium">Çocuğunda fıstık alerjisi mevcut.</p>
+                                <p className="text-xs text-slate-400 mt-2">Bildirim: Dün 19:45 | Kahvaltı Menüsü</p>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="px-4 py-2 bg-rose-600 text-white font-bold rounded-lg text-sm shadow-lg shadow-rose-900/50 uppercase tracking-wider">
+                                    DİKKAT EDİLMELİ
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center bg-orange-500/10 hover:bg-orange-500/20 transition-all border-l-4 border-l-orange-500">
+                            <div>
+                                <h3 className="text-white font-bold text-lg">Oda: 102 - Mehmet Kaya</h3>
+                                <p className="text-md text-orange-300 mt-1 font-medium">Laktoz intoleransı - Süt ürünleri talep etmiyor.</p>
+                                <p className="text-xs text-slate-400 mt-2">Bildirim: 15 dk önce | Oda Servisi</p>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="px-4 py-2 bg-orange-600 text-white font-bold rounded-lg text-sm shadow-lg shadow-orange-900/50 uppercase tracking-wider">
+                                    BİLGİ
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Upload Status Overlay */}
                 {file && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">

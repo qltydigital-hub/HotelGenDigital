@@ -124,42 +124,7 @@ export default function SettingsPage() {
                             </div>
                         )}
 
-                        {/* Tenant Navigation Menu */}
-                        <div className="bg-slate-900/60 border border-slate-700/50 rounded-3xl p-6 mb-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-                            <div className="flex items-center gap-3 mb-5">
-                                <div className="h-8 w-1 bg-blue-500 rounded-full"></div>
-                                <h3 className="text-sm font-extrabold text-white uppercase tracking-widest">Hızlı Departman Erişimi</h3>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <Link href="/settings/fo" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-blue-900/20 border border-slate-800 hover:border-blue-500/50 transition-all rounded-2xl relative overflow-hidden">
-                                    <div className="bg-blue-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Bell className="w-5 h-5 text-blue-400" /></div>
-                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">F/O</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Önbüro</span></div>
-                                </Link>
-                                <Link href="/settings/gr" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-rose-900/20 border border-slate-800 hover:border-rose-500/50 transition-all rounded-2xl relative overflow-hidden">
-                                    <div className="bg-rose-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><HeartHandshake className="w-5 h-5 text-rose-400" /></div>
-                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">G/R</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Misafir İlş.</span></div>
-                                </Link>
-                                <Link href="/settings/fb" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-orange-900/20 border border-slate-800 hover:border-orange-500/50 transition-all rounded-2xl relative overflow-hidden">
-                                    <div className="bg-orange-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Coffee className="w-5 h-5 text-orange-400" /></div>
-                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">F/B</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Yeme İçecek</span></div>
-                                </Link>
-                                <Link href="/settings/spa" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-teal-900/20 border border-slate-800 hover:border-teal-500/50 transition-all rounded-2xl relative overflow-hidden">
-                                    <div className="bg-teal-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Droplet className="w-5 h-5 text-teal-400" /></div>
-                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">SPA</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Sağlık Mrkz.</span></div>
-                                </Link>
-                                <Link href="/settings/hk" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-purple-900/20 border border-slate-800 hover:border-purple-500/50 transition-all rounded-2xl relative overflow-hidden">
-                                    <div className="bg-purple-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Sparkles className="w-5 h-5 text-purple-400" /></div>
-                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">H/K</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Temizlik</span></div>
-                                </Link>
-                                <Link href="/settings/ts" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-zinc-700/40 border border-slate-800 hover:border-zinc-400/50 transition-all rounded-2xl relative overflow-hidden">
-                                    <div className="bg-zinc-500/20 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Wrench className="w-5 h-5 text-zinc-300" /></div>
-                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">T/S</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Teknik Servis</span></div>
-                                </Link>
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative">
+                        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative mb-8">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
                                     <Hotel className="w-7 h-7 text-white" />
@@ -225,6 +190,42 @@ export default function SettingsPage() {
                                 TÜM BİLGİLERİ KAYDET
                             </button>
                         </form>
+
+                        {/* Tenant Navigation Menu */}
+                        <div className="bg-slate-900/60 border border-slate-700/50 rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+                            <div className="flex items-center gap-3 mb-5">
+                                <div className="h-8 w-1 bg-blue-500 rounded-full"></div>
+                                <h3 className="text-sm font-extrabold text-white uppercase tracking-widest">Hızlı Departman Erişimi</h3>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <Link href="/settings/fo" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-blue-900/20 border border-slate-800 hover:border-blue-500/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-blue-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Bell className="w-5 h-5 text-blue-400" /></div>
+                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">F/O</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Önbüro</span></div>
+                                </Link>
+                                <Link href="/settings/gr" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-rose-900/20 border border-slate-800 hover:border-rose-500/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-rose-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><HeartHandshake className="w-5 h-5 text-rose-400" /></div>
+                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">G/R</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Misafir İlş.</span></div>
+                                </Link>
+                                <Link href="/settings/fb" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-orange-900/20 border border-slate-800 hover:border-orange-500/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-orange-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Coffee className="w-5 h-5 text-orange-400" /></div>
+                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">F/B</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Yeme İçecek</span></div>
+                                </Link>
+                                <Link href="/settings/spa" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-teal-900/20 border border-slate-800 hover:border-teal-500/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-teal-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Droplet className="w-5 h-5 text-teal-400" /></div>
+                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">SPA</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Sağlık Mrkz.</span></div>
+                                </Link>
+                                <Link href="/settings/hk" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-purple-900/20 border border-slate-800 hover:border-purple-500/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-purple-500/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Sparkles className="w-5 h-5 text-purple-400" /></div>
+                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">H/K</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Temizlik</span></div>
+                                </Link>
+                                <Link href="/settings/ts" className="group flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-zinc-700/40 border border-slate-800 hover:border-zinc-400/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-zinc-500/20 p-2.5 rounded-xl group-hover:scale-110 transition-transform"><Wrench className="w-5 h-5 text-zinc-300" /></div>
+                                    <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">T/S</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Teknik Servis</span></div>
+                                </Link>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>

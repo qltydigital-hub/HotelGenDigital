@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare, Loader2, Gift, Save, Bell } from 'lucide-react';
+import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare, Loader2, Gift, Save, Bell, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
@@ -257,6 +257,57 @@ export default function GuestRelationSettings() {
                             <div className="mt-4 text-xs font-medium text-emerald-400 text-center">Son Yükleme: <br/>{uploadTimes['vip']}</div>
                         )}
                     </div>
+
+                    {/* YENİ: Alerjik Misafirler Uyarı Panosu (G/R Veri Paneli) */}
+                    <div className="md:col-span-2 bg-slate-900/50 border border-rose-900/50 rounded-3xl p-6 relative group hover:border-rose-500/60 transition-all flex flex-col xl:flex-row gap-8">
+                        <div className="xl:w-1/3 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-rose-600/20 p-3 rounded-xl border border-rose-500/30">
+                                        <AlertCircle className="w-6 h-6 text-rose-400" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-white">Aktif Alerjik Misafirler Panosu</h2>
+                                </div>
+                                <p className="text-sm text-slate-400 leading-relaxed mb-6">Misafirlerin restoran rezervasyonu veya oda siparişi esnasında yapay zeka asistanına ilettiği <strong>alerji / sağlık bildirimleri</strong> burada anlık olarak raporlanır. Lütfen listeyi güncel tutun ve operasyona iletin.</p>
+                            </div>
+                        </div>
+
+                        <div className="xl:w-2/3 flex flex-col space-y-4">
+                            <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center hover:bg-rose-500/10 transition-all border-l-4 border-l-rose-500">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h3 className="text-white font-bold text-lg">Oda: 305 - Ali Yılmaz</h3>
+                                        <span className="px-3 py-1 bg-rose-600/80 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider shadow-lg shadow-rose-900/50">Dikkat Edilmeli</span>
+                                    </div>
+                                    <p className="text-sm text-rose-300 font-medium">Gluten hassasiyeti - Ekmek ve makarna ürünleri tüketemiyor.</p>
+                                    <p className="text-xs text-slate-500 mt-2">Bildirim: Bugün 14:20 | Restoran Sorgusu</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center hover:bg-rose-500/10 transition-all border-l-4 border-l-rose-500">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h3 className="text-white font-bold text-lg">Oda: 412 - Zeynep Demir</h3>
+                                        <span className="px-3 py-1 bg-rose-600/80 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider shadow-lg shadow-rose-900/50">Dikkat Edilmeli</span>
+                                    </div>
+                                    <p className="text-sm text-rose-300 font-medium">Çocuğunda fıstık alerjisi mevcut.</p>
+                                    <p className="text-xs text-slate-500 mt-2">Bildirim: Dün 19:45 | Kahvaltı Menüsü</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center hover:bg-orange-500/10 transition-all border-l-4 border-l-orange-500">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h3 className="text-white font-bold text-lg">Oda: 102 - Mehmet Kaya</h3>
+                                        <span className="px-3 py-1 bg-orange-600/80 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider shadow-lg shadow-orange-900/50">BİLGİ</span>
+                                    </div>
+                                    <p className="text-sm text-orange-300 font-medium">Laktoz intoleransı - Süt ürünleri talep etmiyor.</p>
+                                    <p className="text-xs text-slate-500 mt-2">Bildirim: 15 dk önce | Oda Servisi</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

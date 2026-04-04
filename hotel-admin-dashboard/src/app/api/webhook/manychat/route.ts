@@ -151,6 +151,15 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             }
         }
 
+        // --- ALERJİ / SAĞLIK GÜVENLİK KONTROLÜ ---
+        // Alerji bildirildiyse ve departmana yönlendirilmesi gerekiyorsa, bunu doğrudan REQUEST ve Guest Relation yapalım.
+        if (aiAnalysis.is_alerjen) {
+            aiAnalysis.intent = "REQUEST";
+            aiAnalysis.department = "Guest Relation";
+            overrideToDirect = false; // DURUM B (Ticket Açma) sürecine yönlendir
+        }
+        // ----------------------------------------
+
         // DURUM A: Sadece Soru, Selamlama, Rezervasyon, Dış Sorgu, vb...
         if ((!isAwaitingInfo || overrideToDirect) && directIntents.includes(aiAnalysis.intent)) {
             
@@ -209,7 +218,8 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             const finalGuestName = aiAnalysis.extracted_guest_name || guestName;
 
             // EĞER ODA NUMARASI BİLİNMİYORSA: Session'a yaz, adama sor!
-            if (finalRoomNo === "Bilinmiyor" || finalRoomNo === null) {
+            // ANCAK sağlık/alerji söz konusu ise konaklayan/dış kullanıcı fark etmeksizin acilen bildirim yapılmalıdır.
+            if ((finalRoomNo === "Bilinmiyor" || finalRoomNo === null) && !aiAnalysis.is_alerjen) {
                 const missingInfoReply = "Talebinizi işleme alabilmemiz için lütfen isim, soyisim ve oda numaranızı yazınız. (Örn: 305 Ali Yılmaz)";
                 
                 if (subscriberId && subscriberId !== "unknown") {
@@ -251,7 +261,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                 } catch (e) { console.error("Inhouse DB doğrulama hatası:", e); }
             }
 
-            if (!isVerified) {
+            if (!isVerified && !aiAnalysis.is_alerjen) {
                 // ACİL DURUM BİLDİRİMİ: Sistemde olmayan oda ve isim ile talep oluşturmaya çalışıldı
                 const alertChatId = process.env.TELEGRAM_MANAGER_CHAT_ID || (process.env.TELEGRAM_GUEST_BOT_TOKEN ? "YOUR_RECEPTION_CHAT_ID_TBD" : null);
                 if (alertChatId) {

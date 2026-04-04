@@ -56,31 +56,44 @@ function PresentationFunnelContent() {
     }
   };
 
-  const handleSettingsLogin = async (e: React.FormEvent) => {
+    const handleSettingsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanUser = username.trim().toUpperCase();
     const cleanPass = password.trim();
 
-    if (cleanUser === 'F/O' && cleanPass === '1234') {
-      await login({ id: 'settings-fo', username: 'F/O (Veri Ekibi)', department: 'settings' });
+    if (cleanUser === 'HOTEL_ADMIN') {
+      if (cleanPass === '1234') {
+        await login({ id: 'admin-hotelgen', username: 'HotelGen Yönetim', department: 'settings', tenant_id: 'hotelgen' });
+        router.push('/settings');
+      } else if (cleanPass === 'Rixos2026') {
+        await login({ id: 'admin-rixos', username: 'Rixos Premium Yönetim', department: 'settings', tenant_id: 'rixos' });
+        router.push('/settings');
+      } else if (cleanPass === 'Titanic2026') {
+        await login({ id: 'admin-titanic', username: 'Titanic Mardan Yönetim', department: 'settings', tenant_id: 'titanic' });
+        router.push('/settings');
+      } else {
+        setError('Otel yetki şifresi geçersiz.');
+      }
+    } else if (cleanUser === 'F/O' && cleanPass === '1234') {
+      await login({ id: 'settings-fo', username: 'F/O (Veri Ekibi)', department: 'settings', tenant_id: 'hotelgen' });
       router.push('/settings/fo');
     } else if (cleanUser === 'F/B' && cleanPass === '1234') {
-      await login({ id: 'settings-fb', username: 'F/B (Veri Ekibi)', department: 'settings' });
+      await login({ id: 'settings-fb', username: 'F/B (Veri Ekibi)', department: 'settings', tenant_id: 'hotelgen' });
       router.push('/settings/fb');
     } else if (cleanUser === 'G/R' && cleanPass === '1234') {
-      await login({ id: 'settings-gr', username: 'G/R (Veri Ekibi)', department: 'settings' });
+      await login({ id: 'settings-gr', username: 'G/R (Veri Ekibi)', department: 'settings', tenant_id: 'hotelgen' });
       router.push('/settings/gr');
     } else if (cleanUser === 'H/K' && cleanPass === '1234') {
-      await login({ id: 'settings-hk', username: 'H/K (Veri Ekibi)', department: 'settings' });
+      await login({ id: 'settings-hk', username: 'H/K (Veri Ekibi)', department: 'settings', tenant_id: 'hotelgen' });
       router.push('/settings/hk');
     } else if (cleanUser === 'SPA' && cleanPass === '1234') {
-      await login({ id: 'settings-spa', username: 'SPA (Veri Ekibi)', department: 'settings' });
+      await login({ id: 'settings-spa', username: 'SPA (Veri Ekibi)', department: 'settings', tenant_id: 'hotelgen' });
       router.push('/settings/spa');
     } else if (cleanUser === 'T/S' && cleanPass === '1234') {
-      await login({ id: 'settings-ts', username: 'T/S (Veri Ekibi)', department: 'settings' });
+      await login({ id: 'settings-ts', username: 'T/S (Veri Ekibi)', department: 'settings', tenant_id: 'hotelgen' });
       router.push('/settings/ts');
     } else {
-      setError(`Geçersiz departman ("${username}") veya hatalı şifre.`);
+      setError(`Geçersiz departman veya hatalı şifre.`);
     }
   };
 
@@ -381,6 +394,7 @@ function PresentationFunnelContent() {
                             className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-10 text-white focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
                           >
                             <option value="" disabled>Lütfen Departman Seçin</option>
+                            <option value="HOTEL_ADMIN">Hotel Genel Yönetimi (SaaS)</option>
                             <option value="F/O">F/O - Önbüro</option>
                             <option value="F/B">F/B - Yiyecek & İçecek</option>
                             <option value="H/K">H/K - Housekeeping</option>

@@ -36,6 +36,16 @@ export default function SettingsPage() {
     const [activeHotelId, setActiveHotelId] = useState('hotelgen');
     const [hotelInfo, setHotelInfo] = useState(demoHotelsData['hotelgen']);
 
+    React.useEffect(() => {
+        if (user && user.tenant_id && user.department !== 'admin') {
+            const tenantKey = user.tenant_id as keyof typeof demoHotelsData;
+            if (demoHotelsData[tenantKey]) {
+                setActiveHotelId(user.tenant_id);
+                setHotelInfo(demoHotelsData[tenantKey]);
+            }
+        }
+    }, [user]);
+
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         setDemoHotelsData({ ...demoHotelsData, [activeHotelId]: hotelInfo });

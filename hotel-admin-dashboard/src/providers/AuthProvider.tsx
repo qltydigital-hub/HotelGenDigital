@@ -9,6 +9,7 @@ export type UserProfile = {
     username: string;
     department: string;
     session_token?: string | null;
+    tenant_id?: string; // SaaS için hangi otele ait olduğu
 };
 
 interface AuthContextType {

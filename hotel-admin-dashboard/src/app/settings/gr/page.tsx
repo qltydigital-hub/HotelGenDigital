@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare, Loader2, Gift, Save, Bell, AlertCircle } from 'lucide-react';
+import { Settings, UploadCloud, HeartHandshake, Map, Star, LogOut, CheckSquare, Loader2, Gift, Save, Bell, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
@@ -13,8 +13,7 @@ export default function GuestRelationSettings() {
     const [isSavingOrg, setIsSavingOrg] = useState(false);
 
     // Alerji Sorumlusu State
-    const [allergyContactEmail, setAllergyContactEmail] = useState("");
-    const [allergyContactId, setAllergyContactId] = useState("");
+    const [allergyContacts, setAllergyContacts] = useState([{ id: 'init-1', email: '', telegram: '' }]);
     const [isSavingAllergy, setIsSavingAllergy] = useState(false);
     
     // Mock Veriler
@@ -33,8 +32,11 @@ export default function GuestRelationSettings() {
                  const data = await res.json();
                  if(data.success) {
                      if(data.data.special_org_telegram_id) setSpecialOrgTelegramId(data.data.special_org_telegram_id);
-                     if(data.data.allergy_contact_email) setAllergyContactEmail(data.data.allergy_contact_email);
-                     if(data.data.allergy_contact_id) setAllergyContactId(data.data.allergy_contact_id);
+                     if(data.data.allergy_contacts) {
+                         setAllergyContacts(data.data.allergy_contacts);
+                     } else if (data.data.allergy_contact_email || data.data.allergy_contact_id) {
+                         setAllergyContacts([{ id: 'init-1', email: data.data.allergy_contact_email || '', telegram: data.data.allergy_contact_id || '' }]);
+                     }
                  }
              } catch(e) {}
         };
@@ -79,6 +81,12 @@ export default function GuestRelationSettings() {
         }
     };
 
+    const addAllergyContact = () => setAllergyContacts([...allergyContacts, { id: Date.now().toString(), email: '', telegram: '' }]);
+    const removeAllergyContact = (id: string) => setAllergyContacts(allergyContacts.filter(c => c.id !== id));
+    const updateAllergyContact = (id: string, field: 'email' | 'telegram', value: string) => {
+        setAllergyContacts(allergyContacts.map(c => c.id === id ? { ...c, [field]: value } : c));
+    };
+
     const saveAllergyContact = async () => {
         setIsSavingAllergy(true);
         try {
@@ -86,11 +94,10 @@ export default function GuestRelationSettings() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    allergy_contact_email: allergyContactEmail,
-                    allergy_contact_id: allergyContactId
+                    allergy_contacts: allergyContacts 
                 })
             });
-            alert("Alerji Bildirim Sorumlusu başarıyla kaydedildi/güncellendi.");
+            alert("Alerji Bildirim Sorumluları başarıyla kaydedildi.");
         } catch (error) {
             console.error(error);
         } finally {
@@ -300,34 +307,54 @@ export default function GuestRelationSettings() {
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Bildirim Gidecek Sorumlu Personel</span>
                                     <p className="text-[11px] text-rose-400/80 mb-4 italic">Sistem alerjen riski saptadığında aşağıdaki e-posta ve mesaja acil uyarı gönderir:</p>
                                     
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className="text-[10px] text-slate-500 font-bold uppercase">Sorumlu E-Posta Adresi</label>
-                                            <input 
-                                                type="email" 
-                                                value={allergyContactEmail}
-                                                onChange={(e) => setAllergyContactEmail(e.target.value)}
-                                                placeholder="Örn: saglik@hotel.com"
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] text-slate-500 font-bold uppercase">Telegram / WP Bildirim ID</label>
-                                            <input 
-                                                type="text" 
-                                                value={allergyContactId}
-                                                onChange={(e) => setAllergyContactId(e.target.value)}
-                                                placeholder="Örn: 98765432"
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
-                                            />
-                                        </div>
+                                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                                        {allergyContacts.map((contact, index) => (
+                                            <div key={contact.id} className="relative bg-slate-900 border border-slate-700/50 p-3 rounded-xl flex flex-col gap-2 group">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-xs font-bold text-slate-400">#Sorumlu {index + 1}</span>
+                                                    {allergyContacts.length > 1 && (
+                                                        <button onClick={() => removeAllergyContact(contact.id)} className="bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg p-1.5 transition-all">
+                                                            <Trash2 className="w-3 h-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-slate-500 font-bold uppercase">E-Posta Adresi</label>
+                                                    <input 
+                                                        type="email" 
+                                                        value={contact.email}
+                                                        onChange={(e) => updateAllergyContact(contact.id, 'email', e.target.value)}
+                                                        placeholder="Örn: saglik@hotel.com"
+                                                        className="w-full bg-slate-950 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500 transition-all mt-1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-slate-500 font-bold uppercase">Telegram / WP ID</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={contact.telegram}
+                                                        onChange={(e) => updateAllergyContact(contact.id, 'telegram', e.target.value)}
+                                                        placeholder="Örn: 98765432"
+                                                        className="w-full bg-slate-950 border border-slate-700/50 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500 transition-all mt-1"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <button 
+                                            onClick={addAllergyContact}
+                                            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl transition-all border border-slate-700 text-xs flex items-center justify-center gap-2"
+                                        >
+                                            <Plus className="w-4 h-4" /> Yeni Sorumlu Ekle
+                                        </button>
+
                                         <button 
                                             onClick={saveAllergyContact}
                                             disabled={isSavingAllergy}
                                             className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
                                         >
                                             {isSavingAllergy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>} 
-                                            Sorumluyu Kaydet / Güncelle
+                                            Listeyi Kaydet / Güncelle
                                         </button>
                                     </div>
                                 </div>

@@ -1,23 +1,49 @@
 "use client";
 import React, { useState } from 'react';
-import { Settings, Hotel, Save, CheckCircle2, Building, Info, ShieldCheck } from 'lucide-react';
+import { Settings, Hotel, Save, CheckCircle2, Building, Info, ShieldCheck, Database, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
     const [saved, setSaved] = useState(false);
     
-    // Form States
-    const [hotelInfo, setHotelInfo] = useState({
-        name: 'HotelGen Digital Resort',
-        address: 'Antalya, Türkiye',
-        phone: '+90 242 123 4567',
-        generalRules: 'Check-in: 14:00, Check-out: 12:00. Evcil hayvan kabul edilmemektedir.',
+    // Ajans Veritabanı Simülasyonu (SaaS için farklı oteller)
+    const [demoHotelsData, setDemoHotelsData] = useState({
+        'hotelgen': {
+            id: 'hotelgen',
+            name: 'HotelGen Digital Resort',
+            address: 'Antalya, Türkiye',
+            phone: '+90 242 123 4567',
+            generalRules: 'Check-in: 14:00, Check-out: 12:00. Evcil hayvan kabul edilmemektedir.',
+        },
+        'rixos': {
+            id: 'rixos',
+            name: 'Rixos Premium Belek',
+            address: 'Belek Mevkii, Serik/Antalya, Türkiye',
+            phone: '+90 242 710 2000',
+            generalRules: 'Check-in: 14:00, Check-out: 12:00. Rixy Kids Club 09:00 - 23:00 arası aktiftir. Tüm konaklamalarda The Land of Legends giriş ücretsizdir.',
+        },
+        'titanic': {
+            id: 'titanic',
+            name: 'Titanic Mardan Palace',
+            address: 'Kundu Mah. Tesisler Cad, Aksu/Antalya',
+            phone: '+90 242 310 4100',
+            generalRules: 'Check-in: 14:00, Check-out: 12:00. Akşam yemeklerinde ana restoranda dress-code (kıyafet kuralı) uygulanmaktadır. Havuza bone ile girilmelidir.',
+        }
     });
+
+    const [activeHotelId, setActiveHotelId] = useState('hotelgen');
+    const [hotelInfo, setHotelInfo] = useState(demoHotelsData['hotelgen']);
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
+        setDemoHotelsData({ ...demoHotelsData, [activeHotelId]: hotelInfo });
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+    };
+
+    const changeTenant = (newId: string) => {
+        setActiveHotelId(newId);
+        setHotelInfo((demoHotelsData as any)[newId]);
     };
 
     return (
@@ -47,6 +73,33 @@ export default function SettingsPage() {
 
                 <div className="flex justify-center">
                     <div className="w-full max-w-4xl">
+                        
+                        {/* Simulation UI Bar */}
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between shadow-lg shadow-amber-900/10">
+                            <div className="flex items-center gap-3 mb-4 sm:mb-0">
+                                <div className="bg-amber-600/20 p-2 rounded-lg">
+                                    <Database className="w-5 h-5 text-amber-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-amber-100 font-bold text-sm">Ajans (SaaS) Veritabanı Simülasyonu</h3>
+                                    <p className="text-xs text-amber-400/80 mt-0.5">Yapay zeka hangi otelin panelindeyse o otelin ID'siyle kurallarını çeker.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                                <RefreshCcw className="w-4 h-4 text-slate-500" />
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giriş Yapan Otel:</span>
+                                <select 
+                                    value={activeHotelId}
+                                    onChange={(e) => changeTenant(e.target.value)}
+                                    className="bg-slate-900 text-white font-bold text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer"
+                                >
+                                    <option value="hotelgen">HotelGen Digital Resort</option>
+                                    <option value="rixos">Rixos Premium Belek</option>
+                                    <option value="titanic">Titanic Mardan Palace</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">

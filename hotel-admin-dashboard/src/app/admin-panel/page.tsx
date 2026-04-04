@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock, AlertTriangle, UserPlus } from 'lucide-react';
+import { ShieldCheck, MessageCircle, Send, Plus, Trash2, Users, Save, CheckCircle2, Settings, Clock, AlertTriangle, UserPlus, Globe2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/providers/AuthProvider';
 
 export const ALL_DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cts', 'Paz'];
 export const SHIFTS = ['08:00 - 16:00', '16:00 - 00:00', '00:00 - 08:00', '08:00 - 18:00', '09:00 - 17:00', '7/24'];
@@ -31,6 +32,7 @@ const newContact = (): Contact => ({
 });
 
 export default function AdminPanel() {
+  const { user } = useAuth();
   const [saved, setSaved] = useState(false);
   const [newDept, setNewDept] = useState('');
 
@@ -192,6 +194,11 @@ export default function AdminPanel() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3">
+            {(user?.username === 'OzgurOZEN' || user?.username === 'Kemal KUYUCU') && (
+              <Link href="/agency-portal" className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 text-sm border border-emerald-500/50">
+                <Globe2 className="w-4 h-4" /> Master Hub
+              </Link>
+            )}
             <Link href="/settings" className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
               <Settings className="w-4 h-4" /> Hotel Sistem Ayarları
             </Link>

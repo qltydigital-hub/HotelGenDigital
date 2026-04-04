@@ -69,7 +69,9 @@ export default function SettingsPage() {
                             <Settings className="w-8 h-8 text-blue-400" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight">Hotel Sistem Ayarları</h1>
+                            <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
+                                <span className="text-blue-400">{hotelInfo.name || 'Hotel'}</span> Yönetim Paneli
+                            </h1>
                             <p className="text-slate-400 font-medium mt-1">Otel konsepti, Fact Sheet ve genel bilgilerin yönetimi.</p>
                         </div>
                     </div>
@@ -121,6 +123,16 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Tenant Navigation Menu */}
+                        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 mb-8 flex flex-wrap gap-3 items-center shadow-lg">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mr-2">Departman Panelleri:</span>
+                            <Link href="/settings/fo" className="px-4 py-2 bg-slate-800/80 hover:bg-blue-600/20 border border-slate-700 hover:border-blue-500/50 transition-all rounded-xl text-sm font-bold text-slate-300 hover:text-white">F/O Önbüro</Link>
+                            <Link href="/settings/gr" className="px-4 py-2 bg-slate-800/80 hover:bg-rose-600/20 border border-slate-700 hover:border-rose-500/50 transition-all rounded-xl text-sm font-bold text-slate-300 hover:text-white">G/R Misafir İlişkileri</Link>
+                            <Link href="/settings/fb" className="px-4 py-2 bg-slate-800/80 hover:bg-orange-600/20 border border-slate-700 hover:border-orange-500/50 transition-all rounded-xl text-sm font-bold text-slate-300 hover:text-white">F/B Yeme İçecek</Link>
+                            <Link href="/settings/spa" className="px-4 py-2 bg-slate-800/80 hover:bg-teal-600/20 border border-slate-700 hover:border-teal-500/50 transition-all rounded-xl text-sm font-bold text-slate-300 hover:text-white">SPA & Wellness</Link>
+                            <Link href="/settings/hk" className="px-4 py-2 bg-slate-800/80 hover:bg-purple-600/20 border border-slate-700 hover:border-purple-500/50 transition-all rounded-xl text-sm font-bold text-slate-300 hover:text-white">H/K Temizlik</Link>
+                        </div>
 
                         <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative">
                             <div className="flex items-center justify-between mb-8">

@@ -58,6 +58,9 @@ export default function SpaSettings() {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <Link href="/settings" className="w-full sm:w-auto px-4 py-3 bg-slate-800/80 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-slate-300 hover:text-white text-sm flex items-center justify-center gap-2">
+                            ← Ayarlara Dön
+                        </Link>
                         <Link href="/?login=settings" className="w-full sm:w-auto px-6 py-3 bg-red-900/40 hover:bg-red-800/60 rounded-xl font-bold transition-all border border-red-700/50 text-red-200 text-sm flex items-center justify-center gap-2">
                             <LogOut className="w-4 h-4" /> Çıkış Yap
                         </Link>

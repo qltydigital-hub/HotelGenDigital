@@ -6,6 +6,7 @@ import {
     Image as ImageIcon, RefreshCw, AlertCircle, Phone, 
     ShieldAlert, Loader2, CalendarDays, Star
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -234,6 +235,9 @@ export default function TechnicalServiceDashboard() {
                         </div>
                     </div>
                     
+                    <Link href="/settings" className="hidden sm:flex px-5 py-2.5 bg-[#0a1526]/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-blue-900/50 rounded-xl text-sm font-bold transition-all shadow-md items-center gap-2 h-12">
+                        ← Ayarlara Dön
+                    </Link>
                     <button onClick={handleLogout} className="group relative flex items-center justify-center w-12 h-12 rounded-xl bg-red-950/30 border border-red-900/50 hover:bg-red-900/40 hover:border-red-500/50 transition-all duration-300">
                         <LogOut className="w-5 h-5 text-red-500 group-hover:scale-110 group-hover:text-red-400 transition-transform" />
                     </button>

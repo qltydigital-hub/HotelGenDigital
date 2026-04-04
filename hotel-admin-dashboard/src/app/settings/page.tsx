@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { Settings, Hotel, Save, CheckCircle2, Building, Info, ShieldCheck, Database, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function SettingsPage() {
+    const { user } = useAuth();
     const [saved, setSaved] = useState(false);
     
     // Ajans Veritabanı Simülasyonu (SaaS için farklı oteller)
@@ -62,43 +64,53 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3">
-                        <Link href="/admin-panel" className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center gap-2 text-sm text-white">
-                            <ShieldCheck className="w-4 h-4" /> VIP Yönetici Paneli
-                        </Link>
-                        <Link href="/" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center justify-center gap-2">
-                            ← Sunum Ekranına Dön
-                        </Link>
+                        {user && user.department === 'admin' ? (
+                            <>
+                                <Link href="/admin-panel" className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center gap-2 text-sm text-white">
+                                    <ShieldCheck className="w-4 h-4" /> VIP Yönetici Paneli
+                                </Link>
+                                <Link href="/" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center justify-center gap-2">
+                                    ← Sunum Ekranına Dön
+                                </Link>
+                            </>
+                        ) : (
+                            <Link href="/?login=settings" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold transition-all border border-slate-700 text-sm flex items-center justify-center gap-2">
+                                ← Cihaz/Departman Seçimine Dön
+                            </Link>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex justify-center">
                     <div className="w-full max-w-4xl">
                         
-                        {/* Simulation UI Bar */}
-                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between shadow-lg shadow-amber-900/10">
-                            <div className="flex items-center gap-3 mb-4 sm:mb-0">
-                                <div className="bg-amber-600/20 p-2 rounded-lg">
-                                    <Database className="w-5 h-5 text-amber-400" />
+                        {/* Simulation UI Bar (Only visible to Agency SuperAdmins) */}
+                        {user && user.department === 'admin' && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between shadow-lg shadow-amber-900/10">
+                                <div className="flex items-center gap-3 mb-4 sm:mb-0">
+                                    <div className="bg-amber-600/20 p-2 rounded-lg">
+                                        <Database className="w-5 h-5 text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-amber-100 font-bold text-sm">Ajans (SaaS) Veritabanı Simülasyonu</h3>
+                                        <p className="text-xs text-amber-400/80 mt-0.5">Yapay zeka hangi otelin panelindeyse o otelin ID'siyle kurallarını çeker.</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-amber-100 font-bold text-sm">Ajans (SaaS) Veritabanı Simülasyonu</h3>
-                                    <p className="text-xs text-amber-400/80 mt-0.5">Yapay zeka hangi otelin panelindeyse o otelin ID'siyle kurallarını çeker.</p>
+                                <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                                    <RefreshCcw className="w-4 h-4 text-slate-500" />
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giriş Yapan Otel:</span>
+                                    <select 
+                                        value={activeHotelId}
+                                        onChange={(e) => changeTenant(e.target.value)}
+                                        className="bg-slate-900 text-white font-bold text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer"
+                                    >
+                                        <option value="hotelgen">HotelGen Digital Resort</option>
+                                        <option value="rixos">Rixos Premium Belek</option>
+                                        <option value="titanic">Titanic Mardan Palace</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800">
-                                <RefreshCcw className="w-4 h-4 text-slate-500" />
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giriş Yapan Otel:</span>
-                                <select 
-                                    value={activeHotelId}
-                                    onChange={(e) => changeTenant(e.target.value)}
-                                    className="bg-slate-900 text-white font-bold text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer"
-                                >
-                                    <option value="hotelgen">HotelGen Digital Resort</option>
-                                    <option value="rixos">Rixos Premium Belek</option>
-                                    <option value="titanic">Titanic Mardan Palace</option>
-                                </select>
-                            </div>
-                        </div>
+                        )}
 
                         <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative">
                             <div className="flex items-center justify-between mb-8">

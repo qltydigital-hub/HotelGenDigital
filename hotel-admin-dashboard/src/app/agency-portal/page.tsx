@@ -63,12 +63,15 @@ export default function MasterAgencyPortal() {
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                    <div className="flex items-center gap-3 md:gap-4">
+                        <Link href="/admin-panel" className="flex items-center gap-2 text-xs md:text-sm font-bold px-4 h-10 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 transition-colors shadow-lg">
+                            ← Yönetici Sayfasına Dön
+                        </Link>
+                        <div className="hidden lg:flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             Sistem Çevrimiçi
                         </div>
-                        <div className="h-10 px-4 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-black text-slate-300 text-sm md:text-base whitespace-nowrap shadow-inner">
+                        <div className="hidden md:flex h-10 px-4 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-black text-slate-300 text-sm whitespace-nowrap shadow-inner">
                             ÖzgürÖZEN & Kemal KUYUCU
                         </div>
                     </div>

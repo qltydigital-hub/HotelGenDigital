@@ -45,7 +45,8 @@ export function removeTurkishAccents(str: string | null | undefined): string {
 export async function analyzeGuestMessage(
     message: string, 
     isAudioContext: boolean = false, 
-    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2', minibarNote?: string, dndRooms?: string[] }
+    context?: { roomNo?: string, guestName?: string, agencies?: Array<{name: string, url: string, priceText: string, isDirect: boolean}>, hotelTier?: 'paket1' | 'paket2', minibarNote?: string, dndRooms?: string[] },
+    chatHistory?: { role: string; content: string }[]
 ): Promise<AIAnalysisResult> {
     const isGuestKnown = context?.roomNo && context.roomNo !== "Bilinmiyor";
 
@@ -119,6 +120,7 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
             max_tokens: 1024,
             messages: [
                 { role: "system", content: systemPrompt },
+                ...(chatHistory?.map(h => ({ role: h.role as 'user' | 'assistant' | 'system', content: h.content })) || []),
                 { role: "user", content: `Misafir Mesajı: "${message}"` }
             ],
             response_format: { type: "json_object" }

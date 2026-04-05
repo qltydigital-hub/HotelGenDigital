@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { analyzeGuestMessage } from '@/lib/openai-service';
+import { saveMessageToSupabase, getMessagesForChat, getLatestTicketForChat, upsertTicket } from '@/lib/supabase-client';
 
 // Basic helper to send a message via Telegram API
 async function sendTelegramMessage(chatId: string | number, text: string) {
@@ -46,21 +47,49 @@ export async function POST(req: Request) {
                 return NextResponse.json({ success: true });
             }
 
-            // To-Do for Production: Fetch actual room/reservation info from DB using chatId
-            // For now, testing with mocked context
-            const mockContext = {
-                roomNo: "Bilinmiyor", 
-                guestName: firstName
+            // Fetch long-term persistent context from previous tickets
+            const latestTicket = await getLatestTicketForChat(chatId.toString());
+            
+            const userContext = {
+                roomNo: latestTicket?.room_no || "Bilinmiyor", 
+                guestName: latestTicket?.guest_name || firstName
             };
 
+            // Fetch history from Supabase
+            const historyRows = await getMessagesForChat(chatId.toString(), 6);
+            const chatHistory = historyRows.map(row => ({
+                role: row.role === 'user' ? 'user' : 'assistant',
+                content: row.text
+            }));
+
+            // Save user message to Supabase
+            await saveMessageToSupabase({
+                chat_id: chatId.toString(),
+                bot_name: 'hotelYoneticin8n_bot',
+                role: 'user',
+                text: text,
+                platform: 'telegram'
+            });
+
             // Call our AI layer with the strict system prompt we just created
-            const aiResult = await analyzeGuestMessage(text, false, mockContext);
+            const aiResult = await analyzeGuestMessage(text, false, userContext, chatHistory);
 
             console.log(`[Telegram AI Result] Intent: ${aiResult.intent}, Dept: ${aiResult.department}`);
 
             // Send the response back to the guest
             const reply = aiResult.ai_safe_reply || "Lütfen bekleyiniz, ilgili birime aktarıyorum...";
             await sendTelegramMessage(chatId, reply);
+
+            // Save assistant reply to Supabase
+            await saveMessageToSupabase({
+                chat_id: chatId.toString(),
+                bot_name: 'hotelYoneticin8n_bot',
+                role: 'assistant',
+                text: reply,
+                platform: 'telegram',
+                intent: aiResult.intent,
+                department: aiResult.department
+            });
 
             // 2) Departmanlara Yönlendirme (Routing) Mantığı
             if (['REQUEST', 'COMPLAINT'].includes(aiResult.intent)) {
@@ -74,10 +103,28 @@ export async function POST(req: Request) {
                 else if (dept.includes("GUEST") || dept.includes("G/R") || dept.includes("MİSAFİR")) targetChatId = process.env.TELEGRAM_GROUP_GR;
                 else if (dept.includes("REZERVASYON")) targetChatId = process.env.TELEGRAM_GROUP_REZ;
 
-                if (targetChatId) {
+                const finalRoomNo = aiResult.extracted_room_no || userContext.roomNo;
+                const finalGuestName = aiResult.extracted_guest_name || userContext.guestName;
+
+                if (targetChatId && finalRoomNo !== "Bilinmiyor") {
+                    const ticketId = `T-${Date.now().toString().slice(-6)}`;
+                    
+                    // Veritabanına kalıcı hafıza ve Bilet kaydı olarak işle
+                    await upsertTicket({
+                        ticket_id: ticketId,
+                        chat_id: chatId.toString(),
+                        room_no: finalRoomNo,
+                        guest_name: finalGuestName,
+                        department: aiResult.department || "Bilinmiyor",
+                        status: 'OPEN',
+                        priority: 'NORMAL',
+                        description: aiResult.summary,
+                        is_alerjen: aiResult.is_alerjen
+                    });
+
                     const notifyText = `🔔 *YENİ ${aiResult.intent === 'COMPLAINT' ? 'ŞİKAYET' : 'TALEP'}*\n\n` +
-                                       `🛏️ *Oda:* ${mockContext.roomNo}\n` +
-                                       `👤 *Misafir:* ${firstName}\n` +
+                                       `🛏️ *Oda:* ${finalRoomNo}\n` +
+                                       `👤 *Misafir:* ${finalGuestName}\n` +
                                        `📝 *Açıklama:* ${aiResult.summary}\n` +
                                        `🤖 *AI Notu:* ${aiResult.turkish_translation}\n` +
                                        `💬 *Orjinal:* _${text}_`;

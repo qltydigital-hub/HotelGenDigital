@@ -144,17 +144,38 @@ export async function writeLog(level: SystemLog['level'], source: string, messag
     await client.from('system_logs').insert({ level, source, message, metadata });
 }
 
-/** Belirli bir chat_id'nin mesajlarını çek */
+/** Belirli bir chat_id'nin mesajlarını çek (Sadece son 12 saat) */
 export async function getMessagesForChat(chatId: string, limit = 50): Promise<TelegramMessage[]> {
     const client = getServiceSupabase();
+    
+    // Son 12 saat hesaplaması
+    const twelveHoursAgo = new Date();
+    twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
+    const twelveHoursAgoStr = twelveHoursAgo.toISOString();
+
     const { data, error } = await client
         .from('telegram_messages')
         .select('*')
         .eq('chat_id', chatId)
+        .gte('created_at', twelveHoursAgoStr)
         .order('created_at', { ascending: true })
         .limit(limit);
     if (error) return [];
     return data as TelegramMessage[];
+}
+
+/** Sohbetten en son açılan ticket bilgisini getirerek kayıtlı odayı bulur */
+export async function getLatestTicketForChat(chatId: string): Promise<LiveTicket | null> {
+    const client = getServiceSupabase();
+    const { data, error } = await client
+        .from('live_tickets')
+        .select('*')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    if (error || !data || data.length === 0) return null;
+    return data[0];
 }
 
 /** Son N sistem logu çek */

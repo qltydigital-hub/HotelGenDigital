@@ -90,8 +90,8 @@ export default function FrontOfficeSettings() {
                         adults: d.guest_count || 2, // Backend'de eklenmemişse default 2
                         children: 0,
                         childAges: '-',
-                        checkIn: d.check_in_date || '-',
-                        checkOut: d.check_out_date || '-',
+                        checkIn: d.checkin_date || '-',
+                        checkOut: d.checkout_date || '-',
                         selected: true
                     }));
                     setGuests(mappedData);
@@ -314,8 +314,8 @@ export default function FrontOfficeSettings() {
                     adults: d.guest_count || 2, // Default 2 if not present
                     children: 0,
                     childAges: '-',
-                    checkIn: d.check_in_date || '-',
-                    checkOut: d.check_out_date || '-',
+                    checkIn: d.checkin_date || '-',
+                    checkOut: d.checkout_date || '-',
                     selected: true
                 }));
 

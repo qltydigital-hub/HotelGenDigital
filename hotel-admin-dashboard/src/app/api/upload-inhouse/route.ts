@@ -54,20 +54,22 @@ export async function POST(req: Request) {
             const first_name = isimSoyisim.toString().split(' ')[0] || '';
             const last_name = isimSoyisim.toString().split(' ').slice(1).join(' ') || '';
             
-            // Excel tarihleri string formatında geldiğini varsayıyoruz (örn: 28.03.2026)
-            let checkInDate = null;
-            let checkOutDate = null;
+            let checkin_date = null;
+            let checkout_date = null;
             
             if (row[3]) {
                 const parts = row[3].toString().split('.');
-                if (parts.length === 3) checkInDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                else checkInDate = row[3];
+                if (parts.length === 3) checkin_date = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                else checkin_date = row[3];
             }
             if (row[4]) {
                 const parts = row[4].toString().split('.');
-                if (parts.length === 3) checkOutDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                else checkOutDate = row[4];
+                if (parts.length === 3) checkout_date = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                else checkout_date = row[4];
             }
+            
+            let guestCount = parseInt(row[2]);
+            if (isNaN(guestCount)) guestCount = 2;
 
             insertData.push({
                 hotel_id: '11111111-1111-1111-1111-111111111111',
@@ -75,8 +77,9 @@ export async function POST(req: Request) {
                 first_name: first_name,
                 last_name: last_name,
                 language: 'tr',
-                check_in_date: checkInDate,
-                check_out_date: checkOutDate
+                checkin_date: checkin_date,
+                checkout_date: checkout_date,
+                guest_count: guestCount
             });
         }
 

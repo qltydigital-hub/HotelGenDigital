@@ -75,9 +75,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 console.error('Log error', e);
             }
         }
+        // Çıkış yaparken nereden geldiğini hatırla ve ona göre doğru ekrana yönlendir
+        const targetPath = (user && (user.department === 'settings' || user.department === 'admin')) 
+            ? '/?login=settings' 
+            : '/login';
+
         setUser(null);
         localStorage.removeItem('guestflow_user');
-        router.push('/login');
+        router.push(targetPath);
     }, [user, router]);
 
     const forceLogoutFromEverywhere = useCallback(async () => {

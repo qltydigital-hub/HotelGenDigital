@@ -19,18 +19,13 @@ type InhouseGuest = {
     selected: boolean;
 };
 
-// Generate Mock Data for simulation after upload
-const generateMockGuests = (): InhouseGuest[] => [
-    { id: '1', voucher: 'VCH-1001', agency: 'Booking.com', room: '101', fullName: 'İrfan Doğan', adults: 2, children: 0, childAges: '-', checkIn: '10.03.2026', checkOut: '15.03.2026', selected: true },
-    { id: '2', voucher: 'VCH-1002', agency: 'Expedia', room: '102', fullName: 'Ayşe Yılmaz', adults: 2, children: 1, childAges: '5', checkIn: '08.03.2026', checkOut: '15.03.2026', selected: true },
-    { id: '3', voucher: 'VCH-1003', agency: 'Otelz', room: '103', fullName: 'Michael Smith', adults: 1, children: 0, childAges: '-', checkIn: '12.03.2026', checkOut: '15.03.2026', selected: true },
-    { id: '4', voucher: 'VCH-1004', agency: 'Direct', room: '104', fullName: 'Fatma Kaya', adults: 2, children: 2, childAges: '3, 7', checkIn: '01.03.2026', checkOut: '15.03.2026', selected: true },
-    { id: '5', voucher: 'VCH-1005', agency: 'Jolly Tur', room: '105', fullName: 'Ali Veli', adults: 2, children: 0, childAges: '-', checkIn: '14.03.2026', checkOut: '15.03.2026', selected: true },
-];
+// Fake guests removed, now we fill dynamically from Excel upload limit 5 for preview!
 
 export default function FrontOfficeSettings() {
     const [guests, setGuests] = useState<InhouseGuest[]>([]);
     const [isUploaded, setIsUploaded] = useState(false);
+    const [isGuestListOpen, setIsGuestListOpen] = useState(false);
+    const [inhouseFile, setInhouseFile] = useState<File | null>(null);
     const [messageSent, setMessageSent] = useState(false);
     const [messageTime, setMessageTime] = useState<string | null>(null);
     const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
@@ -78,6 +73,33 @@ export default function FrontOfficeSettings() {
                 }
             })
             .catch(err => console.error("Ayarlar çekilemedi:", err));
+
+        // DB'den Inhouse Misafirleri Çek
+        const loadGuestsFromDB = async () => {
+            try {
+                const res = await fetch('/api/get-inhouse', { cache: 'no-store' });
+                const json = await res.json();
+                
+                if (json.success && json.data && json.data.length > 0) {
+                    const mappedData = json.data.map((d: any, idx: number) => ({
+                        id: String(idx),
+                        voucher: 'APP-SYS',
+                        agency: 'Bilinmiyor',
+                        room: d.room_number,
+                        fullName: `${d.first_name} ${d.last_name}`,
+                        adults: d.guest_count || 2, // Backend'de eklenmemişse default 2
+                        children: 0,
+                        childAges: '-',
+                        checkIn: d.check_in_date || '-',
+                        checkOut: d.check_out_date || '-',
+                        selected: true
+                    }));
+                    setGuests(mappedData);
+                    setIsUploaded(true); // Veri varsa menü aktif görünsün
+                }
+            } catch(e) { console.error("Misafirler yüklenemedi", e); }
+        };
+        loadGuestsFromDB();
 
         // DB'den departmana ait son doküman yükleme tarihlerini (created_at) getir (En YENİLER)
         const loadUploadTimes = async () => {
@@ -251,28 +273,69 @@ export default function FrontOfficeSettings() {
 
     const [isUploadingObj, setIsUploadingObj] = useState<Record<string, boolean>>({});
 
-    // Simulate file upload + real Supabase DB interaction
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Dosya Seçimi
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            setIsUploadingObj(prev => ({ ...prev, 'inhouse': true }));
+            setInhouseFile(e.target.files[0]);
+        }
+    };
 
-            // 1. Veritabanına Gerçek Yükleme (F/O Departmanı, 'inhouse' dökümanı)
-            const result = await uploadDocumentToSupabase(file, 'FO', 'inhouse');
+    // Full Excel parsing to Supabase (Kaydet Butonu)
+    const handleFileSave = async () => {
+        if (!inhouseFile) return;
+        
+        setIsUploadingObj(prev => ({ ...prev, 'inhouse': true }));
 
-            if (result.success) {
+        // 1. Storage'a Yedekle
+        await uploadDocumentToSupabase(inhouseFile, 'FO', 'inhouse');
+
+        // 2. Excel dosyasını API'ye gönderip veritabanına yaz
+        const formData = new FormData();
+        formData.append('file', inhouseFile);
+
+        try {
+            const res = await fetch('/api/upload-inhouse', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await res.json();
+
+            if (result.success && result.data) {
                 setIsUploaded(true);
-                setGuests(generateMockGuests());
                 
-                // Record upload time
+                // UI'de göstermek için tamamını formatla
+                const previewData = result.data.map((d: any, idx: number) => ({
+                    id: String(idx),
+                    voucher: 'APP-SYS',
+                    agency: 'Bilinmiyor',
+                    room: d.room_number,
+                    fullName: `${d.first_name} ${d.last_name}`,
+                    adults: d.guest_count || 2, // Default 2 if not present
+                    children: 0,
+                    childAges: '-',
+                    checkIn: d.check_in_date || '-',
+                    checkOut: d.check_out_date || '-',
+                    selected: true
+                }));
+
+                setGuests(previewData);
+                setIsGuestListOpen(true); // Yükler yüklemez listeyi açık göster
+                
                 const now = new Date();
                 const timeString = `${now.toLocaleDateString('tr-TR')} - ${now.toLocaleTimeString('tr-TR')}`;
                 setUploadTimes(prev => ({ ...prev, 'inhouse': timeString }));
+                setInhouseFile(null); // Reset selection
+                
+                alert(`✅ Mükemmel! ${result.data.length} misafir veritabanına başarıyla eklendi! Yapay Zeka artık bu güncel listeyi (in_house_guests) kullanarak doğrulama yapacak.`);
             } else {
-                alert(`Yükleme hatası: ${result.error}`);
+                alert(`🚨 Yükleme Hatası: ${result.error}`);
             }
-            setIsUploadingObj(prev => ({ ...prev, 'inhouse': false }));
+        } catch (error) {
+            alert("Bağlantı hatası oluştu, dosya gönderilemedi.");
         }
+
+        setIsUploadingObj(prev => ({ ...prev, 'inhouse': false }));
     };
 
     const handleGenericUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -351,25 +414,50 @@ export default function FrontOfficeSettings() {
                                 </div>
                             </div>
                         
-                            <div className="flex flex-col items-center">
-                                <label className={`flex items-center px-6 py-3 rounded-xl cursor-pointer font-bold transition-colors ${isUploaded ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-blue-600 hover:bg-blue-500'}`}>
-                                    {isUploadingObj['inhouse'] ? (
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                    ) : (
-                                        <UploadCloud className="w-5 h-5 mr-2" />
-                                    )}
-                                    {isUploadingObj['inhouse'] ? 'Yükleniyor...' : (isUploaded ? 'Listeyi Güncelle' : 'Dosya Yükle')}
-                                    <input type="file" className="hidden" accept=".xlsx, .xls, .pdf" onChange={handleFileUpload} disabled={isUploadingObj['inhouse']} />
-                                </label>
+                        
+                            <div className="flex flex-col items-end gap-3 w-full md:w-auto">
+                                <div className="flex flex-col md:flex-row items-center gap-3 w-full">
+                                    <label className={`flex items-center justify-center w-full md:w-auto px-6 py-3 rounded-xl cursor-pointer font-bold transition-all border border-blue-500/30 ${inhouseFile ? 'bg-blue-900/40 text-blue-300 hover:bg-blue-900/60' : 'bg-blue-600/20 hover:bg-blue-600/40 text-blue-400'}`}>
+                                        <FileSpreadsheet className="w-5 h-5 mr-2" />
+                                        {inhouseFile ? inhouseFile.name : 'Dosya Seç (Excel)'}
+                                        <input type="file" className="hidden" accept=".xlsx, .xls, .csv" onChange={handleFileChange} disabled={isUploadingObj['inhouse']} />
+                                    </label>
+
+                                    <button 
+                                        onClick={handleFileSave}
+                                        disabled={!inhouseFile || isUploadingObj['inhouse']}
+                                        className={`flex items-center justify-center w-full md:w-auto px-6 py-3 rounded-xl font-bold transition-all ${!inhouseFile ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]'}`}
+                                    >
+                                        {isUploadingObj['inhouse'] ? (
+                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        ) : (
+                                            <UploadCloud className="w-5 h-5 mr-2" />
+                                        )}
+                                        {isUploadingObj['inhouse'] ? 'Kaydediliyor...' : 'Kayıt Et'}
+                                    </button>
+                                </div>
+
                                 {uploadTimes['inhouse'] && (
-                                    <span className="text-xs text-emerald-400 mt-2 font-medium">Son yükleme: {uploadTimes['inhouse']}</span>
+                                    <span className="text-xs text-emerald-400 font-medium bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-500/20">Son kayıt: {uploadTimes['inhouse']}</span>
                                 )}
                             </div>
-                    </div>
+                        </div>
 
-                    {isUploaded && (
-                        <div className="mt-8">
-                            <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto">
+                        {/* Akordiyon Tetikleyici (Mevcut Yüklenmiş Listeyi Göster) */}
+                        {isUploaded && guests.length > 0 && (
+                            <div className="pt-4 border-t border-slate-800/50 flex justify-center">
+                                <button 
+                                    onClick={() => setIsGuestListOpen(!isGuestListOpen)}
+                                    className="flex items-center gap-2 px-8 py-2 rounded-full cursor-pointer font-bold transition-all bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-500"
+                                >
+                                    {isGuestListOpen ? 'Yüklenen Listeyi Gizle ⬆' : `Son Yüklenen Listeyi Görüntüle (${guests.length} Kayıt) ⬇`}
+                                </button>
+                            </div>
+                        )}
+
+                        {isGuestListOpen && isUploaded && (
+                            <div className="mt-8 animate-in slide-in-from-top-4 fade-in duration-300">
+                                <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto max-h-[500px] overflow-y-auto">
                                 <table className="w-full text-left text-sm text-slate-300">
                                     <thead className="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-800">
                                         <tr>

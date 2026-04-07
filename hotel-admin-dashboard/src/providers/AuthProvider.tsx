@@ -33,11 +33,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const router = useRouter();
     const pathname = usePathname();
 
+    // Inactivity timeout (5 minutes = 300,000ms)
+    const INACTIVITY_LIMIT = 5 * 60 * 1000;
+    const [lastActivity, setLastActivity] = useState<number>(Date.now());
+
     // Oturum kontrolü
     useEffect(() => {
         const storedUser = localStorage.getItem('guestflow_user');
         if (storedUser) {
             setUser(JSON.parse(storedUser));
+            setLastActivity(Date.now());
         } else if (pathname !== '/login' && pathname !== '/') {
             // Login ve Landing page dışında giriş yapılmamışsa logine at
             router.push('/login');
@@ -91,6 +96,31 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
         logout('Tüm cihazlardan çıkış yapıldı.');
     }, [user, logout]);
+
+    // Inactivity Tracking
+    useEffect(() => {
+        if (!user || pathname === '/login') return;
+
+        const updateActivity = () => {
+            setLastActivity(Date.now());
+        };
+
+        const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => window.addEventListener(event, updateActivity));
+
+        const checkInactivity = setInterval(() => {
+            const now = Date.now();
+            if (now - lastActivity > INACTIVITY_LIMIT) {
+                logout('5 dakikalık hareketsizlik nedeniyle oturumunuz otomatik olarak sonlandırıldı.', true);
+            }
+        }, 10000); // Check every 10 seconds
+
+        return () => {
+            events.forEach(event => window.removeEventListener(event, updateActivity));
+            clearInterval(checkInactivity);
+        };
+    }, [user, pathname, lastActivity, logout, INACTIVITY_LIMIT]);
+
 
     // Timer bazlı otomatik DB token kontrolü
     useEffect(() => {

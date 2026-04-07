@@ -87,101 +87,31 @@ HOTEL FACTSHEET - GENEL SABİTLER
 GENEL BİLGİLER:
 • Otel Adı: Azure Coast Resort & SPA
 • Yıldız: 5 Yıldız | Konsept: Ultra Her Şey Dahil
-• Açılış: 2018 | Son Renovasyon: 2024
-• Toplam Alan: 85.000 m² | Sahil: 350 metre özel kum plaj
 • Adres: Beldibi Mah. Atatürk Cad. No:42, Kemer / Antalya
 • Telefon: +90 242 824 00 00
+• Rezervasyon Çalışma Saatleri: 09:00 - 18:00
 
-ODA TİPLERİ & KAPASİTELER:
+REZERVASYON VE BANKA BİLGİLERİ (IBAN):
+• Rezervasyon Önceliği: Önce otel üzerinden direkt rezervasyon. Müşteri otel üzerinden yapmak isterse veya websitemizi değerlendirirse, Front Office'in yüklediği banka IBAN bilgilerini müşteriyle paylaşarak direkt seçenek sun:
+  - Alıcı: Azure Coast Otel İşletmeleri A.Ş.
+  - Banka: Garanti BBVA - Antalya Ticari Şubesi
+  - IBAN: TR98 0006 2000 0000 1234 5678 90
+• Güven Sorunu/Acenta: Eğer müşteri direkt rezervasyon yapmakta güven sorunu yaşarsa veya bunu hissettirirse o zaman müşteriyi kaybetmemek adına "Çalıştığımız güvenilir acentalarımız da mevcuttur." diyerek acenta alternatiflerini sun.
+  - Front Office'in yüklediği acenta linkleri: https://www.etstur.com/Azure-Coast, https://www.jollytur.com/Azure-Coast
+
+REZERVASYON MÜSAİTLİK VE FİYAT:
+• Eğer rezervasyon ile ilgili soru geliyorsa ve saatler 09:00 ile 18:00 arasındaysa "Rezervasyon departmanımıza iletiyorum" diyebilirsin ama hemen kapatıp atma.
+• Tarih, müsaitlik ve fiyat sorulduğunda dönemsel ücretleri inceleyerek yanıt ver. Eğer otelin kendi sayfasından ileri tarihler için kontrol yapamıyorsan ve müsaitliği garanti edemiyorsan, çok hoş bir üslupla "Bunlar çalıştığımız acentalarımız, size daha uygun olması açısından hemen ileriki tarihler için rezervasyonunuzu yapıp avantajlardan yararlanabilirsiniz" diyerek acenta adreslerini yönlendir. Acenta ve otel temsilcisinin irtibat bilgilerini istenirse memnuniyetle ver.
+
+BÖLGESEL BİLGİLER (PERPLEXITY PROTOCOL):
+• Eğer "Dışarıda yemek yenecek güzel bir yer var mı?", "Buralarda gezilecek yer nereler?", "En yakın hastane nerede?" gibi otel dışı ama bölge ile alakalı bir soru gelirse, bir Perplexity/detaylı arama motoru gibi hareket et! Bildiğin en iyi, detaylı bilgileri dök. O mekanın neyi meşhur, özellikleri neler ve lokasyonuyla/konumuyla beraber çok iyi bir açıklama ile ilet. Müşteri memnuniyetini zirvede tut.
+
+YAZIM HATALARI, ANLAMA VE TALEP OLUŞTURMA:
+• "istiyorum" yerine "isiyorım", "yastık" yerine "yaztık" gibi yazım ve klavye otomatik düzeltme hatalarına karşı çok dikkatli ol. Bunları doğru analiz et. Eğer anlamak için yeterli açıklık varsa, TEKRAR ONAY İSTEMEDEN doğrudan cevabını verip talebi oluştur ("hemen gönderiyoruz" gibi).
+• ODA SERVİSİ/HİZMET TALEPLERİ (ÇOK ÖNEMLİ): Eğer müşteri "Odama bir yastık daha istiyorum" vs yazmışsa bu bir GÖREV ve İSTEKTİR. Mutlaka bir sistemsel request dönmelisin ki (JSON içinde isRequest: true), sistem müşteriye Ad-Soyad-Oda no sorabilsin. Yoksa havaya onay vermiş olursun, sistem çalışmaz. Eğer müşteri odasını/ismini söylememişse sadece talebi doğrula ve JSON "isRequest": true ver!
+
+ODA TİPLERİ VE DİĞER BİLGİLER... 
 • Standart Oda Bahçe: 180 adet, 28m², max 3 kişi
-• Standart Oda Deniz: 120 adet, 28m², max 3 kişi
-• Superior Oda: 80 adet, 36m², max 3 kişi
-• Deluxe Oda: 45 adet, 42m², max 3+1 kişi
-• Aile Odası: 35 adet, 55m², max 4+1 kişi
-• Junior Suite: 20 adet, 65m², max 4 kişi
-• King Suite: 8 adet, 90m², max 4 kişi
-• Royal Suite: 2 adet, 140m², max 4+2 kişi
-• TOPLAM: 500 oda | 1.200 kişi kapasitesi
-
-ODA ÖZELLİKLERİ (STANDART):
-• Bireysel split klima, 55 inç LED Smart TV, ücretsiz minibar (günlük dolum)
-• Laptop boyutu kasa, duş+küvet (suite'lerde jakuzi), terlik & bornoz
-• Ücretsiz yüksek hızlı Wi-Fi, möbleli balkon
-
-RESTORANLAR & BARLAR:
-• Ana Restoran (Lale): Açık büfe, 600 kişi - Yıl boyu
-• İtalyan (Bella Vista): A La Carte, 80 kişi - 1 Nis/31 Eki
-• Uzak Doğu (Sakura): A La Carte, 60 kişi - 1 May/30 Eyl
-• Türk Mutfağı (Saray): A La Carte, 70 kişi - Yıl boyu
-• Balık (Fener): A La Carte, 50 kişi - 1 May/30 Eyl
-• NOT: A La Carte restoranlar rezervasyon gerektirir, konaklama başına 1 kez ücretsiz
-
-HAVUZLAR:
-• Ana Havuz: 1.200m², açık, ısıtmalı - 1 Nis/31 Eki (08:00-19:00)
-• Kapalı Havuz: 400m², yıl boyu, 27°C sabit (08:00-20:00)
-• Çocuk Havuzu: 300m², derinlik 40-80cm - 15 Nis/15 Eki
-• Aquapark: 2.000m², 5 kaydırak - 1 May/30 Eyl
-• Relax Havuz (18+): 200m², sessiz alan - 1 May/30 Eyl
-
-SPA & WELLNESS:
-• Türk Hamamı: Ücretsiz | Sauna & Buhar Odası: Ücretsiz
-• Fitness: Ücretsiz (yaz sezonu 24 saat)
-• Masaj: Ücretli (Bali 70€, Thai 85€, Hot Stone 80€, Çift masaj 130€)
-
-AKTİVİTELER (ÜCRETSİZ):
-• Plaj voleybolu, su topu, tenis (2 kort), mini golf, okçuluk
-• Mini Club 4-12 yaş, Teens Club, gündüz animasyon, gece şovları (21:30)
-
-GENEL KURALLAR:
-• Check-in: 14:00 | Check-out: 12:00
-• Evcil hayvan kabul edilmez
-• Odalarda ve kapalı alanlarda sigara yasak
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FİYAT & KAMPANYA TABLOSU (2025 Sezonu - EUR, kişi başı/gece)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-SEZONLAR:
-• Düşük Sezon: 1 Oca-31 Mar, 1 Kas-31 Ara
-• Orta Sezon: 1 Nis-31 May, 16 Eyl-31 Eki
-• Yüksek Sezon: 1 Haz-15 Tem, 1-15 Eyl
-• Pik Sezon: 16 Tem-31 Ağu, Bayram dönemleri
-
-ODA FİYATLARI (EUR/kişi/gece):
-• Standart Bahçe: Düşük 55€ | Orta 85€ | Yüksek 130€ | Pik 165€
-• Standart Deniz: Düşük 70€ | Orta 100€ | Yüksek 150€ | Pik 190€
-• Superior: Düşük 90€ | Orta 125€ | Yüksek 180€ | Pik 230€
-• Deluxe: Düşük 120€ | Orta 160€ | Yüksek 220€ | Pik 280€
-• Aile Odası: Düşük 100€ | Orta 140€ | Yüksek 195€ | Pik 250€
-• Junior Suite: Düşük 150€ | Orta 200€ | Yüksek 280€ | Pik 350€
-• King Suite: Düşük 220€ | Orta 300€ | Yüksek 420€ | Pik 520€
-• Royal Suite: Düşük 400€ | Orta 550€ | Yüksek 750€ | Pik 950€
-
-ÇOCUK POLİTİKASI:
-• 0-2 yaş: Ücretsiz | 3-6 yaş: %75 indirim | 7-12 yaş: %50 indirim | 13-17 yaş: %25 indirim
-
-İPTAL POLİTİKASI:
-• 30+ gün önce: Ücretsiz | 15-30 gün: %25 kesinti | 7-15 gün: %50 kesinti | 0-7 gün: %100 kesinti
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PERİYODİK & SEZONLUK BİLGİ
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-ANA RESTORAN SAATLER:
-• Kahvaltı: Yaz 07:00-10:30 | Kış 07:30-10:00
-• Öğle: Yaz 12:00-14:30 | Kış 12:30-14:00
-• Akşam: Yaz 19:00-22:00 | Kış 19:00-21:00
-
-BAR SAATLER:
-• Lobby Bar: 10:00-23:00 (Yaz 00:00'ye kadar), yıl boyu
-• Havuz Bar: Mayıs-Eylül 10:00-18:00
-• Disco Bar: Haziran-Eylül 23:00-03:00
-
-YANIT KURALLARI:
-• Türkçe sorulara Türkçe, İngilizce sorulara İngilizce cevap ver
-• Kısa, net ve sıcak bir dil kullan
-• Belirsizlik varsa "+90 242 824 00 00" yönlendir
-• Misafir otel haritası veya krokisi isterse: "Otel haritamızı /harita yazarak alabilirsiniz." de
 `;
 
 // ── Otel haritasını gönder ────────────────────────────────────────────
@@ -211,6 +141,44 @@ async function saveMessageToDashboard(chatId, role, text, platform = 'Telegram')
     }
 }
 
+// ── Alerji Alarmı (Guest Relations'a anında uyarı) ───────────────────
+async function alertGuestRelationsAboutAllergy(guestName, guestRoom, allergies) {
+    if (!supabase) return;
+    try {
+        // Guest Relations yetkililerini bul
+        const { data: grPersonnel } = await supabase
+            .from('hotel_personnel')
+            .select('*')
+            .eq('department', 'GUEST_RELATIONS')
+            .eq('is_active', true);
+
+        const alertMsg = `⚠️ *KRİTİK ALERJİ BİLDİRİMİ* ⚠️
+👤 *Misafir:* ${guestName}
+🚪 *Oda:* ${guestRoom}
+🚫 *Alerji/Diyet:* ${allergies}
+
+_Bu misafir sisteme yeni giriş yaptı. Lütfen iletişime geçiniz._`;
+
+        if (grPersonnel && grPersonnel.length > 0) {
+            for (const person of grPersonnel) {
+                if (person.platform.toUpperCase() === 'TELEGRAM') {
+                    await bot.telegram.sendMessage(person.contact_id, alertMsg, { parse_mode: 'Markdown' });
+                }
+            }
+        }
+        
+        // Log to allergy_alerts table if it exists
+        await supabase.from('allergy_alerts').insert({
+            guest_name: guestName,
+            room_no: guestRoom,
+            allergy_details: allergies,
+            alert_status: 'NOTIFIED'
+        });
+    } catch (e) {
+        console.error('Allergy alert error:', e.message);
+    }
+}
+
 // ── OGG → MP3 ─────────────────────────────────────────────────────────
 function convertOggToMp3(inputPath, outputPath) {
     return new Promise((resolve, reject) => {
@@ -234,19 +202,25 @@ async function processMessageWithAI(userText) {
 ${HOTEL_KNOWLEDGE}
 ==========================
 
-EK GÖREVİN:
-Sana gelen mesajları dikkatle incele ve JSON formatında geri dönüş yap.
-1) Gelen mesaj sadece bilgi amaçlı bir "Soru" ise (restoran saati, fiyatlar, havuz bilgisi vb.):
+!!! ÖNEMLİ KURALLAR - KESİNLİKLE UY !!!
+1) REZERVASYON: Önce Front Office banka IBAN'ı ile direkt rezervasyonu yap. Yalnızca müşteri güvensiz veya acenta isterse Front Office acenta linklerini (ETS/Jolly vb.) paylaş. Müsaitlik bulamazsan "size daha uygun olması açısından güvenilir acentalarımızla rezervasyon yapabilirsiniz" diyip acenta linklerini gönder.
+2) BÖLGESEL BİLGİ: Otel çevresi gezilecek yer vb sorulduğunda adeta bir detaylı arama motoru gibi konumlarıyla beraber muazzam detayda sun.
+3) YAZIM HATALARI: "yaztık" vs gibi klavye hatalarını doğru anla. Teyit etmeden doğrudan onay ver.
+4) ASLA İSİM UYDURMA VE SEN SORMA: Karşıdaki kişinin adını BİLMİYORSUN. Yanıtlarında ASLA isim uydurma! Yalnızca "Sayın Misafirimiz" de.
+5) TALEPLER (ÇOK KRİTİK): Müşteri (oda numarası belirtmese bile) "yastık", "havlu", "su istiyorum" gibi odaya fiziksel bir şey isterse, sen SADECE "isRequest": true ve departman JSON verisini dön! SEN MÜŞTERİYE "ODA NUMARANIZ NEDİR?" DİYE SORU SORMAYACAKSIN. Bırak onu yazılım sistemi otomatik halletsin. Sen sadece talebi anla, "isRequest": true işaretle ve "İlgili birime iletiyorum" de. Başka hiçbir şeyi dert etme! Eğet false yaparsan yazılım bu işi algılayamaz ve otel işlemez.
+
+EK GÖREVİN JSON ŞABLONU:
+Gelen mesajı incele ve ŞU JSON'U dön:
+1) Gelen mesaj bir "İstek, Sipariş veya Görev" ise (müşteri ismini bilmesen bile):
+   - "isRequest": true
+   - "department": "HOUSEKEEPING" | "TEKNIK" | "RESEPSIYON" | "F&B" | "GUEST_RELATIONS"
+   - "turkishSummary": Kısa, net Türkçe görev tanımı.
+   - "replyToUser": Talebin alındığını bildiren kısa onay mesajı ("Hemen ilgili departmana iletiyorum" vb.)
+2) Gelen mesaj sadece bilgi amaçlı bir "Soru" ise (restoran saati, lokal bilgiler, rezervasyon vb.):
    - "isRequest": false
    - "replyToUser": Müşteriye uygun dildeki detaylı yanıt.
-2) Gelen mesaj bir "İstek, Şikayet veya Fiziksel Görev" ise (yastık, klima arızası, temizlik, yiyecek-içecek vb.):
-   - "isRequest": true
-   - "department": "HOUSEKEEPING" | "TEKNIK" | "RESEPSIYON" | "F&B"
-     (yastık/havlu/temizlik->HOUSEKEEPING; bozuk/arızalı/klima->TEKNIK; sipariş/içecek/yemek->F&B; diğer->RESEPSIYON)
-   - "turkishSummary": Kısa, net Türkçe görev tanımı. (Örn: "Misafir ekstra yastık istiyor.")
-   - "replyToUser": Talebinin alındığını bildiren, müşterinin dilindeki kısa profesyonel yanıt.
 
-ÖNEMLİ: Yalnızca JSON objesi döndür! Markdown kulllanma.`;
+ÖNEMLİ: Yalnızca JSON objesi döndür! Markdown kullanma.`;
 
     try {
         const response = await openai.chat.completions.create({
@@ -257,7 +231,7 @@ Sana gelen mesajları dikkatle incele ve JSON formatında geri dönüş yap.
             ],
             response_format: { type: "json_object" },
             max_tokens: 800,
-            temperature: 0.7
+            temperature: 0.1 // Kurumsal kullanım için yaratıcılık (halüsinasyon) minimuma indirildi
         });
         return JSON.parse(response.choices[0].message.content);
     } catch (error) {
@@ -271,22 +245,57 @@ async function extractGuestInfo(text) {
     if (!openai) return null;
     try {
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-4o', // Bilgi çekiminde hata olmaması için üst modele geçildi
             messages: [{
                 role: 'system',
-                content: 'Kullanıcının mesajından ad, soyad ve oda numarasını çıkar. Sadece JSON döndür: {"name": "Ad Soyad", "room": "Oda No"}. Bulanamazsa null döndür.'
+                content: 'Kullanıcının mesajından ad, soyad, oda numarası ve varsa alerji/özel diyet bilgisini çıkar. EĞER cümlede kişinin adı veya oda numarası açıkça geçmiyorsa ASLA SAKIN İSİM VEYA RAKAM UYDURMA, o alanlara null döndür. Sadece JSON döndür: {"name": "Ad Soyad veya null", "room": "Oda No veya null", "allergies": "Alerji bilgisi veya null"}. Eğer emin değilsen değerlere null ver.'
             }, {
                 role: 'user',
                 content: text
             }],
             response_format: { type: "json_object" },
-            max_tokens: 100
+            max_tokens: 200,
+            temperature: 0.0 // Sıfır halüsinasyon, kesin metin analizi
         });
         const result = JSON.parse(response.choices[0].message.content);
-        if (result.name && result.room) return result;
+        if (result.name && (result.room || result.room_no)) return { ...result, room: result.room || result.room_no };
         return null;
     } catch (e) {
         return null;
+    }
+}
+
+// ── STRICT In-House DB Doğrulaması (KESİN KURAL) ────────────────────
+async function validateGuestInHouse(fullName, roomNo) {
+    if (!supabase) return { valid: false }; // DB yoksa kesinlikle işlem yapılmaz! (Sıfır tolerans)
+    
+    try {
+        if (!fullName || !roomNo) {
+            console.warn(`[GUEST_VALIDATION_REJECTED] Ad veya Oda eksik: ${fullName} / ${roomNo}`);
+            return { valid: false };
+        }
+        // İsim ve oda bazlı ara
+        const { data, error } = await supabase
+            .from('in_house_guests')
+            .select('*')
+            .eq('room_number', String(roomNo))
+            .ilike('first_name', `%${fullName.split(' ')[0]}%`)
+            .limit(1);
+
+        if (error) {
+            console.error('[IN_HOUSE_DB_ERROR]:', error.message);
+            return { valid: false };
+        }
+
+        if (data && data.length > 0) {
+            console.log(`✅ [IN_HOUSE_MATCHED] Misafir doğrulandı: ${fullName} -> Oda: ${roomNo}`);
+            return { valid: true, guest: data[0] };
+        }
+        
+        console.warn(`❌ [IN_HOUSE_MISMATCH] Veritabanında eşleşmeyen misafir: ${fullName} / ${roomNo}`);
+        return { valid: false };
+    } catch (e) {
+        return { valid: false };
     }
 }
 
@@ -308,22 +317,40 @@ async function routeToDepartment(ctx, department, turkishSummary, guestChatId, g
         }
     }
 
-    // Eğer veritabanında o departmana atanmış kimse yoksa Fallback (Yedek/Test) Modu
+    // Grup chat referansını ekle (.env'den)
+    let envContactId = null;
+    switch(department) {
+        case 'HOUSEKEEPING': envContactId = process.env.DEPT_HOUSEKEEPING_ID; break;
+        case 'TEKNIK': envContactId = process.env.DEPT_TEKNIK_ID; break;
+        case 'RESEPSIYON': envContactId = process.env.DEPT_RESEPSIYON_ID; break;
+        case 'F&B': envContactId = process.env.DEPT_FB_ID; break;
+        case 'GUEST_RELATIONS': envContactId = process.env.DEPT_GUEST_RELATIONS_ID; break;
+    }
+
+    if (envContactId) {
+        const hasGroup = targetPersonnel.some(p => p.contact_id === envContactId);
+        if (!hasGroup) {
+            targetPersonnel.push({ full_name: `${department} (Grup)`, platform: 'TELEGRAM', contact_id: envContactId });
+        }
+    }
+
+    // Eğer hiçbir yetkili veya grup bulunamazsa, testi gönderene ilet (mock fallback)
     if (targetPersonnel.length === 0) {
-        console.warn(`⚠️ [SLA UYARI] ${department} için aktif yetkili bulunamadı! Yedek (Test) moduna geçiliyor.`);
+        console.warn(`⚠️ [SLA UYARI] ${department} için aktif yetkili/grup bulunamadı!`);
         const fallbackId = (platform === 'Telegram' || !platform) ? String(guestChatId) : "758605940";
         targetPersonnel = [{ full_name: 'Test Yöneticisi', platform: 'TELEGRAM', contact_id: fallbackId }];
         isMock = true;
     }
 
     const ticketId = `HTL-${Math.floor(Math.random() * 10000)}`;
-    const taskMessage = `🔔 *YENİ GÖREV BİLDİRİMİ*
-🏢 *Departman:* ${department}
-👤 *Misafir:* ${guestName}
-🚪 *Oda No:* ${guestRoom}
-📝 *Talep:* ${turkishSummary}
-⏰ *Yanıt süresi:* 1 Dakika
-${isMock ? '\n_(Test modu: Veritabanında atalı yetkili eksik olduğu için varsayılan adrese gönderildi.)_' : ''}`;
+    
+    // PAYLOAD: [Room No | Guest Request]
+    const taskMessage = `🔔 *TASK ASSIGMENT*
+    
+[${guestRoom} | ${turkishSummary}]
+
+⏰ *SLA:* 1 Minute
+_${isMock ? '(Test Mode)' : ''}_`;
 
     try {
         // 2. GÖREVİ (TICKET) SUPABASE'E KAYDET
@@ -351,8 +378,8 @@ ${isMock ? '\n_(Test modu: Veritabanında atalı yetkili eksik olduğu için var
                     const sentMsg = await bot.telegram.sendMessage(person.contact_id, taskMessage, {
                         parse_mode: 'Markdown',
                         ...Markup.inlineKeyboard([
-                            Markup.button.callback('👍 İlgileniyorum', `ack_${ticketId}`),
-                            Markup.button.callback('✅ Tamamlandı', `done_${ticketId}`)
+                            Markup.button.callback('👍 Confirmed - Attending Now', `ack_${ticketId}`),
+                            Markup.button.callback('⏳ Busy - Will Attend Shortly', `busy_${ticketId}`)
                         ])
                     });
                     if (!firstMessageId) firstMessageId = sentMsg.message_id; // SLA paneli yakalaması için
@@ -388,7 +415,13 @@ ${isMock ? '\n_(Test modu: Veritabanında atalı yetkili eksik olduğu için var
             }
         }
 
-        // 5. SLA ZAMANLAYICISINI (1 Dakika) BAŞLAT
+        // 5. SLA ZAMANLAYICISINI (Dinamik: Departman bazlı veya varsayılan 1 dk) BAŞLAT
+        let slaMin = 1;
+        if (supabase) {
+            const { data: deptData } = await supabase.from('departments').select('sla_timeout_min').eq('name', department).single();
+            if (deptData && deptData.sla_timeout_min) slaMin = deptData.sla_timeout_min;
+        }
+
         pendingTickets[ticketId] = {
             id: ticketId,
             department,
@@ -409,8 +442,14 @@ ${isMock ? '\n_(Test modu: Veritabanında atalı yetkili eksik olduğu için var
                     console.log(`⚠️ SLA AŞIMI: ${ticketId} - Resepsiyona iletiliyor...`);
 
                     // SLA Aşıldı -> DB Güncellemesi
-                    await dbUpsertTicket({ ticket_id: ticketId, status: 'ESCALATED', escalated_at: escalatedAt });
-                    await dbLogEvent(ticketId, 'ESCALATED', 'system', `${department} 1 dk içinde yanıt vermedi.`);
+                    const failureReason = `${department} departmanı ${slaMin} dakika içinde yanıt vermedi.`;
+                    await dbUpsertTicket({ 
+                        ticket_id: ticketId, 
+                        status: 'ESCALATED', 
+                        escalated_at: escalatedAt,
+                        failure_reason: failureReason
+                    });
+                    await dbLogEvent(ticketId, 'ESCALATED', 'system', failureReason);
 
                     // Acil Eskalasyon mesajını tüm RESEPSİYON yetkililerine at
                     let escalationTargets = [];
@@ -426,12 +465,13 @@ ${isMock ? '\n_(Test modu: Veritabanında atalı yetkili eksik olduğu için var
                         escalationTargets.push({ full_name: 'Test Res', platform: 'TELEGRAM', contact_id: fallbackId });
                     }
 
-                    const escalationMsg = `🚨 *ACİL ESKALASYON*
-🏢 *Yanıtsız Departman:* ${department}
-👤 *Misafir:* ${guestName} | 🚪 *Oda:* ${guestRoom}
-📝 *Talep:* ${turkishSummary}
+                    const escalationMsg = `🚨 *ESCALATION ALERT*
+🏢 *Unresponsive Dept:* ${department}
+👤 *Info:* Room ${guestRoom} | ${guestName}
+📝 *TASK:* ${turkishSummary}
 
-⏰ _${department} departmanı belirlenen süre içinde yanıt VERMEDİ._
+⏰ _FAILURE: ${department} failed to respond within SLA._
+*Investigate and fulfill request immediately.*
 Lütfen aşağıdan inceleme notu ekleyin.`;
 
                     // İlk Resepsiyon ID'sini referans al
@@ -453,10 +493,9 @@ Lütfen aşağıdan inceleme notu ekleyin.`;
                     }
 
                     await saveMessageToDashboard(guestChatId, 'system',
-                        `SLA Eskalasyon: ${ticketId} - ${guestName} (Oda ${guestRoom}) talebi cevapsız kaldı, resepsiyona aktarıldı.`, 'SLA_BOT');
-                    // Misafire panik mesajı GİTMEZ.
+                        `SLA Escalation: ${ticketId} - ${guestName} (Room ${guestRoom}) failed to respond, escalated to Reception.`, 'SLA_BOT');
                 }
-            }, 60000) // 1 Dakika
+            }, slaMin * 60000) 
         };
 
     } catch (err) {
@@ -489,9 +528,11 @@ bot.action(/note_(.+)/, async (ctx) => {
 async function askForGuestInfo(ctx) {
     const msg = `Talebinizi iletebilmem için birkaç bilgiye ihtiyacım var 🙏
 
-Lütfen *adınız soyadınız* ve *oda numaranızı* paylaşır mısınız?
+1️⃣ *Adınız Soyadınız*
+2️⃣ *Oda Numaranız*
+3️⃣ *Varsa Alerji veya Özel Diyet İhtiyacınız* (Yoksa "Yok" yazabilirsiniz)
 
-_(Örnek: Ahmet Yılmaz, Oda 305)_`;
+_ (Örnek: Ahmet Yılmaz, Oda 305, Alerjim yok )_`;
     await ctx.replyWithMarkdown(msg);
 }
 
@@ -502,7 +543,7 @@ async function generateFinalConfirmation(guestName, guestRoom, langRef) {
     }
     try {
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-4o', // Onay mesajında dil/hitap sapmasını önlemek için standart model
             messages: [{
                 role: 'system',
                 content: `Sen bir 5 yıldızlı otel asistanısın. Aşağıdaki referans metinden misafirin dilini algıla ve TAM O DİLDE yaz. Misafirin adını ve oda numarasını kullanarak sıcak, kişisel, kısa (2 cümle max) bir onay mesajı üret. Mesaj şunu İÇERMELI: talebinin alındığı, ilgili departmanın anında haberdar edildiği ve kendisiyle ilgilenileceği. Emoji kullanabilirsin. Markdown kullanma.`
@@ -511,7 +552,7 @@ async function generateFinalConfirmation(guestName, guestRoom, langRef) {
                 content: `Misafir adı: ${guestName}, Oda: ${guestRoom}. Dil referansı: "${langRef}"`
             }],
             max_tokens: 120,
-            temperature: 0.8
+            temperature: 0.3 // Güvenli varyasyon
         });
         return response.choices[0].message.content.trim();
     } catch (e) {
@@ -529,7 +570,11 @@ async function handleIncomingMessage(ctx, userText) {
         const actor = ctx.from.first_name || 'Resepsiyon Personeli';
 
         // Notu Supabase'e kaydet
-        await dbUpsertTicket({ ticket_id: ticketId, reception_note: userText });
+        await dbUpsertTicket({ 
+            ticket_id: ticketId, 
+            reception_note: userText,
+            failure_reason: `Management Review: ${userText}` // Failure explanation for reporting
+        });
         await dbLogEvent(ticketId, 'RECEPTION_NOTE', actor, userText);
 
         console.log(`📝 [RESEPSIYON NOTU] ${ticketId} - ${actor}: ${userText}`);
@@ -561,20 +606,36 @@ async function handleIncomingMessage(ctx, userText) {
         const guestInfo = await extractGuestInfo(userText);
 
         if (guestInfo && guestInfo.name && guestInfo.room) {
-            // Bilgi alındı, kaydet
+            // In-House Doğrulaması
+            const validation = await validateGuestInHouse(guestInfo.name, guestInfo.room);
+            
+            if (!validation.valid) {
+                const failMsg = `⚠️ Üzgünüm, oda bilgileriniz (Ad/Soyad ve Oda No) konaklayan listemizle eşleşmedi. Lütfen bilgilerinizi kontrol edip tekrar yazınız. 🙏`;
+                await ctx.reply(failMsg);
+                return;
+            }
+
+            // Bilgi alındı ve doğrulandı, kaydet
             session.name = guestInfo.name;
             session.room = guestInfo.room;
+            session.allergies = guestInfo.allergies;
             session.state = 'complete';
 
-            console.log(`✅ Misafir bilgisi alındı: ${guestInfo.name}, Oda: ${guestInfo.room}`);
+            console.log(`✅ Misafir doğrulandı: ${guestInfo.name}, Room: ${guestInfo.room}`);
 
-            // Bekleyen talebi işle + kişisel kapanış mesajı gönder
+            // Alerji Protokolü...
+            if (guestInfo.allergies && guestInfo.allergies.toLowerCase() !== 'yok' && guestInfo.allergies.toLowerCase() !== 'none') {
+                await alertGuestRelationsAboutAllergy(guestInfo.name, guestInfo.room, guestInfo.allergies);
+            }
+
+            // Bekleyen talebi işle
             if (session.pendingAI) {
                 const { department, turkishSummary, replyToUser } = session.pendingAI;
-                // Departmana sessizce yönlendir
                 await routeToDepartment(ctx, department, turkishSummary, chatId, guestInfo.name, guestInfo.room);
-                // Misafire: kendi dilinde sıcak ve kişisel kapanış mesajı
+                
+                // MULTILINGUAL CONFIRMATION: "Request forwarded immediately."
                 const finalMsg = await generateFinalConfirmation(guestInfo.name, guestInfo.room, replyToUser);
+                // Prompt template ensures it's in guest's language.
                 await ctx.reply(finalMsg);
                 await saveMessageToDashboard(chatId, 'assistant', finalMsg);
                 session.pendingAI = null;
@@ -604,10 +665,7 @@ _(Örnek: Mehmet Kaya, Oda 412)_`;
             await routeToDepartment(ctx, aiResult.department, aiResult.turkishSummary, chatId, session.name, session.room);
         } else {
             // Misafir bilgisi yok:
-            // 1. HEMEN kendi dilinde "ilgileniyoruz" gönder
-            await ctx.reply(aiResult.replyToUser);
-            await saveMessageToDashboard(chatId, 'assistant', aiResult.replyToUser);
-            // 2. Ardından isim/oda bilgisi iste
+            // 1. Önce isim/oda bilgisi iste (Talebi henüz iletmeden önce)
             session.pendingAI = aiResult;
             session.state = 'awaiting_info';
             await askForGuestInfo(ctx);
@@ -644,65 +702,54 @@ bot.action(/ack_(.+)/, async (ctx) => {
         // Supabase güncelle
         await dbUpsertTicket({
             ticket_id: ticketId,
-            status: 'ACKED',
+            status: 'ACKNOWLEDGED',
             acked_at: ackedAt,
             acked_by: user,
             response_time_sec: responseTimeSec
         });
-        await dbLogEvent(ticketId, 'ACKED', user, `Yanıt süresi: ${responseTimeSec ?? '?'} saniye`);
+        await dbLogEvent(ticketId, 'ACKNOWLEDGED', user, `Processing started. Response time: ${responseTimeSec ?? '?'}s`);
 
         const oldMsg = ctx.callbackQuery.message.text;
         await ctx.editMessageText(
-            `${oldMsg}\n\n👷‍♂️ *Üstlenen:* ${user} (İşleme Alındı)`,
+            `${oldMsg}\n\n👷‍♂️ *Status:* ${user} (Acknowledged / Processing)`,
             { parse_mode: 'Markdown' }
         );
 
         await saveMessageToDashboard(tk.guestChatId, 'system',
-            `${ticketId} numaralı talep (${tk.guestName}, Oda ${tk.guestRoom}) ${user} tarafından işleme alındı. Yanıt süresi: ${responseTimeSec}sn`, 'SLA_BOT');
+            `${ticketId} acknowledged by ${user}.`, 'SLA_BOT');
     } else {
-        await ctx.answerCbQuery('Talep bulunamadı veya süresi dolmuş olabilir.', { show_alert: true });
+        await ctx.answerCbQuery('Ticket not found or expired.', { show_alert: true });
     }
 });
 
-bot.action(/done_(.+)/, async (ctx) => {
+bot.action(/busy_(.+)/, async (ctx) => {
     const ticketId = ctx.match[1];
-    const user = ctx.from.first_name || "Personel";
+    const user = ctx.from.first_name || "Staff";
 
     if (pendingTickets[ticketId]) {
-        clearTimeout(pendingTickets[ticketId].timer);
-        pendingTickets[ticketId].status = 'resolved';
-
+        await ctx.answerCbQuery('Marked as Busy / Delayed');
+        
         const tk = pendingTickets[ticketId];
-        const resolvedAt = new Date().toISOString();
-        const resolutionTimeSec = tk.createdAt
-            ? Math.round((new Date(resolvedAt) - new Date(tk.createdAt)) / 1000)
-            : null;
-
-        // Supabase güncelle
         await dbUpsertTicket({
             ticket_id: ticketId,
-            status: 'RESOLVED',
-            resolved_at: resolvedAt,
-            resolved_by: user,
-            resolution_time_sec: resolutionTimeSec
+            status: 'BUSY_DELAYED',
+            updated_at: new Date().toISOString()
         });
-        await dbLogEvent(ticketId, 'RESOLVED', user, `Toplam çözüm süresi: ${resolutionTimeSec ?? '?'} saniye`);
+        await dbLogEvent(ticketId, 'BUSY_DELAYED', user, 'Staff is currently busy, request might be delayed.');
 
         const oldMsg = ctx.callbackQuery.message.text;
-        await ctx.editMessageText(`${oldMsg}\n\n✅ *TAMAMLANDI:* ${user}`, { parse_mode: 'Markdown' });
-        await ctx.answerCbQuery('Görev tamamlandı olarak işaretlendi!');
+        await ctx.editMessageText(
+            `${oldMsg}\n\n⏳ *Status:* ${user} (Busy / Delayed)`,
+            { parse_mode: 'Markdown' }
+        );
 
-        if (tk.platform === 'Telegram' || !tk.platform) {
-            try {
-                await bot.telegram.sendMessage(tk.guestChatId,
-                    `✅ Talebiniz (${ticketId}) otel personelimiz tarafından tamamlanmıştır. İyi tatiller, ${tk.guestName}! 😊`);
-            } catch (e) { }
-        }
-
-        await saveMessageToDashboard(tk.guestChatId, 'system',
-            `${ticketId} başarıyla kapatıldı. Çözüm süresi: ${resolutionTimeSec}sn (${tk.guestName}, Oda ${tk.guestRoom})`, 'SLA_BOT');
+        // Notify guest about the delay
+        try {
+            await bot.telegram.sendMessage(tk.guestChatId, 
+                `⏳ Sayın misafirimiz, talebinizle (${ticketId}) ilgileniyoruz ancak şu an yoğunluk nedeniyle kısa bir gecikme yaşanabilir. Anlayışınız için teşekkür ederiz. 🙏`);
+        } catch (e) {}
     } else {
-        await ctx.answerCbQuery('Talep bulunamadı.', { show_alert: true });
+        await ctx.answerCbQuery('Ticket not found.', { show_alert: true });
     }
 });
 
@@ -852,9 +899,24 @@ app.post('/api/webhook/instagram', async (req, res) => {
         // 2. Mesajı analiz et (isRequest, department, summary, replyToUser)
         const aiResult = await processMessageWithAI(msgText);
 
-        // 3. İstek ise departmana yönlendir ve SLA sürecini başlat
+        // 3. İstek ise ODA/İSİM doğrulaması (STRICT CHECK)
         if (aiResult.isRequest && aiResult.department) {
-            // routeToDepartment (ctx=null gönderip platform='instagram' ekliyoruz)
+            
+            // WEBHOOK'ta da GUEST VALIDATION mecburidir.
+            const validation = await validateGuestInHouse(fullName, roomNo);
+            
+            if (!validation.valid) {
+                const failMsg = `⚠️ İşleminiz gerçekleştirilemiyor. Belirttiğiniz ad ve oda numarası aktif konaklayan in-house misafir listemizle eşleşmedi. Lütfen bilgilerinizi kontrol ediniz.`;
+                await saveMessageToDashboard(contactId, 'assistant', failMsg, platform);
+                console.log(`🚫 [WEBHOOK BANNED] İn-House eşleşmedi: ${fullName} / Oda: ${roomNo}`);
+                return res.json({
+                    success: false,
+                    action: "REJECTED_NOT_IN_HOUSE",
+                    reply_text: failMsg
+                });
+            }
+
+            // Doğrulandıysa routeToDepartment (ctx=null gönderip platform='instagram' ekliyoruz)
             await routeToDepartment(
                 null,
                 aiResult.department,

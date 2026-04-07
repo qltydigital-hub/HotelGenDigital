@@ -3,14 +3,13 @@ module.exports = {
         {
             name: 'hotel-dashboard',
             cwd: './hotel-admin-dashboard',
-            script: 'node_modules/.bin/next',
-            args: 'dev',
-            interpreter: 'none',
+            script: 'npm',
+            args: 'run start',
             watch: false,
             autorestart: true,
             max_restarts: 10,
             env: {
-                NODE_ENV: 'development',
+                NODE_ENV: 'production',
                 PORT: 3000
             }
         },

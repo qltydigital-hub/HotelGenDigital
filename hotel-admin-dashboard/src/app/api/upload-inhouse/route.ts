@@ -2,6 +2,43 @@ import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase-client';
 import * as xlsx from 'xlsx';
 
+function parseExcelDate(excelVal: any): string | null {
+    if (!excelVal) return null;
+    
+    // JS Date objesi
+    if (excelVal instanceof Date) {
+        return excelVal.toISOString().split('T')[0];
+    }
+    
+    const strVal = String(excelVal).trim();
+    
+    // Sadece sayısal Excel formatı (örn: 46109) - Excel serial dates
+    if (!isNaN(Number(strVal)) && Number(strVal) > 1000) {
+        const serial = Number(strVal);
+        const jsDate = new Date((serial - Math.floor(25569)) * 86400 * 1000);
+        return jsDate.toISOString().split('T')[0];
+    }
+    
+    // "DD.MM.YYYY" formatı
+    if (strVal.includes('.')) {
+        const parts = strVal.split('.');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+    }
+    
+    // "DD/MM/YYYY" formatı
+    if (strVal.includes('/')) {
+        const parts = strVal.split('/');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+    }
+
+    // Default fallback
+    return strVal;
+}
+
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
@@ -54,19 +91,8 @@ export async function POST(req: Request) {
             const first_name = isimSoyisim.toString().split(' ')[0] || '';
             const last_name = isimSoyisim.toString().split(' ').slice(1).join(' ') || '';
             
-            let checkin_date = null;
-            let checkout_date = null;
-            
-            if (row[3]) {
-                const parts = row[3].toString().split('.');
-                if (parts.length === 3) checkin_date = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                else checkin_date = row[3];
-            }
-            if (row[4]) {
-                const parts = row[4].toString().split('.');
-                if (parts.length === 3) checkout_date = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                else checkout_date = row[4];
-            }
+            let checkin_date = parseExcelDate(row[3]);
+            let checkout_date = parseExcelDate(row[4]);
             
             let guestCount = parseInt(row[2]);
             if (isNaN(guestCount)) guestCount = 2;

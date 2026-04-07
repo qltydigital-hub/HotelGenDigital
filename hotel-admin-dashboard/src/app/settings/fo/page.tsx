@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink, AlertTriangle, Save } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink, AlertTriangle, Save, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
@@ -29,6 +29,10 @@ export default function FrontOfficeSettings() {
     const [messageSent, setMessageSent] = useState(false);
     const [messageTime, setMessageTime] = useState<string | null>(null);
     const [uploadTimes, setUploadTimes] = useState<Record<string, string>>({});
+    
+    // Filtreleme State'leri
+    const [filterCheckOutStart, setFilterCheckOutStart] = useState("");
+    const [filterCheckOutEnd, setFilterCheckOutEnd] = useState("");
     
     // AI Welcome Settings States
     const [offerMap, setOfferMap] = useState(true);
@@ -265,10 +269,39 @@ export default function FrontOfficeSettings() {
         setGuests(guests.map(g => g.id === id ? { ...g, selected: !g.selected } : g));
     };
 
-    // Toggle all guests
+    // Computed property for filtered guests
+    const displayedGuests = useMemo(() => {
+        return guests.filter(g => {
+            if (!filterCheckOutStart && !filterCheckOutEnd) return true;
+            
+            // Expected format checkOut: YYYY-MM-DD
+            const outDateStr = g.checkOut;
+            if (!outDateStr || outDateStr === '-') return false;
+
+            // Single day exact match filtering
+            if (filterCheckOutStart && !filterCheckOutEnd) {
+                return outDateStr === filterCheckOutStart;
+            }
+
+            // Date Range filtering
+            const outDate = new Date(outDateStr);
+            if (isNaN(outDate.getTime())) return false;
+
+            const start = filterCheckOutStart ? new Date(filterCheckOutStart) : new Date(0);
+            const end = filterCheckOutEnd ? new Date(filterCheckOutEnd) : new Date(8640000000000000);
+            
+            return outDate >= start && outDate <= end;
+        });
+    }, [guests, filterCheckOutStart, filterCheckOutEnd]);
+
+    // Toggle all guests within the current filter view
     const toggleAll = () => {
-        const allSelected = guests.every(g => g.selected);
-        setGuests(guests.map(g => ({ ...g, selected: !allSelected })));
+        const allSelected = displayedGuests.every(g => g.selected);
+        const displayedIds = displayedGuests.map(g => g.id);
+        
+        setGuests(prevGuests => prevGuests.map(g => 
+            displayedIds.includes(g.id) ? { ...g, selected: !allSelected } : g
+        ));
     };
 
     const [isUploadingObj, setIsUploadingObj] = useState<Record<string, boolean>>({});
@@ -364,7 +397,7 @@ export default function FrontOfficeSettings() {
         setTimeout(() => setMessageSent(false), 4000);
     };
 
-    const selectedCount = guests.filter(g => g.selected).length;
+    const selectedCount = displayedGuests.filter(g => g.selected).length;
 
     return (
         <div className="min-h-screen bg-[#0a0f1c] text-white p-6 md:p-10 font-sans pb-20">
@@ -471,12 +504,48 @@ export default function FrontOfficeSettings() {
 
                         {isGuestListOpen && isUploaded && (
                             <div className="mt-8 animate-in slide-in-from-top-4 fade-in duration-300">
+                                
+                                {/* FILTER UI */}
+                                <div className="flex flex-col md:flex-row items-center gap-4 mb-4 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl">
+                                    <div className="flex items-center gap-2">
+                                        <Filter className="w-5 h-5 text-blue-400" />
+                                        <span className="font-bold text-slate-300 text-sm">Çıkış Tarihine Göre Filtrele:</span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 w-full md:w-auto">
+                                        <input 
+                                            type="date" 
+                                            value={filterCheckOutStart}
+                                            onChange={(e) => setFilterCheckOutStart(e.target.value)}
+                                            className="bg-slate-950 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-auto hover:border-blue-500/50 transition-colors"
+                                            title="Başlangıç (veya Tek Gün)"
+                                        />
+                                        <span className="text-slate-600 font-bold">-</span>
+                                        <input 
+                                            type="date" 
+                                            value={filterCheckOutEnd}
+                                            onChange={(e) => setFilterCheckOutEnd(e.target.value)}
+                                            className="bg-slate-950 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-auto hover:border-blue-500/50 transition-colors"
+                                            title="Bitiş Tarihi (Opsiyonel)"
+                                        />
+                                    </div>
+                                    
+                                    {(filterCheckOutStart || filterCheckOutEnd) && (
+                                        <button 
+                                            onClick={() => { setFilterCheckOutStart(""); setFilterCheckOutEnd(""); }}
+                                            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 px-3 py-2 rounded-lg font-bold transition-colors ml-auto md:ml-2"
+                                        >
+                                            Temizle
+                                        </button>
+                                    )}
+                                </div>
+
                                 <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto max-h-[500px] overflow-y-auto">
                                 <table className="w-full text-left text-sm text-slate-300">
                                     <thead className="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-800">
                                         <tr>
                                             <th scope="col" className="p-4 cursor-pointer hover:text-white transition-colors" onClick={toggleAll}>
-                                                {guests.every(g => g.selected) ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5" />}
+                                                {displayedGuests.length > 0 && displayedGuests.every(g => g.selected) ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5" />}
                                             </th>
                                             <th scope="col" className="px-6 py-4">Oda No</th>
                                             <th scope="col" className="px-6 py-4">İsim Soyisim</th>
@@ -487,26 +556,34 @@ export default function FrontOfficeSettings() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {guests.map((guest) => (
-                                            <tr key={guest.id} className={`border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors ${guest.selected ? 'bg-blue-900/10' : ''}`}>
-                                                <td className="p-4 cursor-pointer" onClick={() => toggleGuest(guest.id)}>
-                                                    {guest.selected ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5 text-slate-500" />}
-                                                </td>
-                                                <td className="px-6 py-4 font-bold text-white text-base">{guest.room}</td>
-                                                <td className="px-6 py-4">{guest.fullName}</td>
-                                                <td className="px-6 py-4 text-blue-300">{guest.agency}</td>
-                                                <td className="px-6 py-4 font-mono text-xs">{guest.voucher}</td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <span className="bg-slate-800 px-2 py-1 rounded-md text-slate-300">{guest.adults} Y</span>
-                                                    {guest.children > 0 && (
-                                                        <span className="bg-slate-800 px-2 py-1 rounded-md text-slate-300 ml-1" title={`Çocuk Yaşları: ${guest.childAges}`}>{guest.children} Ç</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="text-green-400">{guest.checkIn}</span> <span className="text-slate-500 mx-1">/</span> <span className="text-red-400">{guest.checkOut}</span>
+                                        {displayedGuests.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="px-6 py-8 text-center text-slate-500 font-medium">
+                                                    Belirttiğiniz tarihte çıkış yapan misafir bulunamadı.
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            displayedGuests.map((guest) => (
+                                                <tr key={guest.id} className={`border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors ${guest.selected ? 'bg-blue-900/10' : ''}`}>
+                                                    <td className="p-4 cursor-pointer" onClick={() => toggleGuest(guest.id)}>
+                                                        {guest.selected ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5 text-slate-500" />}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-bold text-white text-base">{guest.room}</td>
+                                                    <td className="px-6 py-4">{guest.fullName}</td>
+                                                    <td className="px-6 py-4 text-blue-300">{guest.agency}</td>
+                                                    <td className="px-6 py-4 font-mono text-xs">{guest.voucher}</td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className="bg-slate-800 px-2 py-1 rounded-md text-slate-300">{guest.adults} Y</span>
+                                                        {guest.children > 0 && (
+                                                            <span className="bg-slate-800 px-2 py-1 rounded-md text-slate-300 ml-1" title={`Çocuk Yaşları: ${guest.childAges}`}>{guest.children} Ç</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-emerald-400 font-medium">{guest.checkIn}</span> <span className="text-slate-600 mx-1">/</span> <span className="text-red-400 font-bold">{guest.checkOut}</span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>

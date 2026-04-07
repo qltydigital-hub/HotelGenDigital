@@ -506,36 +506,64 @@ export default function FrontOfficeSettings() {
                             <div className="mt-8 animate-in slide-in-from-top-4 fade-in duration-300">
                                 
                                 {/* FILTER UI */}
-                                <div className="flex flex-col md:flex-row items-center gap-4 mb-4 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl">
+                                <div className="flex flex-col xl:flex-row items-center gap-4 mb-4 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl">
                                     <div className="flex items-center gap-2">
                                         <Filter className="w-5 h-5 text-blue-400" />
-                                        <span className="font-bold text-slate-300 text-sm">Çıkış Tarihine Göre Filtrele:</span>
+                                        <span className="font-bold text-slate-300 text-sm whitespace-nowrap">Çıkış Filtre:</span>
                                     </div>
                                     
-                                    <div className="flex items-center gap-2 w-full md:w-auto">
-                                        <input 
-                                            type="date" 
-                                            value={filterCheckOutStart}
-                                            onChange={(e) => setFilterCheckOutStart(e.target.value)}
-                                            className="bg-slate-950 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-auto hover:border-blue-500/50 transition-colors"
-                                            title="Başlangıç (veya Tek Gün)"
-                                        />
-                                        <span className="text-slate-600 font-bold">-</span>
-                                        <input 
-                                            type="date" 
-                                            value={filterCheckOutEnd}
-                                            onChange={(e) => setFilterCheckOutEnd(e.target.value)}
-                                            className="bg-slate-950 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-auto hover:border-blue-500/50 transition-colors"
-                                            title="Bitiş Tarihi (Opsiyonel)"
-                                        />
+                                    <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                                        {/* Hızlı Butonlar */}
+                                        <button 
+                                            onClick={() => {
+                                                const today = new Date();
+                                                const str = today.toISOString().split('T')[0];
+                                                setFilterCheckOutStart(str); setFilterCheckOutEnd("");
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60 border border-indigo-500/30 transition-all whitespace-nowrap"
+                                        >
+                                            Bugün
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                const tomorrow = new Date(); 
+                                                tomorrow.setDate(tomorrow.getDate()+1);
+                                                const str = tomorrow.toISOString().split('T')[0];
+                                                setFilterCheckOutStart(str); setFilterCheckOutEnd("");
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-900/40 text-blue-300 hover:bg-blue-800/60 border border-blue-500/30 transition-all whitespace-nowrap"
+                                        >
+                                            Yarınki Çıkışlar
+                                        </button>
+
+                                        {/* Seçilebilir Takvim Inputları */}
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="date" 
+                                                value={filterCheckOutStart}
+                                                onChange={(e) => setFilterCheckOutStart(e.target.value)}
+                                                style={{ colorScheme: 'dark' }}
+                                                className="bg-slate-950 border border-slate-700 text-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-auto hover:border-blue-500/50 transition-colors cursor-pointer"
+                                                title="Başlangıç (veya Tek Gün)"
+                                            />
+                                            <span className="text-slate-600 font-bold">-</span>
+                                            <input 
+                                                type="date" 
+                                                value={filterCheckOutEnd}
+                                                onChange={(e) => setFilterCheckOutEnd(e.target.value)}
+                                                style={{ colorScheme: 'dark' }}
+                                                className="bg-slate-950 border border-slate-700 text-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none w-full md:w-auto hover:border-blue-500/50 transition-colors cursor-pointer"
+                                                title="Bitiş Tarihi (Opsiyonel)"
+                                            />
+                                        </div>
                                     </div>
                                     
                                     {(filterCheckOutStart || filterCheckOutEnd) && (
                                         <button 
                                             onClick={() => { setFilterCheckOutStart(""); setFilterCheckOutEnd(""); }}
-                                            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 px-3 py-2 rounded-lg font-bold transition-colors ml-auto md:ml-2"
+                                            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 px-4 py-2 rounded-lg font-bold transition-colors ml-auto mt-2 xl:mt-0 whitespace-nowrap border border-red-500/20"
                                         >
-                                            Temizle
+                                            Filtreyi Temizle
                                         </button>
                                     )}
                                 </div>

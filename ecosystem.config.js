@@ -3,8 +3,7 @@ module.exports = {
         {
             name: 'hotel-dashboard',
             cwd: './hotel-admin-dashboard',
-            script: 'npm',
-            args: 'run start',
+            script: 'start-server.js',
             watch: false,
             autorestart: true,
             max_restarts: 10,

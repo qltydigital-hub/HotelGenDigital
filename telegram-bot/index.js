@@ -389,6 +389,7 @@ ${KNOWLEDGE.konusmaSenaryolari.substring(0, 2000)}` : '',
             temperature: 0.0 // SIFIR halüsinasyon — kurumsal kullanım için yaratıcılık tamamen kapatıldı
         });
         const parsed = JSON.parse(response.choices[0].message.content);
+        console.log(`🧠 [AI RAW OUTPUT]:`, parsed);
         
         // ── POST-PROCESSING: Halüsinasyon Güvenlik Duvarı (3 KATMANLI) ──
         if (parsed.replyToUser) {
@@ -401,23 +402,27 @@ ${KNOWLEDGE.konusmaSenaryolari.substring(0, 2000)}` : '',
             }
 
             // KATMAN 2: Sahte Onay Kontrolü (FALSE CONFIRMATION BLOCKER)
-            // AI isRequest:true döndürüp "iletildi/gönderildi/odanıza" diyorsa → düzelt
-            if (parsed.isRequest) {
-                const falseConfirmPatterns = /(?:taleb|istek|rica)(?:iniz(?:i)?|nız(?:ı)?)?\s*(?:ilet(?:il)?|gönder|yolla|aktarıl|karşılan|odanıza\s+gönderi)/gi;
-                const falseConfirmPatternsEN = /(?:your\s+request\s+has\s+been\s+(?:sent|forwarded|delivered)|sending\s+(?:it\s+)?to\s+your\s+room|we(?:'re|\s+are)\s+sending)/gi;
-                
-                if (falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser)) {
-                    console.warn(`🛑 [FALSE_CONFIRM_BLOCKED] AI sahte onay verdi, düzeltiliyor: ${parsed.replyToUser.substring(0, 120)}`);
-                    // Dili koru: Türkçe mi İngilizce mi?
-                    const isTurkish = /[çğıöşü]/i.test(parsed.replyToUser) || /talep|istek|oda/i.test(parsed.replyToUser);
+            // AI isRequest:true ise veya AI yanlışlıkla false çevirse bile cümlede 'iletiyorum/gönderiyorum' varsa
+            const isTurkish = /[çğıöşü]/i.test(parsed.replyToUser) || /talep|istek|oda/i.test(parsed.replyToUser);
+            const falseConfirmPatterns = /(?:taleb|istek|rica)(?:iniz(?:i)?|nız(?:ı)?)?\s*(?:hemen\s+)?(?:ilet(?:il)?|gönder|yolla|aktarıl|karşılan|odanıza|iletiyorum|gönderiyoruz|gönderiyorum)/gi;
+            const falseConfirmPatternsEN = /(?:your\s+request\s+has\s+been\s+(?:sent|forwarded|delivered)|sending\s+(?:it\s+)?to\s+your\s+room|we(?:'re|\s+are)\s+sending)/gi;
+            
+            if (parsed.isRequest || falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser)) {
+                if (falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser) || parsed.replyToUser.toLowerCase().includes("iletiyorum") || parsed.replyToUser.toLowerCase().includes("gönderiyorum")) {
+                    console.warn(`🛑 [FALSE_CONFIRM_BLOCKED] AI sahte onay verdi, iptal ediliyor: ${parsed.replyToUser.substring(0, 120)}`);
                     parsed.replyToUser = isTurkish
                         ? 'Talebinizi aldım! Hızlıca iletebilmem için birkaç bilgiye ihtiyacım var. 🙏'
                         : 'I\'ve noted your request! To process it quickly, I\'ll need a few details from you. 🙏';
+                    
+                    // Eğer LLM isRequest false yaptıysa bile, metinde iletiyorum dediği için zorla true yapıyoruz!
+                    if (!parsed.isRequest) {
+                        parsed.isRequest = true;
+                        parsed.department = "HOUSEKEEPING"; // Fallback departman
+                    }
                 }
             }
 
             // KATMAN 3: Oda Numarası Uydurma Kontrolü
-            // AI yanıtında belirli bir oda numarası geçiyorsa ve bu kullanıcıdan gelmemişse → temizle
             const roomInReply = parsed.replyToUser.match(/(?:oda(?:\s*(?:no|numar|num))?[\s.:]*|room\s*)(\d{3,4})/i);
             if (roomInReply && !userText.includes(roomInReply[1])) {
                 console.warn(`⚠️ [ROOM_FABRICATION] AI oda numarası uydurdu: ${roomInReply[1]}`);

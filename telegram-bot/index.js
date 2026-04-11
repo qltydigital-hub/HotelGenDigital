@@ -266,7 +266,7 @@ function convertOggToMp3(inputPath, outputPath) {
 }
 
 // ── AI ile mesaj işle (Soru mu, Talep mi?) ────────────────────────────
-async function processMessageWithAI(userText) {
+async function processMessageWithAI(userText, session = null) {
     if (!openai) {
         return { replyToUser: "⚙️ OpenAI API anahtarı tanımlı değil.", isRequest: false };
     }
@@ -291,6 +291,24 @@ ${DOCS.zamanYonetimi ? `
 [ZAMAN YÖNETİMİ PROTOKOLÜ]
 ${DOCS.zamanYonetimi.substring(0, 1500)}` : ''}`,
 
+        // ═══ KATMAN 1.5: MİSAFİR OTURUM BİLGİLERİ ═══
+        (session && session.state === 'complete' && session.real_first_name) ? `╔══════════════════════════════════════════════════╗
+║             AKTİF MİSAFİR BİLGİSİ                ║
+╚══════════════════════════════════════════════════╝
+Sen şu an doğrulanmış bir misafirle konuşuyorsun:
+- Adı Soyadı: ${session.real_first_name} ${session.last_name || ''}
+- Oda Numarası: ${session.room}
+- Giriş Tarihi: ${session.checkin_date || 'Bilinmiyor'}
+- Çıkış Tarihi: ${session.checkout_date || 'Bilinmiyor'}
+
+Bu misafiri tanıyorsun. Hitap ederken "Sayın ${session.real_first_name} ${session.last_name ? 'Bey/Hanım' : 'Misafirimiz'}" şeklinde hitap edebilirsin.
+Giriş veya çıkış tarihlerini sorarsa DİREKT olarak bu bilgileri ver.` : `╔══════════════════════════════════════════════════╗
+║             AKTİF MİSAFİR BİLGİSİ                ║
+╚══════════════════════════════════════════════════╝
+Şu an konuştuğun kişi henüz doğrulanmadı. ADINI, SOYADINI, ODA NUMARASINI ASLA BİLMİYORSUN.
+KİŞİYE İSİM UYDURMAN KESİNLİKLE YASAKTIR!
+Sadece "Sayın Misafirimiz" diyerek hitap et.`,
+
         // ═══ KATMAN 2: OTEL BİLGİ BANKASI ═══
         `╔══════════════════════════════════════════════════╗
 ║              OTEL BİLGİ BANKASI                  ║
@@ -303,16 +321,16 @@ ${HOTEL_KNOWLEDGE}`,
 ╚══════════════════════════════════════════════════╝
 
 ████ KURAL 1: SIFIR HALÜSİNASYON — İSİM UYDURMA MUTLAK YASAK ████
-- Karşıdaki kişinin adını, soyadını, oda numarasını BİLMİYORSUN.
-- Yanıtlarında ASLA bir isim kullanma! "Ahmet", "Mehmet", "Ali" gibi isimler UYDURMAK KESİNLİKLE YASAK.
-- Hitap şeklin HER ZAMAN: "Sayın Misafirimiz" olmalı.
-- replyToUser'da ASLA kişi adı, oda numarası veya uydurulmuş bilgi BULUNMAZ.
+- BAŞKA HİÇBİR İSİM KULLANAMAZSIN (Örneğin test, Haydar Bakır, default, user vs YASAK!).
+- Eğer yukarıdaki "AKTİF MİSAFİR BİLGİSİ" bölümünde misafirin adı yazmıyorsa, BİLMİYORSUN! Asla isim uydurma. Hitap "Sayın Misafirimiz" olmalı.
+- Eğer misafirin adı yazıyorsa, ona saygılı bir şekilde adıyla hitap EDEBİLİRSİN.
+- replyToUser'da uydurma bilgi, uydurma oda numarası KESİNLİKLE bulunamaz.
 
 ████ KURAL 2: TALEPLER — isRequest DOĞRU İŞARETLE ████
 - Müşteri fiziksel bir şey istiyorsa (yastık, havlu, su, temizlik, arıza, oda servisi vb.):
   → "isRequest": true DÖNDÜR. Bu kritik! false dönersen sistem çalışmaz.
-- SEN müşteriye oda numarası veya isim SORMA. Yazılım sistemi bunu halleder.
-- ASLA "talebiniz iletildi" veya "odanıza gönderildi" deme — henüz doğrulama yapılmadı!
+- SEN müşteriye oda numarası veya isim SORMA. Sistem bunu otomatik yapacak.
+- Aktif misafir doğrulanmamışsa ASLA "talebiniz iletildi" veya "odanıza gönderildi" deme — doğrulama yapılacak!
 
 ████ KURAL 3: YAZIM HATALARI — TOLERANSLI OL ████
 - "yaztık"=yastık, "isiyorım"=istiyorum, "havlı"=havlu, "klma"=klima
@@ -365,7 +383,7 @@ ${KNOWLEDGE.konusmaSenaryolari.substring(0, 2000)}` : '',
 ║              JSON ÇIKTI ŞABLONU                  ║
 ╚══════════════════════════════════════════════════╝
 
-1) TALEP/İSTEK (fiziksel hizmet, arıza, şikayet):
+3) TALEP/İSTEK (fiziksel hizmet, arıza, şikayet):
    {"isRequest": true, "department": "HOUSEKEEPING|TEKNIK|RESEPSIYON|F&B|GUEST_RELATIONS|SPA|IT|SECURITY", "turkishSummary": "Kısa Türkçe özet", "replyToUser": "İsimsiz, genel onay mesajı"}
 
 2) SORU/BİLGİ (saat, restoran, bölge bilgisi, sohbet):
@@ -373,8 +391,7 @@ ${KNOWLEDGE.konusmaSenaryolari.substring(0, 2000)}` : '',
 
 ⛔ MUTLAK KURALLAR:
 - Yalnızca JSON objesi döndür! Markdown kullanma.
-- replyToUser'da KESİNLİKLE kişi adı kullanma!
-- replyToUser'da isRequest:true ise "iletildi/gönderildi" KELİMELERİ YASAK!`
+- MİSAFİR DOĞRULANMAMIŞSA, replyToUser'da isRequest:true ise "iletildi/gönderildi" KELİMELERİ YASAK!`
     ].filter(Boolean).join('\n\n');
 
     try {
@@ -393,42 +410,45 @@ ${KNOWLEDGE.konusmaSenaryolari.substring(0, 2000)}` : '',
         
         // ── POST-PROCESSING: Halüsinasyon Güvenlik Duvarı (3 KATMANLI) ──
         if (parsed.replyToUser) {
-            // KATMAN 1: İsim Uydurma Kontrolü (Genişletilmiş)
-            const genericNames = /(Ahmet|Mehmet|Ali|Ayşe|Fatma|Hasan|Mustafa|Özgür|Kemal|Veli|Hüseyin|İbrahim|Osman|Emre|Burak|Serkan|Murat|Cem|Deniz|Can)\s*(Bey|Hanım|bey|hanım)?/gi;
-            
-            if (genericNames.test(parsed.replyToUser)) {
-                console.warn(`⚠️ [HALÜSİNASYON ENGEL] AI isim uydurdu, temizleniyor: ${parsed.replyToUser.substring(0, 100)}`);
-                parsed.replyToUser = parsed.replyToUser.replace(genericNames, 'Sayın Misafirimiz');
-            }
+            // Sadece misafir ONAYLI DEĞİLSE İsim / Sahte Onay engellerini çalıştır
+            if (!session || session.state !== 'complete') {
+                // KATMAN 1: İsim Uydurma Kontrolü (Genel Kontrol)
+                // Eğer doğrulanmamış durumdaysak hiçbir şekilde oda numarasını veya misafir isimlerini metinde barındırma
+                const containsRoom = /\b\d{3,4}\b/.test(parsed.replyToUser);
+                const containsNamesPattern = /(bey|hanım|mr|mrs|ms)/i.test(parsed.replyToUser);
+                if (containsRoom || containsNamesPattern) {
+                     console.warn(`⚠️ [HALÜSİNASYON ENGEL] AI doğrulanmamış misafire isim/oda uydurdu! Metin: ${parsed.replyToUser}`);
+                     parsed.replyToUser = 'Talebinizi aldım! Hızlıca iletebilmem için lütfen Adınız, Soyadınız ve Oda Numaranızı yazınız. 🙏';
+                }
 
-            // KATMAN 2: Sahte Onay Kontrolü (FALSE CONFIRMATION BLOCKER)
-            // AI isRequest:true ise veya AI yanlışlıkla false çevirse bile cümlede 'iletiyorum/gönderiyorum' varsa
-            const isTurkish = /[çğıöşü]/i.test(parsed.replyToUser) || /talep|istek|oda/i.test(parsed.replyToUser);
-            const falseConfirmPatterns = /(?:taleb|istek|rica)(?:iniz(?:i)?|nız(?:ı)?)?\s*(?:hemen\s+)?(?:ilet(?:il)?|gönder|yolla|aktarıl|karşılan|odanıza|iletiyorum|gönderiyoruz|gönderiyorum)/gi;
-            const falseConfirmPatternsEN = /(?:your\s+request\s+has\s+been\s+(?:sent|forwarded|delivered)|sending\s+(?:it\s+)?to\s+your\s+room|we(?:'re|\s+are)\s+sending)/gi;
-            
-            if (parsed.isRequest || falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser)) {
-                if (falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser) || parsed.replyToUser.toLowerCase().includes("iletiyorum") || parsed.replyToUser.toLowerCase().includes("gönderiyorum")) {
-                    console.warn(`🛑 [FALSE_CONFIRM_BLOCKED] AI sahte onay verdi, iptal ediliyor: ${parsed.replyToUser.substring(0, 120)}`);
-                    parsed.replyToUser = isTurkish
-                        ? 'Talebinizi aldım! Hızlıca iletebilmem için birkaç bilgiye ihtiyacım var. 🙏'
-                        : 'I\'ve noted your request! To process it quickly, I\'ll need a few details from you. 🙏';
-                    
-                    // Eğer LLM isRequest false yaptıysa bile, metinde iletiyorum dediği için zorla true yapıyoruz!
-                    if (!parsed.isRequest) {
-                        parsed.isRequest = true;
-                        parsed.department = "HOUSEKEEPING"; // Fallback departman
+                // KATMAN 2: Sahte Onay Kontrolü (FALSE CONFIRMATION BLOCKER)
+                const isTurkish = /[çğıöşü]/i.test(parsed.replyToUser) || /talep|istek|oda/i.test(parsed.replyToUser);
+                const falseConfirmPatterns = /(?:taleb|istek|rica)(?:iniz(?:i)?|nız(?:ı)?)?\s*(?:hemen\s+)?(?:ilet(?:il)?|gönder|yolla|aktarıl|karşılan|odanıza|iletiyorum|gönderiyoruz|gönderiyorum)/gi;
+                const falseConfirmPatternsEN = /(?:your\s+request\s+has\s+been\s+(?:sent|forwarded|delivered)|sending\s+(?:it\s+)?to\s+your\s+room|we(?:'re|\s+are)\s+sending)/gi;
+                
+                if (parsed.isRequest || falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser)) {
+                    if (falseConfirmPatterns.test(parsed.replyToUser) || falseConfirmPatternsEN.test(parsed.replyToUser) || parsed.replyToUser.toLowerCase().includes("iletiyorum") || parsed.replyToUser.toLowerCase().includes("gönderiyorum")) {
+                        console.warn(`🛑 [FALSE_CONFIRM_BLOCKED] AI sahte onay verdi, iptal ediliyor: ${parsed.replyToUser.substring(0, 120)}`);
+                        parsed.replyToUser = isTurkish
+                            ? 'Talebinizi aldım! Hızlıca iletebilmem için birkaç bilgiye ihtiyacım var. 🙏'
+                            : 'I\'ve noted your request! To process it quickly, I\'ll need a few details from you. 🙏';
+                        
+                        if (!parsed.isRequest) {
+                            parsed.isRequest = true;
+                            parsed.department = "HOUSEKEEPING";
+                        }
                     }
                 }
             }
 
-            // KATMAN 3: Oda Numarası Uydurma Kontrolü
+            // KATMAN 3: Oda Numarası Uydurma Kontrolü (Her durumda çalışsın)
             const roomInReply = parsed.replyToUser.match(/(?:oda(?:\s*(?:no|numar|num))?[\s.:]*|room\s*)(\d{3,4})/i);
-            if (roomInReply && !userText.includes(roomInReply[1])) {
+            if (roomInReply && (!session || session.room !== roomInReply[1]) && !userText.includes(roomInReply[1])) {
                 console.warn(`⚠️ [ROOM_FABRICATION] AI oda numarası uydurdu: ${roomInReply[1]}`);
                 parsed.replyToUser = parsed.replyToUser.replace(/(?:oda(?:\s*(?:no|numar|num))?[\s.:]*|room\s*)\d{3,4}/gi, '');
             }
         }
+
         
         return parsed;
     } catch (error) {
@@ -450,11 +470,11 @@ async function extractGuestInfo(text) {
 Sen bir metin analiz motorusun. Kullanıcının mesajından SADECE açıkça yazılmış bilgileri çıkar.
 
 MUTLAK KURALLAR:
-1. Mesajda kişi adı AÇIKÇA geçmiyorsa → name: null (ASLA İSİM UYDURMA!)
-2. Mesajda oda numarası AÇIKÇA geçmiyorsa → room: null (ASLA NUMARA UYDURMA!)
+1. Mesajda kişi adı AÇIKÇA geçmiyorsa → name: null (KENDİN İSİM UYDURMAYACAKSIN!)
+2. Mesajda oda numarası AÇIKÇA geçmiyorsa → room: null (KENDİN ODA NO UYDURMAYACAKSIN!)
 3. "Herhalde" veya "muhtemelen" diye TAHMİN YAPMA.
 4. Telegram kullanıcı adını kişi adı olarak KULLANMA.
-5. Sadece mesajın İÇİNDE yazılmış açık bilgileri al.
+5. Sadece mesajın İÇİNDE yazılmış açık bilgileri al. EĞER YAZMIYORSA BİR ALANI null GEÇMEKTEN ÇEKİNME.
 
 ÖRNEK DOĞRU ÇIKARIMLAR:
 - "Mehmet Kaya, 305" → {"name":"Mehmet Kaya","room":"305","allergies":null}
@@ -462,7 +482,7 @@ MUTLAK KURALLAR:
 - "Ben Ali, 201 nolu odadayım, fıstık alerjim var" → {"name":"Ali","room":"201","allergies":"Fıstık alerjisi"}
 
 ÖRNEK YANLIŞ — BUNLARI YAPMA:
-- Mesaj: "Yastık istiyorum" → name UYDURMA! → {"name":null,"room":null,"allergies":null}
+- Mesaj: "Yastık istiyorum" → KESİNLİKLE İSİM/ODA UYDURMA! → {"name":null,"room":null,"allergies":null}
 - Mesaj: "Merhaba" → hiçbir bilgi yok → {"name":null,"room":null,"allergies":null}
 
 JSON formatı: {"name": "... veya null", "room": "... veya null", "allergies": "... veya null"}
@@ -543,6 +563,7 @@ async function routeToDepartment(ctx, department, turkishSummary, guestChatId, g
         case 'RESEPSIYON': envContactId = process.env.DEPT_RESEPSIYON_ID; break;
         case 'F&B': envContactId = process.env.DEPT_FB_ID; break;
         case 'GUEST_RELATIONS': envContactId = process.env.DEPT_GUEST_RELATIONS_ID; break;
+        case 'SPA': envContactId = process.env.DEPT_SPA_ID; break;
     }
 
     if (envContactId) {
@@ -827,7 +848,18 @@ async function handleIncomingMessage(ctx, userText) {
     if (!guestSessions[chatId]) {
         guestSessions[chatId] = { name: null, room: null, state: 'new', pendingAI: null, failedAttempts: 0 };
     }
-    const session = guestSessions[chatId];
+    let session = guestSessions[chatId];
+
+    // Misafir çıkış tarihi geçmişse oturumu sıfırla
+    if (session.state === 'complete' && session.checkout_date) {
+        const checkoutDate = new Date(session.checkout_date);
+        checkoutDate.setHours(23, 59, 59, 999); // O günün sonuna kadar geçerli olsun
+        if (new Date() > checkoutDate) {
+            console.log(`[SESSION EXPIRED] ${chatId} için çıkış tarihi (${session.checkout_date}) geçmiş, hafıza temizleniyor.`);
+            guestSessions[chatId] = { name: null, room: null, state: 'new', pendingAI: null, failedAttempts: 0 };
+            session = guestSessions[chatId];
+        }
+    }
 
     await saveMessageToDashboard(chatId, 'user', userText);
 
@@ -866,6 +898,25 @@ async function handleIncomingMessage(ctx, userText) {
                     await askForGuestInfo(ctx, 3);
                     session.state = 'blocked';
                     console.warn(`🚫 [DOĞRULAMA BAŞARISIZ x3] chatId: ${chatId} → Resepsiyona yönlendirildi.`);
+                    
+                    // Resepsiyona bilgi ver
+                    if (supabase) {
+                        const { data: recPersonnel } = await supabase.from('hotel_personnel')
+                            .select('*').eq('department', 'RESEPSIYON').eq('is_active', true);
+                        if (recPersonnel && recPersonnel.length > 0) {
+                            const infoMsg = `🚨 *DIŞ KULLANICI / DOĞRULAMA BAŞARISIZ*
+Bir kullanıcı 3 kez sisteme hatalı bilgi girerek bloke oldu. Lütfen In-House verilerinizi kontrol ediniz.
+👤 *Denenen Ad:* ${guestInfo.name}
+🚪 *Denenen Oda:* ${guestInfo.room}
+💬 *Uygulama ID:* ${chatId}`;
+                            recPersonnel.forEach(async (rec) => {
+                                if (rec.platform.toUpperCase() === 'TELEGRAM') {
+                                    try { await bot.telegram.sendMessage(rec.contact_id, infoMsg, { parse_mode: 'Markdown' }); } 
+                                    catch (e) {}
+                                }
+                            });
+                        }
+                    }
                 } else {
                     const failMsg = `⚠️ Üzgünüm, oda bilgileriniz (Ad/Soyad ve Oda No) konaklayan listemizle eşleşmedi.\n\nLütfen check-in sırasında verdiğiniz bilgileri kontrol edip tekrar yazınız. 🙏\n_(Deneme: ${session.failedAttempts}/3)_`;
                     await ctx.replyWithMarkdown(failMsg);
@@ -880,6 +931,13 @@ async function handleIncomingMessage(ctx, userText) {
             session.allergies = guestInfo.allergies;
             session.state = 'complete';
             session.failedAttempts = 0; // Başarılı doğrulama, sayacı sıfırla
+
+            if (validation.guest) {
+                session.real_first_name = validation.guest.first_name;
+                session.last_name = validation.guest.last_name;
+                session.checkin_date = validation.guest.checkin_date;
+                session.checkout_date = validation.guest.checkout_date;
+            }
 
             console.log(`✅ [DOĞRULANDI] Misafir: ${guestInfo.name}, Oda: ${guestInfo.room}, chatId: ${chatId}`);
 
@@ -911,7 +969,7 @@ async function handleIncomingMessage(ctx, userText) {
     if (session.state === 'blocked') {
         // Sadece SORU ise yanıtla, TALEP ise resepsiyona yönlendir
         await ctx.sendChatAction('typing');
-        const aiResult = await processMessageWithAI(userText);
+        const aiResult = await processMessageWithAI(userText, session);
         if (aiResult.isRequest) {
             await ctx.replyWithMarkdown(`Talebiniz için lütfen resepsiyonumuzu arayın:\n📞 *+90 242 824 00 00*`);
             return;
@@ -923,7 +981,7 @@ async function handleIncomingMessage(ctx, userText) {
 
     // ── NORMAL AKIŞ: AI ile mesajı değerlendir ─────────────────────────
     await ctx.sendChatAction('typing');
-    const aiResult = await processMessageWithAI(userText);
+    const aiResult = await processMessageWithAI(userText, session);
 
     // Talep ise departmana yönlendir
     if (aiResult.isRequest && aiResult.department) {
@@ -1166,7 +1224,15 @@ app.post('/api/webhook/instagram', async (req, res) => {
         console.log(`🤖 Instagram'dan gelen mesaj yapay zekaya gönderiliyor... (Kişi: ${fullName})`);
 
         // 2. Mesajı analiz et (isRequest, department, summary, replyToUser)
-        const aiResult = await processMessageWithAI(msgText);
+        const dummySession = {
+            state: 'complete',
+            real_first_name: fullName.split(' ')[0] || 'Misafir',
+            last_name: fullName.split(' ').slice(1).join(' ') || '',
+            room: roomNo,
+            checkin_date: 'Bilinmiyor',
+            checkout_date: 'Bilinmiyor'
+        };
+        const aiResult = await processMessageWithAI(msgText, dummySession);
 
         // 3. İstek ise ODA/İSİM doğrulaması (STRICT CHECK)
         if (aiResult.isRequest && aiResult.department) {

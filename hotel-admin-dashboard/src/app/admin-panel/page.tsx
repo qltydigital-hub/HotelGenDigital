@@ -58,6 +58,10 @@ export default function AdminPanel() {
       id: 5, name: 'Teknik Servis', is24_7: true, offlineShifts: ['16:00 - 00:00', '00:00 - 08:00'], offlineDays: ['Paz'], timeout_minutes: 30,
       contacts: [{ id: 5, name: 'Teknik', telegramId: '', whatsappId: '' }],
     },
+    {
+      id: 6, name: 'SPA', is24_7: false, offlineShifts: ['00:00 - 08:00'], offlineDays: [], timeout_minutes: 15,
+      contacts: [{ id: 6, name: 'SPA Sorumlusu', telegramId: '', whatsappId: '' }],
+    },
   ]);
 
   useEffect(() => {

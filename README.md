@@ -63,6 +63,7 @@ Bir talep geldiğinde şu adımlar **sırasıyla ve eksiksiz** uygulanır:
    - Havlu / Yastık / Temizlik vb. ➡️ **HOUSEKEEPING**
    - Klima / TV / Su / Elektrik vb. ➡️ **TEKNİK SERVİS**
    - Şikayet / Özel İstek vb. ➡️ **MİSAFİR İLİŞKİLERİ**
+   - Masaj / Hamam / Ritüel İstekleri vb. ➡️ **SPA**
 4. **Çift Taraflı Eşzamanlı Bildirim:**
    - **Misafire (Kendi Dilinde):** *"Talebinizi aldım, ilgili birime hemen iletiyorum."*
    - **Departmana (Türkçe & Platform Üzerinden):** Sadece belirli bir format ve interaktif butonlarla bildirim gider. Departman misafirle **ASLA ÇETLEŞMEZ**, Sadece butonlara tıklar.
@@ -110,6 +111,7 @@ Bu proje, hata payını **SIFIRA** indirmek için modüler .md dosyalarından ol
 
 | # | Dosya | İçerik | Bot Okur? | Öncelik |
 |---|---|---|---|---|
+| 0 | `otomasyon_kural_ve_sistem.md` | 🔥 Yeni Otomasyon Kuralları, Supabase Şeması, SPA ve Kapsayıcı Sistem İş Akışı | ✅ EVET | 🔴 EN KRİTİK |
 | 1 | `AI_DAVRANIS_KURALLARI.md` | 🤖 AI halüsinasyon engelleme, isim uydurma yasağı, yasak cümleler | ✅ EVET | 🔴 KRİTİK |
 | 2 | `OTEL_BILGI_BANKASI.md` | 🏨 Otel bilgileri, odalar, restoranlar, SPA, aktiviteler | ✅ EVET | 🔴 KRİTİK |
 | 3 | `TALEP_YONETIMI.md` | 📋 Talep sınıflandırma, iş akışı adımları, yazım hatası toleransı | ✅ EVET | 🔴 KRİTİK |

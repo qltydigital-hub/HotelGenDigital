@@ -8,8 +8,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
 
-type TabType = 'access' | 'api' | 'users' | 'channels' | 'logs';
+type TabType = 'access' | 'api' | 'users' | 'channels' | 'logs' | 'location';
 
 function SettingsContent() {
     const searchParams = useSearchParams();
@@ -21,6 +22,12 @@ function SettingsContent() {
     const [openaiKey, setOpenaiKey] = useState('sk-proj-••••••••••••••••');
     const [timezone, setTimezone] = useState('Europe/Istanbul');
     const [saved, setSaved] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Location Settings
+    const [hotelLocationUrl, setHotelLocationUrl] = useState('');
+    const [hotelLocationDesc, setHotelLocationDesc] = useState('');
+    const [isLocationLoaded, setIsLocationLoaded] = useState(false);
 
     // Departman bazlı kanal ayarları state'i
     const [deptConfigs, setDeptConfigs] = useState([
@@ -40,15 +47,53 @@ function SettingsContent() {
     // URL'den tab değişirse state'i güncelle
     useEffect(() => {
         const tab = searchParams.get('tab') as TabType;
-        if (tab && ['access', 'api', 'users', 'channels', 'logs'].includes(tab)) {
+        if (tab && ['access', 'api', 'users', 'channels', 'logs', 'location'].includes(tab)) {
             setActiveTab(tab);
         }
     }, [searchParams]);
 
-    const handleSave = (e: React.FormEvent) => {
+    // Konum verisini veritabanından çek
+    useEffect(() => {
+        if (activeTab === 'location' && !isLocationLoaded) {
+            const fetchLocation = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('hotel_settings')
+                        .select('value')
+                        .eq('key', 'hotel_location')
+                        .single();
+                    if (!error && data && data.value) {
+                        setHotelLocationUrl(data.value.url || '');
+                        setHotelLocationDesc(data.value.description || '');
+                    }
+                    setIsLocationLoaded(true);
+                } catch (e) {
+                    console.error("Location fetch hatası", e);
+                }
+            };
+            fetchLocation();
+        }
+    }, [activeTab, isLocationLoaded]);
+
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        setIsSaving(true);
+        try {
+            if (activeTab === 'location') {
+                const newValue = { url: hotelLocationUrl, description: hotelLocationDesc };
+                await supabase.from('hotel_settings').upsert({
+                    key: 'hotel_location',
+                    value: newValue,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+            }
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (error) {
+            console.error("Kaydetme hatası:", error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Sahte Log Verileri
@@ -125,6 +170,13 @@ function SettingsContent() {
                             icon={<MessageSquare className="w-5 h-5" />}
                             active={activeTab === 'channels'}
                             onClick={() => setActiveTab('channels')}
+                        />
+                        <NavButton
+                            id="location"
+                            label="Konum ve Harita"
+                            icon={<Settings className="w-5 h-5 text-green-400" />}
+                            active={activeTab === 'location'}
+                            onClick={() => setActiveTab('location')}
                         />
                         <NavButton
                             id="logs"
@@ -345,6 +397,38 @@ function SettingsContent() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* TAB: LOCATION */}
+                                {activeTab === 'location' && (
+                                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        <TabHeader title="OTEL KONUM VE YOL TARİFİ" desc="Ön Büro ve Genel bilgi için misafirlere otomatik gönderilecek konum bilgileri." icon={<Settings className="w-6 h-6 text-green-500" />} />
+                                        <div className="space-y-6">
+                                            <div className="p-6 bg-slate-950/30 border border-slate-800 rounded-3xl">
+                                                <div className="mb-4 text-green-400 font-bold bg-green-500/10 p-4 rounded-xl text-sm border border-green-500/20">
+                                                    Bu ayarlar, misafir Telegram/WhatsApp üzerinden "Konum nerede?", "Nasıl gelirim?" gibi sorular sorduğunda yapay zeka tarafından doğrudan gönderilecektir.
+                                                </div>
+                                                <div className="space-y-6">
+                                                    <InputField 
+                                                        label="Google Maps Veya Harita Linki" 
+                                                        type="text" 
+                                                        value={hotelLocationUrl} 
+                                                        onChange={setHotelLocationUrl} 
+                                                        placeholder="https://maps.app.goo.gl/..." 
+                                                    />
+                                                    <div className="space-y-2">
+                                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest px-1">Rota ve Rehberlik Açıklaması</label>
+                                                        <textarea
+                                                            value={hotelLocationDesc}
+                                                            onChange={(e) => setHotelLocationDesc(e.target.value)}
+                                                            placeholder="Lütfen sahil yolunu kullanmayınız, arka sokaktaki ana girişten daha kolay ulaşabilirsiniz."
+                                                            className="w-full bg-slate-950/50 border-2 border-slate-800 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-green-500 transition-all font-mono placeholder-slate-700 h-32 resize-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Save Button */}
@@ -352,15 +436,16 @@ function SettingsContent() {
                                 <div className="mt-12 flex items-center justify-end">
                                     <button
                                         onClick={handleSave}
+                                        disabled={isSaving}
                                         className={`flex items-center gap-3 px-10 py-5 rounded-[22px] font-black transition-all ${saved
                                             ? 'bg-green-600 text-white shadow-lg shadow-green-500/20'
                                             : 'bg-blue-600 hover:bg-blue-500 text-white shadow-2xl shadow-blue-600/30'
-                                            }`}
+                                            } ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     >
                                         {saved ? 'GÜNCELLENDİ!' : (
                                             <>
                                                 <Save className="w-5 h-5" />
-                                                AYARLARI KAYDET
+                                                {isSaving ? 'KAYDEDİLİYOR...' : 'AYARLARI KAYDET'}
                                             </>
                                         )}
                                     </button>

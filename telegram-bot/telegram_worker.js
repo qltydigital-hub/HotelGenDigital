@@ -15,6 +15,7 @@ const { createAllergyProtocol } = require('./skills/allergy_protocol');
 const { convertOggToMp3 } = require('./skills/voice_processor');
 const { getPromptForDepartment } = require('./skills/prompts/index');
 const { getRelevantKnowledge, CORE_INFO } = require('./skills/knowledge/index');
+const { isSurroundingsQuestion, searchSurroundings } = require('./skills/perplexity_search');
 
 const app = express();
 app.use(cors());
@@ -213,13 +214,15 @@ async function processMessageWithAI(userText, session = null) {
         return { replyToUser: "⚙️ OpenAI API anahtarı tanımlı değil.", isRequest: false };
     }
 
-    const targetDepartment = detectDepartmentFromText(userText);
+    let targetDepartment = detectDepartmentFromText(userText);
     let locationData = null;
 
     // Eğer Konum/Adres/Nerede gibi bir soruysa, DB'den konumu çek (RESEPSIYON a yönlenir)
     if (supabase) {
         const locKeywords = ['konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol'];
-        if (locKeywords.some(k => userText.toLowerCase().includes(k))) {
+        const locMatched = locKeywords.find(k => userText.toLowerCase().includes(k));
+        if (locMatched) {
+            console.log(`[LOCATION_TRIGGER] Keyword eşleşti: "${locMatched}" → Supabase'den hotel_location çekiliyor...`);
             try {
                 const { data, error } = await supabase
                     .from('hotel_settings')
@@ -227,8 +230,16 @@ async function processMessageWithAI(userText, session = null) {
                     .eq('key', 'hotel_location')
                     .single();
                 
-                if (!error && data && data.value) {
+                if (error) {
+                    console.error('[LOCATION_FETCH_ERROR] Supabase hatası:', error.message);
+                } else if (!data || !data.value) {
+                    console.warn('[LOCATION_FETCH_WARN] Supabase\'den boş veri döndü!');
+                } else {
                     locationData = data.value;
+                    console.log(`✅ [LOCATION_LOADED] url: ${locationData.url} | desc: ${locationData.description?.substring(0,40)}...`);
+                    // Konum sorusu → MUTLAKA RESEPSIYON promptu kullanılsın (location kuralları orada)
+                    targetDepartment = 'RESEPSIYON';
+                    console.log(`[LOCATION_DEPT_OVERRIDE] Departman RESEPSIYON olarak zorlandı.`);
                 }
             } catch (e) {
                 console.warn("[LOCATION_FETCH_ERROR]:", e.message);
@@ -1479,8 +1490,32 @@ async function handleText(ctx) {
     const textMsg = ctx.message.text;
     console.log(`📨 [${chatId}] Müşteri: ${textMsg}`);
 
-    // Harita / Kroki anahtar kelimesi algıla
-    const mapKeywords = ['harita', 'kroki', 'map', 'floor plan', 'plan', 'layout', 'nerede', 'where is', 'şema'];
+    // ── ÇEVRE SORUSU? → Perplexity ile yanıtla ────────────────────────
+    // NOT: 'nerede', 'konum' gibi kelimeler lokasyon için handleIncomingMessage'da da işleniyor.
+    // Sadece gerçek çevre soruları (restoran, gezi, müze vb.) buraya düşsün.
+    if (isSurroundingsQuestion(textMsg)) {
+        // Lokasyon/adres soruları Perplexity'ye değil, DB'deki konum verisine gitsin
+        const locOnlyKeywords = ['konum', 'lokasyon', 'adres', 'nasıl gelirim', 'yol tarifi', 'neredesiniz'];
+        const isLocOnly = locOnlyKeywords.some(k => textMsg.toLowerCase().includes(k))
+            && !['restoran', 'kafe', 'müze', 'gezi', 'gezilecek', 'yakın', 'nearby', 'yakında', 'civar', 'etraf', 'ne var', 'nereye'].some(k => textMsg.toLowerCase().includes(k));
+
+        if (!isLocOnly) {
+            console.log(`[PERPLEXITY] Çevre sorusu tespit edildi, arama başlatılıyor...`);
+            await ctx.sendChatAction('typing');
+            const searchResult = await searchSurroundings(textMsg, openai);
+            if (searchResult && searchResult.content) {
+                const sourceTag = searchResult.source === 'perplexity' ? '🔍 *Güncel Bilgi*' : '📍 *Bölge Bilgisi*';
+                const reply = `${sourceTag}\n\n${searchResult.content}\n\n_The Green Park Gaziantep — Misafir Asistanı_`;
+                await ctx.replyWithMarkdown(reply);
+                await saveMessageToDashboard(chatId, 'assistant', reply);
+                console.log(`✅ [PERPLEXITY] Yanıt gönderildi → chatId: ${chatId} (kaynak: ${searchResult.source})`);
+                return;
+            }
+        }
+    }
+
+    // Harita / Kroki anahtar kelimesi algıla (sadece otel içi kroki, lokasyon değil)
+    const mapKeywords = ['kroki', 'map', 'floor plan', 'plan', 'layout', 'kat planı', 'şema'];
     if (mapKeywords.some(k => textMsg.toLowerCase().includes(k))) {
         await sendHotelMap(ctx);
         return;

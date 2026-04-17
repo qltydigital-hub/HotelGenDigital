@@ -295,37 +295,34 @@ async function processMessageWithAI(userText, session = null) {
         }
 
         // Paralel sorgular
+        const safeQuery = async (key) => {
+            try {
+                const { data, error } = await supabase.from('hotel_settings').select('value').eq('key', key).single();
+                return error ? null : data;
+            } catch (e) { return null; }
+        };
+
         const [locResult, agencyResult, ibanResult] = await Promise.all([
-            // 1. Lokasyon
-            (locMatched && !isThankYouOnly)
-                ? supabase.from('hotel_settings').select('value').eq('key', 'hotel_location').single().catch(e => ({ error: e }))
-                : Promise.resolve(null),
-            // 2. Acenta
-            needsAgency
-                ? supabase.from('hotel_settings').select('value').eq('key', 'hotel_agencies').single().catch(e => ({ error: e }))
-                : Promise.resolve(null),
-            // 3. IBAN
-            needsIban
-                ? supabase.from('hotel_settings').select('value').eq('key', 'reception_settings').single().catch(e => ({ error: e }))
-                : Promise.resolve(null)
+            (locMatched && !isThankYouOnly) ? safeQuery('hotel_location')      : null,
+            needsAgency                     ? safeQuery('hotel_agencies')       : null,
+            needsIban                       ? safeQuery('reception_settings')   : null,
         ]);
 
         // Lokasyon işle
-        if (locResult && !locResult.error && locResult.data?.value) {
-            locationData = locResult.data.value;
+        if (locResult?.value) {
+            locationData = locResult.value;
             targetDepartment = 'RESEPSIYON';
             console.log(`✅ [LOCATION_LOADED] url: ${locationData.url}`);
-            console.log(`[LOCATION_DEPT_OVERRIDE] Departman RESEPSIYON olarak zorlandı.`);
         }
 
         // Acenta işle
-        if (agencyResult && !agencyResult.error && agencyResult.data?.value) {
-            agencyData = agencyResult.data.value;
+        if (agencyResult?.value) {
+            agencyData = agencyResult.value;
         }
 
         // IBAN işle
-        if (ibanResult && !ibanResult.error && ibanResult.data?.value?.ibanText) {
-            ibanData = ibanResult.data.value.ibanText;
+        if (ibanResult?.value?.ibanText) {
+            ibanData = ibanResult.value.ibanText;
         }
     }
 

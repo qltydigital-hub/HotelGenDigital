@@ -218,7 +218,7 @@ async function processMessageWithAI(userText, session = null) {
 
     // Eğer Konum/Adres/Nerede gibi bir soruysa, DB'den konumu çek (RESEPSIYON a yönlenir)
     if (supabase) {
-        const locKeywords = ['konum', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita'];
+        const locKeywords = ['konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol'];
         if (locKeywords.some(k => userText.toLowerCase().includes(k))) {
             try {
                 const { data, error } = await supabase

@@ -4,7 +4,7 @@ module.exports = (locationData, agencyData) => {
   if (locationData && locationData.url) {
       locationRules = `
 [ÖZEL DURUM - KONUM VE YOL TARİFİ]
-Misafir "konum", "nerede", "adres", "nasıl gelirim", "navigasyon" gibi otelin yerini veya yol tarifini soruyorsa ASLA isRequest:true YAPMA!
+Misafir "konum", "lokasyon", "nerede", "adres", "nasıl gelirim", "navigasyon", "yol tarifi", "ulaşım", "harita" gibi otelin yerini veya yol tarifini soruyorsa ASLA isRequest:true YAPMA!
 Bunlar BİLGİ isteğidir, bu yüzden isRequest: false döndür.
 "replyToUser" alanına KESİNLİKLE şu metni ve linki gönder (Aşağıdaki metni kendi cümlemmiş gibi doğrudan yansıt):
 ${locationData.description}

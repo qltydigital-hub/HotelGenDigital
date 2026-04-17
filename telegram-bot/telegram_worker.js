@@ -265,24 +265,67 @@ async function processMessageWithAI(userText, session = null) {
         }
     }
 
+    // ── PARALEL DB SORGULARI (Hız optimizasyonu) ────────────────────────
+    // Location + Agency + IBAN sorguları aynı anda başlatılır — 3 ayrı await yerine 1 Promise.all
     let agencyData = null;
-    // Eğer Rezervasyon/Acenta gibi bir konuysa, DB'den rezervasyon/acenta ayarlarını çek
+    let ibanData = null;
+
     if (supabase) {
+        const locKeywords   = ['konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol'];
         const agencyKeywords = ['rezervasyon', 'acenta', 'acente', 'rezervasyon link', 'booking', 'fiyat', 'yer ayırt', 'oda ayırt', 'oda ayirt'];
-        if (agencyKeywords.some(k => userText.toLowerCase().includes(k))) {
-            try {
-                const { data, error } = await supabase
-                    .from('hotel_settings')
-                    .select('value')
-                    .eq('key', 'hotel_agencies')
-                    .single();
-                
-                if (!error && data && data.value) {
-                    agencyData = data.value;
-                }
-            } catch (e) {
-                console.warn("[AGENCY_FETCH_ERROR]:", e.message);
-            }
+        const ibanKeywords  = ['iban', 'havale', 'eft', 'banka hesab', 'hesap numar', 'para gönder', 'transfer'];
+        const lower         = userText.toLowerCase();
+
+        const locMatched    = locKeywords.find(k => lower.includes(k));
+        const needsAgency   = agencyKeywords.some(k => lower.includes(k));
+        const needsIban     = ibanKeywords.some(k => lower.includes(k));
+
+        // ─ İntent filtresi: teşekkür/onay için lokasyon tetikleme ─
+        const thankYouPatterns = [
+            'teşekkür', 'tesekkur', 'sağ ol', 'sag ol', 'tamam', 'anladım', 'harika',
+            'güzel', 'süper', 'mükemmel', 'aldım', 'gördüm', 'ok', '👍', '🙏', '❤️', '😊'
+        ];
+        const isThankYouOnly = thankYouPatterns.some(p => lower.includes(p))
+            && !['nerede', 'nasıl', 'hangi', 'ver', 'gönder', 'istiyorum', 'lazım', '?'].some(q => lower.includes(q));
+
+        if (locMatched && !isThankYouOnly) {
+            console.log(`[LOCATION_TRIGGER] Keyword: "${locMatched}"`);
+        } else if (locMatched && isThankYouOnly) {
+            console.log(`[LOCATION_SKIP] "${locMatched}" geçti ama bağlam teşekkür — atlanıyor.`);
+        }
+
+        // Paralel sorgular
+        const [locResult, agencyResult, ibanResult] = await Promise.all([
+            // 1. Lokasyon
+            (locMatched && !isThankYouOnly)
+                ? supabase.from('hotel_settings').select('value').eq('key', 'hotel_location').single().catch(e => ({ error: e }))
+                : Promise.resolve(null),
+            // 2. Acenta
+            needsAgency
+                ? supabase.from('hotel_settings').select('value').eq('key', 'hotel_agencies').single().catch(e => ({ error: e }))
+                : Promise.resolve(null),
+            // 3. IBAN
+            needsIban
+                ? supabase.from('hotel_settings').select('value').eq('key', 'reception_settings').single().catch(e => ({ error: e }))
+                : Promise.resolve(null)
+        ]);
+
+        // Lokasyon işle
+        if (locResult && !locResult.error && locResult.data?.value) {
+            locationData = locResult.data.value;
+            targetDepartment = 'RESEPSIYON';
+            console.log(`✅ [LOCATION_LOADED] url: ${locationData.url}`);
+            console.log(`[LOCATION_DEPT_OVERRIDE] Departman RESEPSIYON olarak zorlandı.`);
+        }
+
+        // Acenta işle
+        if (agencyResult && !agencyResult.error && agencyResult.data?.value) {
+            agencyData = agencyResult.data.value;
+        }
+
+        // IBAN işle
+        if (ibanResult && !ibanResult.error && ibanResult.data?.value?.ibanText) {
+            ibanData = ibanResult.data.value.ibanText;
         }
     }
 
@@ -291,25 +334,6 @@ async function processMessageWithAI(userText, session = null) {
     // Modüler bilgi bankası: Sadece ilgili bilgiyi yükle (token tasarrufu)
     const hotelKnowledge = getRelevantKnowledge(userText);
 
-    // IBAN bilgisini sadece havale/EFT talep eden misafire sun
-    let ibanData = null;
-    if (supabase) {
-        const ibanKeywords = ['iban', 'havale', 'eft', 'banka hesab', 'hesap numar', 'para gönder', 'transfer'];
-        if (ibanKeywords.some(k => userText.toLowerCase().includes(k))) {
-            try {
-                const { data, error } = await supabase
-                    .from('hotel_settings')
-                    .select('value')
-                    .eq('key', 'reception_settings')
-                    .single();
-                if (!error && data && data.value && data.value.ibanText) {
-                    ibanData = data.value.ibanText;
-                }
-            } catch (e) {
-                console.warn('[IBAN_FETCH_ERROR]:', e.message);
-            }
-        }
-    }
 
     const nowStr = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", dateStyle: "full", timeStyle: "short" });
     const isVerified = session && session.state === 'complete' && !!session.room;
@@ -340,31 +364,30 @@ async function processMessageWithAI(userText, session = null) {
     if (session && session.state === 'complete' && session.checkout_date) {
         const dateKeywords = ['çıkış', 'cikis', 'check-out', 'checkout', 'ne zaman ayrılıyorum', 'ne zaman çıkıyorum', 'ayrılma', 'giriş tarihi', 'checkin', 'check-in', 'ne zaman geldim', 'tarihim', 'tarihimiz', 'rezervasyonum'];
         if (dateKeywords.some(k => userText.toLowerCase().includes(k))) {
-            const checkoutFormatted = new Date(session.checkout_date).toLocaleDateString('tr-TR', {
-                year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-            });
-            const checkinFormatted = session.checkin_date
-                ? new Date(session.checkin_date).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
-                : null;
-            checkoutRule = `\n[ÖZEL DURUM — REZERVASYOn TARİH BİLGİSİ]\nMisafir kendi çıkış veya giriş tarihini sordu. Bu tartışmasız BİLGİ isteğidir. KESİNLİKLE "isRequest": false döndür, resepsiyona YÖNLENDIRME!\nMisafirin sisteme kayıtlı çıkış tarihi: ${checkoutFormatted}${checkinFormatted ? `\nMisafirin giriş tarihi: ${checkinFormatted}` : ''}\nYapman gereken:\n1. Misafire ismiyle (${session.real_first_name}) nazikçe hitap et.\n2. "Çıkış tarihiniz ${checkoutFormatted} olarak görünüyor." şeklinde bilgi ver.\n3. Eğer misafir tarihi UZATMAK veya DEĞİŞTİRMEK isterse yalnızca şunu söyle: "Bu konuda resepsiyonumuzla irtibata geçmenizi öneririm." — başka işlem yapma, isRequest: false olarak kal.`;
-            console.log(`[CHECKOUT_RULE] ${session.real_first_name} için çıkış tarihi prompt'a enjekte edildi: ${checkoutFormatted}`);
+            const checkoutFormatted = new Date(session.checkout_date).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+            const checkinFormatted = session.checkin_date ? new Date(session.checkin_date).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }) : null;
+            checkoutRule = `\n[ÖZEL DURUM — REZERVASYON TARİH BİLGİSİ]\nMisafir kendi çıkış veya giriş tarihini sordu. Bu tartışmasız BİLGİ isteğidir. KESİNLİKLE "isRequest": false döndür!\nÇıkış: ${checkoutFormatted}${checkinFormatted ? `\nGiriş: ${checkinFormatted}` : ''}\n1. Misafire ismiyle (${session.real_first_name}) hitap et.\n2. Çıkış tarihini bildir.\n3. Tarih uzatma/değiştirme talebi → "Resepsiyonumuzla irtibata geçiniz" de.`;
+            console.log(`[CHECKOUT_RULE] ${session.real_first_name} için tarih enjekte edildi.`);
         }
     }
 
-    // ÇOK SIKI VE KISA SYSTEM PROMPT (DİNAMİK)
-    const SYSTEM_PROMPT = `${basePrompt}\n\nOtel Bilgileri:\n${hotelKnowledge}\n\nTarih/Saat: ${nowStr}${requestHandlingRules}${identityContext}${ibanRule}${checkoutRule}\n\n⛔ ASLA UYDURMA İSİM veya ODA KULLANMA. JSON FORMATINDA SADECE İSTENENİ DÜN.`;
+    // DİL KURALI + SYSTEM PROMPT
+    const LANG_RULE = `\n[DİL KURALI — ZORUNLU]\nMisafir hangi dilde yazmışsa KESİNLİKLE o dilde yanıtla (Türkçe, İngilizce, Almanca, Fransızca, Arapça vb.). Dili asla değiştirme veya karıştırma.`;
+    const SYSTEM_PROMPT = `${basePrompt}\n\nOtel Bilgileri:\n${hotelKnowledge}\n\nTarih/Saat: ${nowStr}${requestHandlingRules}${identityContext}${ibanRule}${checkoutRule}${LANG_RULE}\n\n⛔ ASLA UYDURMA İSİM veya ODA KULLANMA. JSON FORMATINDA SADECE İSTENENİ VER.`;
 
     try {
+        const t0 = Date.now();
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model: 'gpt-4o-mini',   // 5x hızlı, gpt-4o ile eş kalitede kısa JSON görevler için
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: userText }
             ],
             response_format: { type: "json_object" },
-            max_tokens: 800,
-            temperature: 0.0 // SIFIR halüsinasyon — kurumsal kullanım için yaratıcılık tamamen kapatıldı
+            max_tokens: 600,        // 800'den düşürdüm — JSON yanıt için yeterli
+            temperature: 0.0
         });
+        console.log(`⏱️ [AI] gpt-4o-mini yanıt süre: ${Date.now() - t0}ms`);
         const parsed = JSON.parse(response.choices[0].message.content);
         console.log(`🧠 [AI RAW OUTPUT]:`, parsed);
         

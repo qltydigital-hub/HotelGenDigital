@@ -108,8 +108,7 @@ Yanıt Kuralları:
 - Her öneriye 1 satır kısa açıklama ekle
 - Varsa mesafe belirt (örn: "~500m")
 - Markdown kullan (bold başlıklar, bullet points)
-- Kaynakları veya citation numaralarını YAZMA
-- Sonda şunu ekle: "📍 Harita için resepsiyonumuza danışabilirsiniz."`
+- Kaynakları veya citation numaralarını YAZMA`
                         },
                         {
                             role: 'user',

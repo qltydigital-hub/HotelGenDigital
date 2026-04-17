@@ -16,6 +16,8 @@ const { convertOggToMp3 } = require('./skills/voice_processor');
 const { getPromptForDepartment } = require('./skills/prompts/index');
 const { getRelevantKnowledge, CORE_INFO } = require('./skills/knowledge/index');
 const { isSurroundingsQuestion, searchSurroundings } = require('./skills/perplexity_search');
+const { isSpaQuestion, getSpaInfo } = require('./skills/spa_info');
+const { isFoodQuestion, getFacilitiesInfo } = require('./skills/hotel_facilities');
 
 const app = express();
 app.use(cors());
@@ -1506,11 +1508,35 @@ async function handleText(ctx) {
     const textMsg = ctx.message.text;
     console.log(`📨 [${chatId}] Müşteri: ${textMsg}`);
 
-    // ── ÇEVRE SORUSU? → Perplexity ile yanıtla ────────────────────────
-    // NOT: 'nerede', 'konum' gibi kelimeler lokasyon için handleIncomingMessage'da da işleniyor.
-    // Sadece gerçek çevre soruları (restoran, gezi, müze vb.) buraya düşsün.
+    // ── 1. SPA SORUSU? → spa_info skill ────────────────────────────────
+    if (isSpaQuestion(textMsg)) {
+        console.log('[SPA] SPA sorusu tespit edildi.');
+        await ctx.sendChatAction('typing');
+        const spaInfo = await getSpaInfo(supabase);
+        await ctx.replyWithMarkdown(spaInfo.content);
+        await saveMessageToDashboard(chatId, 'assistant', spaInfo.content);
+        console.log(`✅ [SPA] Yanıt gönderildi (kaynak: ${spaInfo.source})`);
+        return;
+    }
+
+    // ── 2. OTel İMKANLARI SORUSU? → hotel_facilities skill ─────────────────
+    // NOT: Yemek/restoran soruları hem burayı HEM alerji kontrolünü tetikler.
+    if (isFoodQuestion(textMsg)) {
+        console.log('[FOOD] Yemek/F&B sorusu tespit edildi → alerji kontrolü yapılacak.');
+        // Alerji sorusu sorulacak mı? Sadece session dogrulanmışsa ve alerji bilgisi yoksa.
+        const session = guestSessions[chatId];
+        if (session && session.state === 'complete' && session.name && !session.allergyAsked) {
+            session.allergyAsked = true; // Bir kez sor
+            const allergyQ = `Memnuniyetiniz için kısa bir soru: Herhangi bir gıda alerjiniz var mı? 🍽️\n_(Varsa lütfen belirtin, mutfağımızı önceden bilgilendirelim.)_`;
+            await ctx.replyWithMarkdown(allergyQ);
+            await saveMessageToDashboard(chatId, 'assistant', allergyQ);
+            console.log(`✅ [FOOD_ALLERGY] Alerji sorusu soruldu → chatId: ${chatId}`);
+            // Asıl soruya da cevap ver (AI ile devam et)
+        }
+    }
+
+    // ── 3. ÇEVRE SORUSU? → Perplexity ile yanıtla ────────────────────
     if (isSurroundingsQuestion(textMsg)) {
-        // Lokasyon/adres soruları Perplexity'ye değil, DB'deki konum verisine gitsin
         const locOnlyKeywords = ['konum', 'lokasyon', 'adres', 'nasıl gelirim', 'yol tarifi', 'neredesiniz'];
         const isLocOnly = locOnlyKeywords.some(k => textMsg.toLowerCase().includes(k))
             && !['restoran', 'kafe', 'müze', 'gezi', 'gezilecek', 'yakın', 'nearby', 'yakında', 'civar', 'etraf', 'ne var', 'nereye'].some(k => textMsg.toLowerCase().includes(k));
@@ -1530,13 +1556,14 @@ async function handleText(ctx) {
         }
     }
 
-    // Harita / Kroki anahtar kelimesi algıla (sadece otel içi kroki, lokasyon değil)
+    // ── 4. KROKI / HARITA ──────────────────────────────────────
     const mapKeywords = ['kroki', 'map', 'floor plan', 'plan', 'layout', 'kat planı', 'şema'];
     if (mapKeywords.some(k => textMsg.toLowerCase().includes(k))) {
         await sendHotelMap(ctx);
         return;
     }
 
+    // ── 5. GENEL AI İŞLEME ──────────────────────────────────────
     await handleIncomingMessage(ctx, textMsg);
 }
 bot.on('text', handleText);

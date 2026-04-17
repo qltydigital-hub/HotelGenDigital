@@ -4,17 +4,112 @@ import React, { useState, useEffect } from 'react';
 import {
     Upload, FileText, CheckCircle, AlertCircle, RefreshCw,
     Utensils, Users, MessageSquare, Bell, UserCircle,
-    ChevronRight, Calendar, Info
+    ChevronRight, Calendar, Info, Archive, UserPlus
 } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase-client';
 
 export default function GuestRelationDashboard() {
-    const [hotelName, setHotelName] = useState('Premium Resort & Spa'); // Mock
+    const [hotelName, setHotelName] = useState('The Green Park Gaziantep');
     const [departmentName, setDepartmentName] = useState('Guest Relations');
     const [file, setFile] = useState<File | null>(null);
     const [uploadType, setUploadType] = useState<'concept' | 'alacart'>('concept');
     const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
+
+    // Alerji verileri state'leri
+    const [allergyRecords, setAllergyRecords] = useState<any[]>([]);
+    const [allergyTab, setAllergyTab] = useState<'active' | 'archived'>('active');
+    const [allergyLoading, setAllergyLoading] = useState(true);
+    const [allergyCount, setAllergyCount] = useState(0);
+
+    // Mutfak personeli state'leri
+    const [kitchenStaff, setKitchenStaff] = useState<any[]>([]);
+    const [newStaffName, setNewStaffName] = useState('');
+    const [newStaffRole, setNewStaffRole] = useState('asci');
+    const [newStaffTelegramId, setNewStaffTelegramId] = useState('');
+
+    // Alerji verilerini Supabase'den çek
+    useEffect(() => {
+        fetchAllergyData();
+        fetchKitchenStaff();
+    }, [allergyTab]);
+
+    const fetchAllergyData = async () => {
+        setAllergyLoading(true);
+        try {
+            // Önce genişletilmiş tabloyu dene
+            const { data, error } = await supabase
+                .from('guest_allergy_records')
+                .select('*')
+                .eq('status', allergyTab === 'active' ? 'ACTIVE' : 'ARCHIVED')
+                .order('reported_at', { ascending: false });
+            if (!error && data) {
+                setAllergyRecords(data);
+                if (allergyTab === 'active') setAllergyCount(data.length);
+            } else {
+                // Fallback: eski tablo
+                const { data: oldData } = await supabase
+                    .from('guest_allergies')
+                    .select('*')
+                    .order('reported_at', { ascending: false });
+                if (oldData) {
+                    setAllergyRecords(oldData.map((r: any) => ({
+                        id: r.id,
+                        guest_name: r.guest_name,
+                        room_number: r.room_no,
+                        allergy_info: r.allergy_details,
+                        reported_at: r.reported_at,
+                        status: r.status || 'ACTIVE'
+                    })));
+                    if (allergyTab === 'active') setAllergyCount(oldData.filter((r: any) => r.status === 'ACTIVE').length);
+                }
+            }
+        } catch (e) {
+            console.error('Alerji verisi çekilemedi:', e);
+        } finally {
+            setAllergyLoading(false);
+        }
+    };
+
+    const fetchKitchenStaff = async () => {
+        try {
+            const { data } = await supabase
+                .from('kitchen_staff')
+                .select('*')
+                .eq('is_active', true)
+                .order('notification_priority', { ascending: false });
+            if (data) setKitchenStaff(data);
+        } catch (e) {
+            console.warn('Mutfak personeli çekilemedi:', e);
+        }
+    };
+
+    const addKitchenStaff = async () => {
+        if (!newStaffName.trim()) return;
+        try {
+            await supabase.from('kitchen_staff').insert({
+                full_name: newStaffName,
+                role: newStaffRole,
+                telegram_chat_id: newStaffTelegramId || null,
+                notification_priority: newStaffRole === 'sef' || newStaffRole === 'mudur' ? 1 : 0
+            });
+            setNewStaffName('');
+            setNewStaffTelegramId('');
+            fetchKitchenStaff();
+        } catch (e) {
+            alert('Personel eklenirken hata: ' + (e as any).message);
+        }
+    };
+
+    const removeKitchenStaff = async (id: string) => {
+        try {
+            await supabase.from('kitchen_staff').update({ is_active: false }).eq('id', id);
+            fetchKitchenStaff();
+        } catch (e) {
+            console.error('Personel silme hatası:', e);
+        }
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'concept' | 'alacart') => {
         if (e.target.files && e.target.files.length > 0) {
@@ -151,53 +246,153 @@ export default function GuestRelationDashboard() {
                     </div>
                 </div>
 
-                {/* YENİ: Alerjik Misafirler Uyarı Panosu */}
+                {/* ALERJİK MİSAFİRLER (Canlı Supabase Verisi) */}
                 <div className="glass-card p-8 bg-slate-900/50 border border-rose-900/50 mt-8 mb-8">
-                    <div className="flex items-center space-x-3 mb-6">
-                        <AlertCircle className="text-rose-400 w-8 h-8" />
-                        <h2 className="text-2xl font-black text-white">Aktif Alerjik Misafirler / Sağlık Bildirimleri</h2>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center space-x-3">
+                            <AlertCircle className="text-rose-400 w-8 h-8" />
+                            <h2 className="text-2xl font-black text-white">Alerjik Misafirler / Sağlık Bildirimleri</h2>
+                            {allergyCount > 0 && (
+                                <span className="bg-rose-600 text-white text-xs font-black px-2 py-1 rounded-lg">{allergyCount}</span>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setAllergyTab('active')}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${allergyTab === 'active' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                Aktif
+                            </button>
+                            <button
+                                onClick={() => setAllergyTab('archived')}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1 ${allergyTab === 'archived' ? 'bg-slate-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                <Archive className="w-3 h-3" /> Arşiv
+                            </button>
+                            <button
+                                onClick={fetchAllergyData}
+                                className="px-3 py-2 rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all"
+                                title="Yenile"
+                            >
+                                <RefreshCw className={`w-4 h-4 ${allergyLoading ? 'animate-spin' : ''}`} />
+                            </button>
+                        </div>
                     </div>
                     <p className="text-sm text-rose-200 mb-6">
-                        Yapay zeka asistanı aracılığıyla restoran rezervasyonu veya yemek siparişi esnasında tespit edilen alerji uyarıları aşağıda canlı olarak listelenir.
+                        Yapay zeka asistanı aracılığıyla tespit edilen alerji uyarıları aşağıda canlı olarak Supabase'den listelenir.
                     </p>
                     <div className="space-y-4">
-                        <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center bg-rose-500/10 hover:bg-rose-500/20 transition-all border-l-4 border-l-rose-500">
-                            <div>
-                                <h3 className="text-white font-bold text-lg">Oda: 305 - Ali Yılmaz</h3>
-                                <p className="text-md text-rose-300 mt-1 font-medium">Gluten hassasiyeti - Ekmek ve makarna ürünleri tüketemiyor.</p>
-                                <p className="text-xs text-slate-400 mt-2">Bildirim: Bugün 14:20 | Restoran Sorgusu</p>
+                        {allergyLoading ? (
+                            <div className="flex items-center justify-center py-10">
+                                <RefreshCw className="w-8 h-8 text-rose-400 animate-spin" />
                             </div>
-                            <div className="flex items-center">
-                                <div className="px-4 py-2 bg-rose-600 text-white font-bold rounded-lg text-sm shadow-lg shadow-rose-900/50 uppercase tracking-wider">
-                                    DİKKAT EDİLMELİ
+                        ) : allergyRecords.length === 0 ? (
+                            <div className="text-center py-10 text-slate-500">
+                                <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                <p className="font-bold">{allergyTab === 'active' ? 'Aktif alerji kaydı bulunamadı.' : 'Arşivlenmiş kayıt yok.'}</p>
+                            </div>
+                        ) : (
+                            allergyRecords.map((record: any) => (
+                                <div key={record.id} className={`bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center hover:bg-rose-500/20 transition-all border-l-4 ${allergyTab === 'active' ? 'border-l-rose-500 bg-rose-500/10' : 'border-l-slate-600 bg-slate-800/30'}`}>
+                                    <div>
+                                        <h3 className="text-white font-bold text-lg">
+                                            Oda: {record.room_number} - {record.guest_name}
+                                        </h3>
+                                        <p className={`text-md mt-1 font-medium ${allergyTab === 'active' ? 'text-rose-300' : 'text-slate-400'}`}>
+                                            {record.allergy_info}
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            Bildirim: {record.reported_at ? new Date(record.reported_at).toLocaleString('tr-TR') : '?'}
+                                            {record.telegram_chat_id && ` | Telegram ID: ${record.telegram_chat_id}`}
+                                            {record.checkout_date && ` | Çıkış: ${record.checkout_date}`}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <div className={`px-4 py-2 font-bold rounded-lg text-sm uppercase tracking-wider shadow-lg ${allergyTab === 'active' ? 'bg-rose-600 text-white shadow-rose-900/50' : 'bg-slate-700 text-slate-300'}`}>
+                                            {allergyTab === 'active' ? 'DİKKAT EDİLMELİ' : 'ARŞİVLENDİ'}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            ))
+                        )}
+                    </div>
+                </div>
 
-                        <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center bg-rose-500/10 hover:bg-rose-500/20 transition-all border-l-4 border-l-rose-500">
-                            <div>
-                                <h3 className="text-white font-bold text-lg">Oda: 412 - Zeynep Demir</h3>
-                                <p className="text-md text-rose-300 mt-1 font-medium">Çocuğunda fıstık alerjisi mevcut.</p>
-                                <p className="text-xs text-slate-400 mt-2">Bildirim: Dün 19:45 | Kahvaltı Menüsü</p>
-                            </div>
-                            <div className="flex items-center">
-                                <div className="px-4 py-2 bg-rose-600 text-white font-bold rounded-lg text-sm shadow-lg shadow-rose-900/50 uppercase tracking-wider">
-                                    DİKKAT EDİLMELİ
-                                </div>
-                            </div>
-                        </div>
+                {/* MUTFAK PERSONELİ YÖNETİMİ */}
+                <div className="glass-card p-8 bg-slate-900/50 border border-amber-900/50 mt-8 mb-8">
+                    <div className="flex items-center space-x-3 mb-6">
+                        <UserPlus className="text-amber-400 w-8 h-8" />
+                        <h2 className="text-2xl font-black text-white">Mutfak Personeli Yönetimi</h2>
+                    </div>
+                    <p className="text-sm text-amber-200 mb-6">
+                        Alerji bildirimleri aşağıdaki mutfak personeline otomatik olarak Telegram üzerinden iletilir.
+                    </p>
 
-                        <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex justify-between items-center bg-orange-500/10 hover:bg-orange-500/20 transition-all border-l-4 border-l-orange-500">
-                            <div>
-                                <h3 className="text-white font-bold text-lg">Oda: 102 - Mehmet Kaya</h3>
-                                <p className="text-md text-orange-300 mt-1 font-medium">Laktoz intoleransı - Süt ürünleri talep etmiyor.</p>
-                                <p className="text-xs text-slate-400 mt-2">Bildirim: 15 dk önce | Oda Servisi</p>
-                            </div>
-                            <div className="flex items-center">
-                                <div className="px-4 py-2 bg-orange-600 text-white font-bold rounded-lg text-sm shadow-lg shadow-orange-900/50 uppercase tracking-wider">
-                                    BİLGİ
+                    {/* Mevcut Personel Listesi */}
+                    <div className="space-y-3 mb-6">
+                        {kitchenStaff.length === 0 ? (
+                            <p className="text-slate-500 text-sm text-center py-4">Kayıtlı mutfak personeli yok.</p>
+                        ) : (
+                            kitchenStaff.map((staff: any) => (
+                                <div key={staff.id} className="flex items-center justify-between bg-slate-800/60 border border-slate-700 p-4 rounded-xl hover:border-amber-500/30 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-amber-600/20 flex items-center justify-center text-amber-400 font-black text-sm">
+                                            {staff.role === 'sef' ? '👨‍🍳' : staff.role === 'mudur' ? '👔' : '🧑‍🍳'}
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold">{staff.full_name}</p>
+                                            <p className="text-xs text-slate-400">
+                                                {staff.role === 'sef' ? 'Şef' : staff.role === 'mudur' ? 'Müdür' : staff.role === 'amir' ? 'Amir' : 'Aşçı'}
+                                                {staff.telegram_chat_id ? ` | TG: ${staff.telegram_chat_id}` : ' | TG: Tanımsız'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => removeKitchenStaff(staff.id)}
+                                        className="text-red-400 hover:text-red-300 text-xs font-bold uppercase px-3 py-1 rounded hover:bg-red-500/10 transition-all"
+                                    >
+                                        Kaldır
+                                    </button>
                                 </div>
-                            </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Yeni Personel Ekleme Formu */}
+                    <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-6">
+                        <h4 className="text-sm font-black text-amber-400 uppercase tracking-widest mb-4">Yeni Personel Ekle</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <input
+                                type="text"
+                                value={newStaffName}
+                                onChange={(e) => setNewStaffName(e.target.value)}
+                                placeholder="Ad Soyad"
+                                className="bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500"
+                            />
+                            <select
+                                value={newStaffRole}
+                                onChange={(e) => setNewStaffRole(e.target.value)}
+                                className="bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500"
+                            >
+                                <option value="sef">Şef</option>
+                                <option value="mudur">Müdür</option>
+                                <option value="amir">Amir</option>
+                                <option value="asci">Aşçı</option>
+                            </select>
+                            <input
+                                type="text"
+                                value={newStaffTelegramId}
+                                onChange={(e) => setNewStaffTelegramId(e.target.value)}
+                                placeholder="Telegram Chat ID"
+                                className="bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500"
+                            />
+                            <button
+                                onClick={addKitchenStaff}
+                                disabled={!newStaffName.trim()}
+                                className="bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold rounded-xl px-6 py-3 text-sm transition-all flex items-center justify-center gap-2"
+                            >
+                                <UserPlus className="w-4 h-4" /> Ekle
+                            </button>
                         </div>
                     </div>
                 </div>

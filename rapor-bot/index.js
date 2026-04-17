@@ -11,7 +11,7 @@ const ffmpegPath = require('ffmpeg-static');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 // ══════════════════════════════════════════════════════════════════
-//  AZURE COAST RESORT — Yönetici Rapor Botu
+//  THE GREEN PARK GAZİANTEP — Yönetici Rapor Botu
 // ══════════════════════════════════════════════════════════════════
 
 const REPORT_BOT_TOKEN = process.env.REPORT_BOT_TOKEN;
@@ -178,7 +178,7 @@ async function buildReport(startDate, endDate, label) {
     // Rapor metni
     let r = '';
     r += `📊 *YÖNETİCİ PERFORMANS RAPORU*\n`;
-    r += `🏨 Azure Coast Resort & SPA\n`;
+    r += `🏨 The Green Park Gaziantep\n`;
     r += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     r += `📅 *Dönem:* ${label}\n`;
     r += `🕐 *Rapor Tarihi:* ${formatTR(new Date().toISOString())}\n`;
@@ -260,7 +260,7 @@ bot.start(async (ctx) => {
     const name = ctx.from.first_name || 'Yönetici';
     await ctx.replyWithMarkdown(`👋 Hoş geldiniz, *${name}*!
 
-📊 *Azure Coast Resort & SPA — Yönetici Rapor Botu*
+📊 *The Green Park Gaziantep — Yönetici Rapor Botu*
 
 Rapor almak için istediğiniz zaman aralığını yazın veya sesli mesaj gönderin:
 
@@ -361,7 +361,7 @@ bot.on('voice', async (ctx) => {
 
 // ── Başlat ────────────────────────────────────────────────────────
 bot.launch().then(() => {
-    console.log('📊 Azure Coast Resort — Yönetici Rapor Botu başlatıldı!');
+    console.log('📊 The Green Park Gaziantep — Yönetici Rapor Botu başlatıldı!');
     console.log(`👥 Yetkili yöneticiler: ${AUTHORIZED_IDS.length > 0 ? AUTHORIZED_IDS.join(', ') : 'Herkese Açık (Geliştirme Modu)'}`);
 });
 

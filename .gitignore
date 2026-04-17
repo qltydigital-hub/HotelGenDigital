@@ -24,3 +24,5 @@ awesome-claude-skills/
 ui-ux-pro-max-skill-main/
 **/node_modules/
 **/.next/
+
+.vercel

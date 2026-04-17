@@ -1,7 +1,7 @@
 {
     "name": "hotel-rapor-bot",
     "version": "1.0.0",
-    "description": "Azure Coast Resort - Yönetici Rapor Botu",
+    "description": "The Green Park Gaziantep - Yönetici Rapor Botu",
     "main": "index.js",
     "scripts": {
         "start": "node index.js"

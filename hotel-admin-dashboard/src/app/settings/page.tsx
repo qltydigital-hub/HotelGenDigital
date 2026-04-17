@@ -224,6 +224,21 @@ export default function SettingsPage() {
                                     <div className="flex flex-col"><span className="text-xs text-slate-500 font-bold">T/S</span><span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">Teknik Servis</span></div>
                                 </Link>
                             </div>
+
+                            {/* Konum ve Harita hızlı erişim */}
+                            <div className="mt-4 pt-4 border-t border-slate-800/60">
+                                <Link href="/settings-panel?tab=location" className="group flex items-center gap-4 p-4 bg-green-900/10 hover:bg-green-900/25 border border-green-500/20 hover:border-green-500/50 transition-all rounded-2xl relative overflow-hidden">
+                                    <div className="bg-green-500/15 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+                                        <Settings className="w-5 h-5 text-green-400" />
+                                    </div>
+                                    <div className="flex flex-col flex-1">
+                                        <span className="text-xs text-green-400/70 font-bold uppercase tracking-widest">Ön Büro Yapılandırması</span>
+                                        <span className="text-sm font-bold text-green-200 group-hover:text-white transition-colors">🗺️ Konum ve Yol Tarifi Ayarları</span>
+                                        <span className="text-xs text-slate-500 mt-0.5">Google Maps linki ve yol tarifi açıklamasını güncelleyin</span>
+                                    </div>
+                                    <span className="text-green-400/50 group-hover:text-green-400 transition-colors text-lg">→</span>
+                                </Link>
+                            </div>
                         </div>
 
                     </div>

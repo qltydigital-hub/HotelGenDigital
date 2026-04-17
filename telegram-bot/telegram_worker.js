@@ -1761,7 +1761,7 @@ async function launchBot(botInstance, label) {
 // Bilgilendirme (asenkron beklemeden)
 console.log(`🏨 Otel: The Green Park Gaziantep`);
 console.log(`🔗 Dashboard API: ${DASHBOARD_API}`);
-console.log(`🤖 AI Model: GPT-4o`);
+console.log(`🤖 AI Model: GPT-4o-mini (hız optimizasyonu)`);
 console.log(`⏱️  SLA Sistemi: Aktif (60 saniye)`);
 console.log(`👤 Misafir Bilgisi Toplama: Aktif`);
 console.log(`📦 Modüler Bilgi Bankası: Aktif (knowledge/)`);

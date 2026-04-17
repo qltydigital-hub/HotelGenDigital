@@ -13,12 +13,23 @@ module.exports = {
             }
         },
         {
-            name: 'hotel-telegram-bot',
-            cwd: './telegram-bot',
-            script: 'index.js',
-            watch: false,
+            name: 'hotel-webhook-api',
+            script: './telegram-bot/index.js',
+            instances: 1,
             autorestart: true,
-            max_restarts: 10,
+            watch: false,
+            max_memory_restart: '1G',
+            env: {
+                NODE_ENV: 'production'
+            }
+        },
+        {
+            name: 'hotel-telegram-worker',
+            script: './telegram-bot/telegram_worker.js',
+            instances: 1,
+            autorestart: true,
+            watch: false,
+            max_memory_restart: '1G',
             env: {
                 NODE_ENV: 'production'
             }

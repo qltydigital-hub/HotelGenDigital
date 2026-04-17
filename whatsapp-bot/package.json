@@ -1,7 +1,7 @@
 {
   "name": "hotel-whatsapp-bot",
   "version": "1.0.0",
-  "description": "Azure Coast Resort WhatsApp Bot (Twilio)",
+  "description": "The Green Park Gaziantep WhatsApp Bot (Twilio)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

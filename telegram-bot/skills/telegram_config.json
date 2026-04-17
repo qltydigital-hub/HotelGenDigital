@@ -1,0 +1,64 @@
+{
+  "mainBotToken": "8378235028:AAHJZaKchO4oI9VjZ5-SDxWM6xKOcI5ZS4M",
+  "botUsername": "hotelYoneticin8n_bot",
+  "managers": {
+    "ozgur_ozen": {
+      "name": "Özgür ÖZEN",
+      "role": "ADMIN",
+      "telegramId": "758605940",
+      "botToken": "8378235028:AAHJZaKchO4oI9VjZ5-SDxWM6xKOcI5ZS4M",
+      "departments": {
+        "HOUSEKEEPING": { "chatId": "-5146686704", "groupName": "Greenpark-HK (Özgür)" },
+        "TEKNIK":       { "chatId": "-5109602342", "groupName": "Greenpark-TS (Özgür)" },
+        "RESEPSIYON":   { "chatId": "-5166737146", "groupName": "Greenpark-FO (Özgür)" },
+        "F&B":          { "chatId": "-5272206709", "groupName": "Greenpark-FB (Özgür)" },
+        "GUEST_RELATIONS": { "chatId": "-5193711765", "groupName": "Greenpark-GR (Özgür)" }
+      }
+    },
+    "kemal_kuyucu": {
+      "name": "Kemal KUYUCU",
+      "role": "ADMIN",
+      "telegramId": "1010061120",
+      "botToken": "8727716113:AAFuKlYDk1E3UebDtHVyrC6oYujOVQcVd1Q",
+      "departments": {
+        "GUEST_RELATIONS": { "chatId": "-4862233097", "groupName": "Greenpark-GR (Kemal)" },
+        "HOUSEKEEPING":    { "chatId": "-5217376218", "groupName": "Greenpark-HK (Kemal)" },
+        "RESEPSIYON":      { "chatId": "-5134706265", "groupName": "Greenpark-FO (Kemal)" },
+        "F&B":             { "chatId": "-5105850779", "groupName": "Greenpark-FB (Kemal)" },
+        "TEKNIK":          { "chatId": "-5141471902", "groupName": "Greenpark-TS (Kemal)" }
+      }
+    }
+  },
+  "departments": {
+    "HOUSEKEEPING": {
+      "chatIds": ["-5146686704", "-5217376218"],
+      "groupName": "Greenpark-HK",
+      "active": true
+    },
+    "TEKNIK": {
+      "chatIds": ["-5109602342", "-5141471902"],
+      "groupName": "Greenpark-TS",
+      "active": true
+    },
+    "RESEPSIYON": {
+      "chatIds": ["-5166737146", "-5134706265"],
+      "groupName": "Greenpark-FO",
+      "active": true
+    },
+    "F&B": {
+      "chatIds": ["-5272206709", "-5105850779"],
+      "groupName": "Greenpark-FB",
+      "active": true
+    },
+    "GUEST_RELATIONS": {
+      "chatIds": ["-5193711765", "-4862233097"],
+      "groupName": "Greenpark-GR",
+      "active": true
+    },
+    "SPA": {
+      "chatIds": [],
+      "groupName": "",
+      "active": false
+    }
+  }
+}

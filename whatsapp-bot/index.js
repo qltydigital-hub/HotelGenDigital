@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // ══════════════════════════════════════════════════════════════════
-//  AZURE COAST RESORT — WhatsApp Bot (Twilio)
+//  THE GREEN PARK GAZİANTEP — WhatsApp Bot (Twilio)
 //  DURUM: HAZIR — Aktif etmek için README.md'yi okuyun
 // ══════════════════════════════════════════════════════════════════
 
@@ -34,14 +34,14 @@ if (process.env.OPENAI_API_KEY) {
 
 // ── Karşılama Mesajı Gönder (Check-in QR'dan tetiklenince) ────────
 async function sendWelcomeMessage(toNumber) {
-    const welcomeText = `🌊 *Azure Coast Resort & SPA'ya Hoş Geldiniz!*
+    const welcomeText = `🏨 *The Green Park Gaziantep'e Hoş Geldiniz!*
 
 Sayın misafirimiz, otelimizdeki konaklamanızı keyifli ve konforlu hale getirmek için buradayız.
 
 Memnuniyetiniz bizim için son derece önemlidir. Herhangi bir sorunuz ya da talebiniz olduğunda lütfen buradan bize bildirin — ekibimiz en kısa sürede ilgilenecektir. 🙏
 
-📞 +90 242 824 00 00
-📧 info@azurecoastresort.com`;
+📞 +90 (850) 222 72 75
+📧 info@thegreenpark.com`;
 
     // Metin mesajı
     await twilioClient.messages.create({
@@ -59,7 +59,7 @@ Memnuniyetiniz bizim için son derece önemlidir. Herhangi bir sorunuz ya da tal
         await twilioClient.messages.create({
             from: WHATSAPP_FROM,
             to: `whatsapp:${toNumber}`,
-            body: '🗺️ Azure Coast Resort & SPA — Otel Krokisi\nTesisin genel yerleşim haritası:',
+            body: '🗺️ The Green Park Gaziantep — Otel Krokisi\nTesisin genel yerleşim haritası:',
             mediaUrl: [mapUrl]
         });
     }

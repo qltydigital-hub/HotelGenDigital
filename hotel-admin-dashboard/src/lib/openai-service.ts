@@ -115,9 +115,10 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
 `;
 
     try {
+        const t0 = Date.now();
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            max_tokens: 1024,
+            model: "gpt-4o-mini",  // Telegram ile aynı model — hız + maliyet tutarlılığı
+            max_tokens: 700,        // Telegram: 600, burada biraz daha fazla (çoklu alan gerekiyor)
             messages: [
                 { role: "system", content: systemPrompt },
                 ...(chatHistory?.map(h => ({ role: h.role as 'user' | 'assistant' | 'system', content: h.content })) || []),
@@ -125,6 +126,7 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
             ],
             response_format: { type: "json_object" }
         });
+        console.log(`⏱️ [INSTAGRAM/gpt-4o-mini] ${Date.now() - t0}ms`);
 
         const aiResText = response.choices[0]?.message?.content || '{}';
 

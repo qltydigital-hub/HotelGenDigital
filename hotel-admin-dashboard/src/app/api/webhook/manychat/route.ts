@@ -50,21 +50,34 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
 
         const supabase = getServiceSupabase();
 
-        // Acentaları DB'den dinamik çek.
+        // Acentaları DB'den çek — Telegram ile aynı kaynak: hotel_settings.hotel_agencies
+        // Sıralama panelden yönetilir; otel web sitesi her zaman 1. sıra (sabit kural)
         let agenciesPayload: Array<{name: string, url: string, priceText: string, isDirect: boolean}> = [];
+        let hotelDirectLink = 'https://www.thegreenpark.com/gaziantep/';
         try {
-            const { data: dbAgencies, error } = await supabase.from('agencies').select('*');
-            if (dbAgencies && !error) {
-                agenciesPayload = dbAgencies.map(a => ({
-                    name: a.name,
-                    url: a.url,
-                    priceText: a.price_text,
-                    isDirect: a.is_direct
-                }));
+            const { data: agencySettings } = await supabase
+                .from('hotel_settings')
+                .select('value')
+                .eq('key', 'hotel_agencies')
+                .single();
+            if (agencySettings?.value) {
+                const av = agencySettings.value;
+                if (av.hotelReservationLink) hotelDirectLink = av.hotelReservationLink;
+                // Otel kendi linki her zaman 1. sıra
+                agenciesPayload = [
+                    { name: 'The Green Park (Direkt)', url: hotelDirectLink, priceText: 'En iyi fiyat garantisi', isDirect: true },
+                    ...(av.agencies || []).map((a: any) => ({
+                        name: a.name,
+                        url: a.url,
+                        priceText: a.priceText || '',
+                        isDirect: false
+                    }))
+                ];
             }
         } catch (e) {
             console.error("Acenta bilgileri çekilemedi:", e);
         }
+
 
         // ------------------ (YENİ EKLEME) STATE KONTROLÜ ------------------
         let sessionData = null;

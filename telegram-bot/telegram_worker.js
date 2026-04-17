@@ -221,7 +221,21 @@ async function processMessageWithAI(userText, session = null) {
     if (supabase) {
         const locKeywords = ['konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol'];
         const locMatched = locKeywords.find(k => userText.toLowerCase().includes(k));
-        if (locMatched) {
+
+        // ── NİYET (INTENT) FİLTRESİ ──────────────────────────────────────
+        // Kullanıcı sadece teşekkür/onay/kabul ediyorsa lokasyon GÖNDERME.
+        // Keyword geçse bile bağlam "talep" değilse ateşleme.
+        const thankYouPatterns = [
+            'teşekkür', 'tesekkur', 'teşekkürler', 'sağ ol', 'sag ol',
+            'tamam', 'tamamdır', 'anladım', 'anladim', 'harika', 'güzel', 'süper',
+            'mükemmel', 'çok iyi', 'aldım', 'aldim', 'gördüm', 'gordum',
+            'oldu', 'tamam oldu', 'evet tamam', 'ok', '👍', '🙏', '❤️', '😊'
+        ];
+        const isThankYouOnly = thankYouPatterns.some(p => userText.toLowerCase().includes(p))
+            && !['nerede', 'nasıl', 'hangi', 'ne zaman', 'ver', 'gönder',
+                 'istiyorum', 'lazım', 'olur mu', 'yardım', '?'].some(q => userText.toLowerCase().includes(q));
+
+        if (locMatched && !isThankYouOnly) {
             console.log(`[LOCATION_TRIGGER] Keyword eşleşti: "${locMatched}" → Supabase'den hotel_location çekiliyor...`);
             try {
                 const { data, error } = await supabase
@@ -244,6 +258,8 @@ async function processMessageWithAI(userText, session = null) {
             } catch (e) {
                 console.warn("[LOCATION_FETCH_ERROR]:", e.message);
             }
+        } else if (locMatched && isThankYouOnly) {
+            console.log(`[LOCATION_SKIP] Keyword "${locMatched}" geçti ama bağlam teşekkür/onay — lokasyon gönderilmiyor.`);
         }
     }
 

@@ -219,51 +219,7 @@ async function processMessageWithAI(userText, session = null) {
     let targetDepartment = detectDepartmentFromText(userText);
     let locationData = null;
 
-    // Eğer Konum/Adres/Nerede gibi bir soruysa, DB'den konumu çek (RESEPSIYON a yönlenir)
-    if (supabase) {
-        const locKeywords = ['konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol'];
-        const locMatched = locKeywords.find(k => userText.toLowerCase().includes(k));
-
-        // ── NİYET (INTENT) FİLTRESİ ──────────────────────────────────────
-        // Kullanıcı sadece teşekkür/onay/kabul ediyorsa lokasyon GÖNDERME.
-        // Keyword geçse bile bağlam "talep" değilse ateşleme.
-        const thankYouPatterns = [
-            'teşekkür', 'tesekkur', 'teşekkürler', 'sağ ol', 'sag ol',
-            'tamam', 'tamamdır', 'anladım', 'anladim', 'harika', 'güzel', 'süper',
-            'mükemmel', 'çok iyi', 'aldım', 'aldim', 'gördüm', 'gordum',
-            'oldu', 'tamam oldu', 'evet tamam', 'ok', '👍', '🙏', '❤️', '😊'
-        ];
-        const isThankYouOnly = thankYouPatterns.some(p => userText.toLowerCase().includes(p))
-            && !['nerede', 'nasıl', 'hangi', 'ne zaman', 'ver', 'gönder',
-                 'istiyorum', 'lazım', 'olur mu', 'yardım', '?'].some(q => userText.toLowerCase().includes(q));
-
-        if (locMatched && !isThankYouOnly) {
-            console.log(`[LOCATION_TRIGGER] Keyword eşleşti: "${locMatched}" → Supabase'den hotel_location çekiliyor...`);
-            try {
-                const { data, error } = await supabase
-                    .from('hotel_settings')
-                    .select('value')
-                    .eq('key', 'hotel_location')
-                    .single();
-                
-                if (error) {
-                    console.error('[LOCATION_FETCH_ERROR] Supabase hatası:', error.message);
-                } else if (!data || !data.value) {
-                    console.warn('[LOCATION_FETCH_WARN] Supabase\'den boş veri döndü!');
-                } else {
-                    locationData = data.value;
-                    console.log(`✅ [LOCATION_LOADED] url: ${locationData.url} | desc: ${locationData.description?.substring(0,40)}...`);
-                    // Konum sorusu → MUTLAKA RESEPSIYON promptu kullanılsın (location kuralları orada)
-                    targetDepartment = 'RESEPSIYON';
-                    console.log(`[LOCATION_DEPT_OVERRIDE] Departman RESEPSIYON olarak zorlandı.`);
-                }
-            } catch (e) {
-                console.warn("[LOCATION_FETCH_ERROR]:", e.message);
-            }
-        } else if (locMatched && isThankYouOnly) {
-            console.log(`[LOCATION_SKIP] Keyword "${locMatched}" geçti ama bağlam teşekkür/onay — lokasyon gönderilmiyor.`);
-        }
-    }
+    // Lokasyon + Acenta + IBAN: paralel blokta (aşağıda) çekiliyor.
 
     // ── PARALEL DB SORGULARI (Hız optimizasyonu) ────────────────────────
     // Location + Agency + IBAN sorguları aynı anda başlatılır — 3 ayrı await yerine 1 Promise.all

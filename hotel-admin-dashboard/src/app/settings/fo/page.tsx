@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
-import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink, AlertTriangle, Save, Filter } from 'lucide-react';
+import { Settings, FileText, UploadCloud, FileSpreadsheet, Banknote, ShieldCheck, Sun, LogOut, FileSearch, CheckSquare, Square, Send, MessageCircle, Map as MapIcon, Bot, Loader2, Trash2, Edit2, ExternalLink, AlertTriangle, Save, Filter, Navigation } from 'lucide-react';
 import Link from 'next/link';
 import { uploadDocumentToSupabase, supabase } from '../../../lib/supabase-client';
 
@@ -44,6 +44,12 @@ export default function FrontOfficeSettings() {
     const [escalationEmail, setEscalationEmail] = useState("");
     const [escalationTelegram, setEscalationTelegram] = useState("");
     const [isSavingEscalation, setIsSavingEscalation] = useState(false);
+
+    // Location Settings States
+    const [locationUrl, setLocationUrl] = useState('');
+    const [locationDesc, setLocationDesc] = useState('');
+    const [isSavingLocation, setIsSavingLocation] = useState(false);
+    const [locationSaved, setLocationSaved] = useState(false);
 
     // IBAN Settings States
     const [ibanText, setIbanText] = useState("");
@@ -127,6 +133,22 @@ export default function FrontOfficeSettings() {
             } catch(e) { console.warn("Doküman tarihleri yüklenemedi", e); }
         };
         loadUploadTimes();
+
+        // Konum ayarlarını Supabase'den yükle
+        const loadLocation = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('hotel_settings')
+                    .select('value')
+                    .eq('key', 'hotel_location')
+                    .single();
+                if (!error && data && data.value) {
+                    setLocationUrl(data.value.url || '');
+                    setLocationDesc(data.value.description || '');
+                }
+            } catch(e) { console.warn("Konum ayarları yüklenemedi", e); }
+        };
+        loadLocation();
     }, []);
 
     const saveAllSettings = async () => {
@@ -153,6 +175,24 @@ export default function FrontOfficeSettings() {
             alert("Bağlantı hatası.");
         } finally {
             setIsSavingAll(false);
+        }
+    };
+
+    const saveLocation = async () => {
+        setIsSavingLocation(true);
+        try {
+            const { error } = await supabase.from('hotel_settings').upsert({
+                key: 'hotel_location',
+                value: { url: locationUrl, description: locationDesc },
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'key' });
+            if (error) throw error;
+            setLocationSaved(true);
+            setTimeout(() => setLocationSaved(false), 3000);
+        } catch (e) {
+            alert("Konum kaydedilirken hata oluştu.");
+        } finally {
+            setIsSavingLocation(false);
         }
     };
 
@@ -905,6 +945,59 @@ export default function FrontOfficeSettings() {
                             {isSavingAll ? 'Kaydediliyor...' : 'Eskalasyon Ayarlarını Kaydet'}
                         </button>
                     </div>
+                </div>
+
+                {/* --- KONUM VE YOL TARİFİ --- */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                    <div className="flex items-center gap-4 mb-6">
+                        <Navigation className="w-8 h-8 text-emerald-400" />
+                        <div>
+                            <h2 className="text-2xl font-bold">Konum ve Yol Tarifi</h2>
+                            <p className="text-slate-400 text-sm mt-1">Misafir "Neredesiniz?", "Nasıl gelirim?" diye sorduğunda yapay zeka bu bilgiyi otomatik gönderir.</p>
+                        </div>
+                    </div>
+
+                    <div className="p-5 mb-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-sm font-semibold">
+                        🗺️ Bu ayarlar Telegram ve WhatsApp botları tarafından anlık olarak kullanılmaktadır. Kaydettiğiniz anda devreye girer.
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest px-1">Google Maps / Harita Linki</label>
+                            <input
+                                type="text"
+                                value={locationUrl}
+                                onChange={(e) => setLocationUrl(e.target.value)}
+                                placeholder="https://maps.app.goo.gl/..."
+                                className="w-full bg-slate-950/50 border-2 border-slate-800 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 transition-all font-mono placeholder-slate-700"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest px-1">Rota ve Rehberlik Açıklaması</label>
+                            <textarea
+                                value={locationDesc}
+                                onChange={(e) => setLocationDesc(e.target.value)}
+                                placeholder="Örn: Havalimanından çıktıktan sonra sola dönün, 500m ileride otelin tabelası görünür..."
+                                className="w-full bg-slate-950/50 border-2 border-slate-800 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 transition-all font-mono placeholder-slate-700 h-36 resize-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            onClick={saveLocation}
+                            disabled={isSavingLocation}
+                            className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {isSavingLocation ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckSquare className="w-5 h-5" />}
+                            {isSavingLocation ? 'KAYDEDİLİYOR...' : 'KONUMU KAYDET'}
+                        </button>
+                    </div>
+                    {locationSaved && (
+                        <div className="mt-4 p-4 bg-emerald-900/20 border border-emerald-800 text-emerald-400 rounded-xl text-center font-bold text-sm animate-in fade-in">
+                            ✅ Konum bilgileri başarıyla güncellendi! Botlar artık yeni adresi kullanıyor.
+                        </div>
+                    )}
                 </div>
 
                 {/* Eski Yükleme Modülleri (Konsept, Fact Sheet vb.) Grid Halinde Altta */}

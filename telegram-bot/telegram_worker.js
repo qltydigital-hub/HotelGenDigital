@@ -337,11 +337,27 @@ async function processMessageWithAI(userText, session = null) {
                 { role: 'user', content: userText }
             ],
             response_format: { type: "json_object" },
-            max_tokens: 600,        // 800'den düşürdüm — JSON yanıt için yeterli
+            max_tokens: 800,        // 600'den artırıldı — JSON parse hatası riskini azaltır
             temperature: 0.0
         });
         console.log(`⏱️ [AI] gpt-4o-mini yanıt süre: ${Date.now() - t0}ms`);
-        const parsed = JSON.parse(response.choices[0].message.content);
+        
+        // Güvenli JSON parse (kesilmiş JSON'a karşı koruma)
+        let parsed;
+        try {
+            parsed = JSON.parse(response.choices[0].message.content);
+        } catch (parseErr) {
+            console.error('[AI JSON PARSE HATASI] Ham yanıt:', response.choices[0].message.content?.substring(0, 200));
+            // Dil tespiti yap ve o dilde hata ver
+            const lowerText = userText.toLowerCase();
+            const isEnglish = /[a-z]/.test(userText) && !/[çğışöü]/.test(userText);
+            return { 
+                replyToUser: isEnglish
+                    ? "I'm sorry, I couldn't process your request. Please try again or contact our reception at +90 (850) 222 72 75."
+                    : "Üzgünüm, mesajınızı işleyemedim. Lütfen tekrar deneyin veya resepsiyonumuzu arayın: +90 (850) 222 72 75.",
+                isRequest: false 
+            };
+        }
         console.log(`🧠 [AI RAW OUTPUT]:`, parsed);
         
         // ── POST-PROCESSING: Halüsinasyon Güvenlik Duvarı (3 KATMANLI) ──
@@ -408,8 +424,13 @@ async function processMessageWithAI(userText, session = null) {
         
         return parsed;
     } catch (error) {
-        console.error("OpenAI Hatası:", error.message);
-        return { replyToUser: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.", isRequest: false };
+        console.error("OpenAI Hatası:", error.message, error.status || '');
+        // Dil tespit: Latin harfleri varsa ve Türkçe karakter yoksa İngilizce say
+        const hasLatinOnly = /[a-z]/i.test(userText) && !/[çğışöüÇĞİŞÖÜ]/.test(userText);
+        const errMsg = hasLatinOnly
+            ? "I'm sorry, something went wrong. Please try again or contact our reception at +90 (850) 222 72 75."
+            : "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin veya resepsiyonumuzla iletişime geçin: +90 (850) 222 72 75.";
+        return { replyToUser: errMsg, isRequest: false };
     }
 }
 
@@ -1245,7 +1266,7 @@ _Lütfen In-House verilerinizi kontrol ediniz._`;
     // muhtemelen yanlış sınıflandırma — sadece bu durumda override et.
     // NOT: AI (GPT-4o) bağlamsal anlama konusunda anahtar kelime listesinden üstündür.
     // "Odama pizza alabilir miyim?" gibi talepler artık ENGELLENMİYOR.
-    const greetingOnlyPatterns = /^(merhaba|selam|hey|hi|hello|meraba|slm|sa|selamlar|iyi günler|günaydın|iyi akşamlar|iyi geceler|nasılsınız|naber)\s*[?.!]*$/i;
+    const greetingOnlyPatterns = /^(merhaba|selam|hey|hi|hello|meraba|slm|sa|selamlar|iyi günler|günaydın|iyi akşamlar|iyi geceler|nasılsınız|naber|good morning|good afternoon|good evening|good night|good day|greetings|howdy|bonjour|bonsoir|bonne nuit|salut|hallo|guten tag|guten morgen|guten abend|hola|buenos días|buenos tardes|buenos noches|ciao|buongiorno|buonasera|مرحبا|أهلاً|السلام عليكم|здравствуйте|привет|добрый день|добрый вечер)\s*[?.!🙏👋😊]*$/i;
     if (aiResult.isRequest && greetingOnlyPatterns.test(userText.trim())) {
         console.warn(`🔄 [AI SINIFLANDIRMA OVERRIDE] AI isRequest:true döndü ama mesaj sadece selamlama.`);
         console.warn(`   ↳ Mesaj: "${userText.substring(0, 100)}"`);

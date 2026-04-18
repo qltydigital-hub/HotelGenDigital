@@ -18,6 +18,7 @@ const { getRelevantKnowledge, CORE_INFO } = require('./skills/knowledge/index');
 const { isSurroundingsQuestion, searchSurroundings } = require('./skills/perplexity_search');
 const { isSpaQuestion, getSpaInfo } = require('./skills/spa_info');
 const { isFoodQuestion, getFacilitiesInfo } = require('./skills/hotel_facilities');
+const { createHealthMonitor } = require('./skills/health_monitor');
 
 const app = express();
 app.use(cors());
@@ -162,9 +163,30 @@ const FALSE_CONFIRM_WORDS = [
 ];
 
 let openai;
-if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
+if (OPENAI_KEY) {
+    openai = new OpenAI({ apiKey: OPENAI_KEY });
+    console.log(`🔑 [API KEY] OpenAI key yüklendi: ${OPENAI_KEY.substring(0, 12)}...${OPENAI_KEY.slice(-6)} (uzunluk: ${OPENAI_KEY.length})`);
+} else {
+    console.error('❌ [FATAL] OPENAI_API_KEY .env dosyasında bulunamadı! AI yanıtları çalışmayacak.');
 }
+
+// ── BAŞLANGIÇ SAĞLIK KONTROLÜ — OpenAI API Key Doğrulaması ───────────
+(async () => {
+    if (!openai) return;
+    try {
+        const testResp = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: 'test' }],
+            max_tokens: 5
+        });
+        console.log('✅ [HEALTH] OpenAI API key geçerli ve çalışıyor.');
+    } catch (e) {
+        console.error(`❌ [HEALTH] OpenAI API key ÇALIŞMIYOR! Hata: ${e.message}`);
+        console.error(`   ↳ Kullanılan key: ${OPENAI_KEY?.substring(0, 15)}...`);
+        console.error('   ↳ Lütfen .env dosyasındaki OPENAI_API_KEY değerini kontrol edin.');
+    }
+})();
 
 // ── Supabase İstemcisi ────────────────────────────────────────────────
 let supabase = null;
@@ -1787,6 +1809,16 @@ async function launchBot(botInstance, label) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await launchBot(secBot, secBot._managerName || `İKİNCİL BOT ${i + 1}`);
     }
+
+    // 3. Sağlık izleme sistemini başlat (AI Agent Manager)
+    const healthMonitor = createHealthMonitor({
+        openai,
+        supabase,
+        bot,
+        secondaryBots,
+        adminChatId: telegramConfig.managers?.ozgur_ozen?.telegramId || '758605940'
+    });
+    healthMonitor.startPeriodicCheck();
 })();
 
 // Bilgilendirme (asenkron beklemeden)

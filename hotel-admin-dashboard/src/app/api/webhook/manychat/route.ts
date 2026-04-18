@@ -196,10 +196,16 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
                 // ManyChat API call kaldırıldı. Yanıtı HTTP üzerinden döneceğiz.
                 console.log(`📲 ManyChat (${channel}) HTTP senkron yanıtı sunuluyor...`);
             }
+            // ai_safe_reply artık openai-service.ts içinde her zaman dolu dönüyor (fallback dahil)
+            const replyText = aiAnalysis.ai_safe_reply || (
+                aiAnalysis.language === 'en' || aiAnalysis.language === 'english'
+                    ? 'Hello! Welcome to The Green Park Gaziantep. How can I help you?'
+                    : 'Merhaba! The Green Park Gaziantep\'e hoş geldiniz. Size nasıl yardımcı olabilirim?'
+            );
             return NextResponse.json({
                 success: true, 
                 action: "AI_REPLY_DIRECTLY", 
-                reply_text: aiAnalysis.ai_safe_reply || "Değerli misafirimiz, mesajınızı aldık. Size en iyi şekilde yardımcı olabilmemiz için lütfen birkaç saniye sonra tekrar deneyin veya resepsiyonumuzu arayın: +90 (850) 222 72 75 📞",
+                reply_text: replyText,
                 status: "completed"
             });
         }

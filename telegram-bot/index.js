@@ -129,8 +129,12 @@ const FALSE_CONFIRM_WORDS = [
 ];
 
 let openai;
-if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
+if (OPENAI_KEY) {
+    openai = new OpenAI({ apiKey: OPENAI_KEY });
+    console.log(`🔑 [INDEX.JS API KEY] OpenAI key yüklendi: ${OPENAI_KEY.substring(0, 12)}...${OPENAI_KEY.slice(-6)}`);
+} else {
+    console.error('❌ [INDEX.JS FATAL] OPENAI_API_KEY bulunamadı!');
 }
 
 // ── Supabase İstemcisi ────────────────────────────────────────────────

@@ -2,8 +2,14 @@ import OpenAI from 'openai';
 import { HOTEL_KNOWLEDGE_BASE } from './hotel-data';
 
 // OpenAI konfigürasyonu
+const OPENAI_KEY_DASHBOARD = process.env.OPENAI_API_KEY;
+if (!OPENAI_KEY_DASHBOARD) {
+    console.error('❌ [OPENAI-SERVICE] OPENAI_API_KEY env değişkeni TANIMLI DEĞİL! Instagram/ManyChat AI yanıtları çalışmayacak.');
+} else {
+    console.log(`🔑 [OPENAI-SERVICE] API key yüklendi: ${OPENAI_KEY_DASHBOARD.substring(0, 12)}...${OPENAI_KEY_DASHBOARD.slice(-6)} (uzunluk: ${OPENAI_KEY_DASHBOARD.length})`);
+}
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: OPENAI_KEY_DASHBOARD || 'MISSING_KEY',
 });
 
 export type IntentType = "QUESTION" | "REQUEST" | "COMPLAINT" | "CANCEL" | "GREETING" | "RESERVATION" | "CONFIRMATION" | "DENIAL" | "EXTERNAL_QUERY";
@@ -117,8 +123,8 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
     try {
         const t0 = Date.now();
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",  // Telegram ile aynı model — hız + maliyet tutarlılığı
-            max_tokens: 700,        // Telegram: 600, burada biraz daha fazla (çoklu alan gerekiyor)
+            model: "gpt-4o-mini",
+            max_tokens: 700,
             messages: [
                 { role: "system", content: systemPrompt },
                 ...(chatHistory?.map(h => ({ role: h.role as 'user' | 'assistant' | 'system', content: h.content })) || []),
@@ -129,41 +135,41 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
         console.log(`⏱️ [INSTAGRAM/gpt-4o-mini] ${Date.now() - t0}ms`);
 
         const aiResText = response.choices[0]?.message?.content || '{}';
-
-        // Gpt-4o json dönerken ekstra block koyabiliyor, emin olmak için temizleyelim
         const cleaned = aiResText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-
         const result: AIAnalysisResult = JSON.parse(cleaned || "{}");
-        
-        // No longer stripping Turkish accents as DB supports UTF-8
-        // If needed for specific legacy systems, use removeTurkishAccents sparingly
-        /*
-        if (result.turkish_translation) result.turkish_translation = removeTurkishAccents(result.turkish_translation);
-        if (result.summary) result.summary = removeTurkishAccents(result.summary);
-        if (result.extracted_guest_name) result.extracted_guest_name = removeTurkishAccents(result.extracted_guest_name);
-        if (result.ai_safe_reply) result.ai_safe_reply = removeTurkishAccents(result.ai_safe_reply);
-        if (result.reply_routing_lang) result.reply_routing_lang = removeTurkishAccents(result.reply_routing_lang);
-        if (result.reply_immediate_lang) result.reply_immediate_lang = removeTurkishAccents(result.reply_immediate_lang);
-        if (result.reply_later_lang) result.reply_later_lang = removeTurkishAccents(result.reply_later_lang);
-        if (result.reply_mismatch_lang) result.reply_mismatch_lang = removeTurkishAccents(result.reply_mismatch_lang);
-        */
+
+        // ai_safe_reply boş gelirse mesajın diline göre oluştur
+        if (!result.ai_safe_reply || result.ai_safe_reply.trim() === '') {
+            const lang = result.language || 'tr';
+            result.ai_safe_reply = lang === 'tr' || lang === 'turkish'
+                ? 'Merhaba! The Green Park Gaziantep\'e hoş geldiniz. Size nasıl yardımcı olabilirim?'
+                : 'Hello! Welcome to The Green Park Gaziantep. How can I help you?';
+        }
 
         return result;
-    } catch (error) {
-        console.error("Claude Analiz Hatası:", error);
+    } catch (error: any) {
+        console.error('❌ [OPENAI-SERVICE] AI Analiz Hatası:', error?.message || error);
+        console.error('   ↳ API Key durumu:', OPENAI_KEY_DASHBOARD ? `Mevcut (${OPENAI_KEY_DASHBOARD.substring(0, 12)}...)` : 'TANIMLI DEĞİL');
+        
+        // Dil tespiti: mesajda Türkçe karakter yoksa İngilizce kabul et
+        const hasLatin = /[a-z]/i.test(message) && !/[çğışöüÇĞİŞÖÜ]/.test(message);
+        const fallbackReply = hasLatin
+            ? 'Hello! Welcome to The Green Park Gaziantep. How can I assist you? For immediate help, please call +90 (850) 222 72 75.'
+            : 'Merhaba! The Green Park Gaziantep\'e hoş geldiniz. Size nasıl yardımcı olabilirim? Acil durumlar için resepsiyonumuz: +90 (850) 222 72 75 📞';
+
         return {
-            intent: "QUESTION",
+            intent: "GREETING",
             department: "Resepsiyon",
-            language: "tr",
-            summary: "Anlasilamayan mesaj / Fallback donuldu.",
+            language: hasLatin ? "en" : "tr",
+            summary: "AI servisi geçici olarak yanıt veremedi.",
             is_alerjen: false,
-            needs_reception_cc: true,
-            ai_safe_reply: "Değerli misafirimiz, mesajınızı aldık. Size en iyi şekilde yardımcı olabilmemiz için lütfen birkaç saniye sonra tekrar deneyin veya resepsiyonumuzu arayın: +90 (850) 222 72 75 📞",
-            turkish_translation: "Anlasilamayan mesaj",
-            reply_routing_lang: "Isteginizi ilgili departmana hizlica iletiyoruz.",
-            reply_immediate_lang: "Talebinizi aldik, hemen ilgileniyorum.",
-            reply_later_lang: "Talebinizi aldim, sonrasinda ilgilenecegim.",
-            reply_mismatch_lang: "Bilgilerinizi resepsiyona iletiyorum, lutfen kisa bir sure bekleyiniz.",
+            needs_reception_cc: false,
+            ai_safe_reply: fallbackReply,
+            turkish_translation: "AI servisi geçici olarak yanıt veremedi.",
+            reply_routing_lang: hasLatin ? "We are forwarding your request to the relevant department." : "İsteğinizi ilgili departmana hızlıca iletiyoruz.",
+            reply_immediate_lang: hasLatin ? "We received your request and are attending to it now." : "Talebinizi aldık, hemen ilgileniyorum.",
+            reply_later_lang: hasLatin ? "We have noted your request and will attend to it shortly." : "Talebinizi aldım, sonrasında ilgileneceğim.",
+            reply_mismatch_lang: hasLatin ? "We are forwarding your information to reception, please wait a moment." : "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz.",
             extracted_room_no: null,
             extracted_guest_name: null
         };

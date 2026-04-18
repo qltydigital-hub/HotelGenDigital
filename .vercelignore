@@ -1,0 +1,47 @@
+# Vercel Deploy - Sadece hotel-admin-dashboard deploy edilecek
+# Büyük ve gereksiz dosyaları hariç tut
+
+# Node modules (tüm alt dizinlerde)
+**/node_modules/
+
+# Build outputs
+**/.next/
+**/out/
+**/dist/
+**/build/
+
+# Zip/yedek dosyaları
+*.zip
+*.tar.gz
+
+# Telegram ve diğer bot klasörleri (Vercel'de çalışmaz)
+telegram-bot/
+rapor-bot/
+whatsapp-bot/
+sales-agent-teams-demo/
+
+# Dev araçları
+.vscode/
+claude-code/
+awesome-claude-skills/
+ui-ux-pro-max-skill-main/
+superpowers/
+extensions/
+plugins/
+docs/
+.agents/
+
+# Env dosyaları (güvenlik)
+**/.env
+**/.env.local
+**/.env.vercel
+
+# PM2 ve log dosyaları
+pm2_list.json
+*.log
+
+# SQL ve script dosyaları
+*.sql
+*.bat
+*.js (kök dizindeki)
+fix_mobile*.js

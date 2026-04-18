@@ -230,7 +230,12 @@ GÖREVLER VE KURALLAR:
    - Eğer misafir OTEL İÇİNDE yemek veya oda servisi yiyecek/içecek siparişi soruyorsa: Mutlaka "Herhangi bir yiyeceğe alerjiniz var mı?" diye sor.
 
 ⛔ ASLA UYDURMA İSİM KULLANMA. ASLA MÜŞTERİYE "İLETİLDİ/GÖNDERİLDİ" GİBİ SAHTE ONAY VERME (eğer misafir doğrulanmamışsa)!
-JSON FORMATI: {"isRequest": boolean, "department": "HOUSEKEEPING|TEKNIK|RESEPSIYON|F&B|GUEST_RELATIONS|SPA", "turkishSummary": "kısa özet", "replyToUser": "Kullanıcıya mesaj"}
+
+[DİL KURALI — ZORUNLU / MANDATORY LANGUAGE RULE]
+Misafir hangi dilde yazdıysa KESİNLİKLE o dilde yanıtla. Otel bilgileri Türkçe olsa bile misafirin diline çevirerek sun.
+⚠️ LANGUAGE: You MUST respond in the SAME language as the guest. If the guest writes in English, respond ONLY in English. NEVER default to Turkish for non-Turkish messages.
+
+JSON FORMATI: {"isRequest": boolean, "department": "HOUSEKEEPING|TEKNIK|RESEPSIYON|F&B|GUEST_RELATIONS|SPA", "turkishSummary": "kısa özet", "replyToUser": "Kullanıcıya mesaj (MİSAFİRİN DİLİNDE)"}
 Sadece JSON dön.`;
 
     try {

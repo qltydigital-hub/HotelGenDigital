@@ -103,7 +103,7 @@ async function sharedAIHandler({ userText, openai, supabase = null, session = nu
 
     const platformNote = `\n[PLATFORM: ${platform.toUpperCase()}] Her platformda aynı kural geçerli.`;
 
-    const LANG_RULE = `\n[DİL KURALI — ZORUNLU] Kullanıcı hangi dilde yazdıysa KESİNLİKLE aynı dilde yanıtla. Türkçe/İngilizce/Almanca/Fransızca/Arapça — dili asla değiştirme.`;
+    const LANG_RULE = `\n[DİL KURALI — ZORUNLU / MANDATORY LANGUAGE RULE] Kullanıcı hangi dilde yazdıysa KESİNLİKLE aynı dilde yanıtla (Türkçe, İngilizce, Almanca, Fransızca, Arapça, Rusça vb.). Dili asla değiştirme veya karıştırma. Otel bilgileri Türkçe olsa bile misafirin diline çevirerek sun.\n⚠️ LANGUAGE: You MUST respond in the SAME language as the guest. If the guest writes in English, respond ONLY in English. NEVER default to Turkish for non-Turkish messages. Translate all hotel information to the guest's language.`;
 
     const SYSTEM_PROMPT = `${basePrompt}\n\nOtel Bilgileri:\n${hotelKnowledge}\n\nTarih/Saat: ${nowStr}${requestHandlingRules}${identityContext}${ibanRule}${checkoutRule}${platformNote}${LANG_RULE}\n\n⛔ ASLA UYDURMA İSİM/ODA. JSON: {"isRequest":bool,"department":"...","turkishSummary":"...","replyToUser":"..."}`;
 

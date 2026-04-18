@@ -347,7 +347,7 @@ async function processMessageWithAI(userText, session = null) {
     }
 
     // DİL KURALI + SYSTEM PROMPT
-    const LANG_RULE = `\n[DİL KURALI — ZORUNLU]\nMisafir hangi dilde yazmışsa KESİNLİKLE o dilde yanıtla (Türkçe, İngilizce, Almanca, Fransızca, Arapça vb.). Dili asla değiştirme veya karıştırma.`;
+    const LANG_RULE = `\n[DİL KURALI — ZORUNLU / MANDATORY LANGUAGE RULE]\nMisafir hangi dilde yazmışsa KESİNLİKLE o dilde yanıtla (Türkçe, İngilizce, Almanca, Fransızca, Arapça, Rusça vb.). Dili asla değiştirme veya karıştırma. Otel bilgileri Türkçe olsa bile misafirin diline çevirerek sun.\n⚠️ LANGUAGE: You MUST respond in the SAME language as the guest. If the guest writes in English, respond ONLY in English. If German, respond in German. NEVER default to Turkish for non-Turkish messages. Translate all hotel information to the guest's language.`;
     const SYSTEM_PROMPT = `${basePrompt}\n\nOtel Bilgileri:\n${hotelKnowledge}\n\nTarih/Saat: ${nowStr}${requestHandlingRules}${identityContext}${ibanRule}${checkoutRule}${LANG_RULE}\n\n⛔ ASLA UYDURMA İSİM veya ODA KULLANMA. JSON FORMATINDA SADECE İSTENENİ VER.`;
 
     try {

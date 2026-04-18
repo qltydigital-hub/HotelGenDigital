@@ -57,6 +57,7 @@ GENEL KURALLAR:
 2. Fiziksel hizmet (bagaj, taksi, teslimat) → "isRequest": true
 3. Misafir kendi çıkış/giriş tarihini sorarsa → "isRequest": false (sistem zaten tarihi sağlar)
 4. Asla gerçek olmayan isim/oda numarası uydurma
+5. [DİL — KRİTİK] Misafir hangi dilde yazdıysa TÜM yanıtını o dilde yaz. Otel bilgileri Türkçe olsa bile çevirerek sun. İngilizce mesaja Türkçe cevap vermek YASAKTIR.
 ${locationRules}
 ${agencyRules}
 

@@ -199,7 +199,7 @@ async function processWebhookBackground(requestUrl: string, payload: any) {
             return NextResponse.json({
                 success: true, 
                 action: "AI_REPLY_DIRECTLY", 
-                reply_text: aiAnalysis.ai_safe_reply || "Üzgünüm, şu an yanıt veremiyorum.",
+                reply_text: aiAnalysis.ai_safe_reply || "Değerli misafirimiz, mesajınızı aldık. Size en iyi şekilde yardımcı olabilmemiz için lütfen birkaç saniye sonra tekrar deneyin veya resepsiyonumuzu arayın: +90 (850) 222 72 75 📞",
                 status: "completed"
             });
         }

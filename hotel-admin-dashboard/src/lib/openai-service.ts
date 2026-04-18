@@ -158,7 +158,7 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
             summary: "Anlasilamayan mesaj / Fallback donuldu.",
             is_alerjen: false,
             needs_reception_cc: true,
-            ai_safe_reply: "Degerli misafirimiz, size daha iyi yardimci olabilmek adina talebinizi resepsiyon ekibimize iletiyorum. Acil durumlar ve detayli bilgi icin resepsiyonumuzu her zaman arayabilirsiniz.",
+            ai_safe_reply: "Değerli misafirimiz, mesajınızı aldık. Size en iyi şekilde yardımcı olabilmemiz için lütfen birkaç saniye sonra tekrar deneyin veya resepsiyonumuzu arayın: +90 (850) 222 72 75 📞",
             turkish_translation: "Anlasilamayan mesaj",
             reply_routing_lang: "Isteginizi ilgili departmana hizlica iletiyoruz.",
             reply_immediate_lang: "Talebinizi aldik, hemen ilgileniyorum.",

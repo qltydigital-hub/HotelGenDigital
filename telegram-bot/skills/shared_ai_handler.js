@@ -54,15 +54,23 @@ async function sharedAIHandler({ userText, openai, supabase = null, session = nu
         const needsAgency = agencyKeywords.some(k => lower.includes(k));
         const needsIban   = ibanKeywords.some(k => lower.includes(k));
 
+        // Supabase query wrapper (`.catch()` Supabase'de çalışmaz, try/catch kullanılmalı)
+        const safeQuery = async (key) => {
+            try {
+                const { data, error } = await supabase.from('hotel_settings').select('value').eq('key', key).single();
+                return error ? null : data;
+            } catch (e) { return null; }
+        };
+
         const [locResult, agencyResult, ibanResult] = await Promise.all([
-            locMatched   ? supabase.from('hotel_settings').select('value').eq('key', 'hotel_location').single().catch(() => null) : null,
-            needsAgency  ? supabase.from('hotel_settings').select('value').eq('key', 'hotel_agencies').single().catch(() => null)  : null,
-            needsIban    ? supabase.from('hotel_settings').select('value').eq('key', 'reception_settings').single().catch(() => null) : null,
+            locMatched   ? safeQuery('hotel_location')    : null,
+            needsAgency  ? safeQuery('hotel_agencies')     : null,
+            needsIban    ? safeQuery('reception_settings')  : null,
         ]);
 
-        if (locResult?.data?.value)               { locationData = locResult.data.value; targetDepartment = 'RESEPSIYON'; }
-        if (agencyResult?.data?.value)             { agencyData   = agencyResult.data.value; }
-        if (ibanResult?.data?.value?.ibanText)     { ibanData     = ibanResult.data.value.ibanText; }
+        if (locResult?.value)               { locationData = locResult.value; targetDepartment = 'RESEPSIYON'; }
+        if (agencyResult?.value)             { agencyData   = agencyResult.value; }
+        if (ibanResult?.value?.ibanText)     { ibanData     = ibanResult.value.ibanText; }
     }
 
     // ── Prompt ───────────────────────────────────────────────────────

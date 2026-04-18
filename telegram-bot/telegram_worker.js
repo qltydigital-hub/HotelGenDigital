@@ -1005,9 +1005,23 @@ async function generateFinalConfirmation(guestName, guestRoom, langRef) {
     }
 }
 
+// ── Mesaj İşleme Kilidi (Duplikasyon Önleme) ──────────────────────────
+// Aynı chatId için eşzamanlı mesaj işlemeyi engeller
+const processingLocks = {};
+
 // ── Ortak mesaj işleyici (text ve voice için) ─────────────────────────
 async function handleIncomingMessage(ctx, userText) {
     const chatId = ctx.chat.id;
+
+    // ── DUPLİKASYON KİLİDİ ──────────────────────────────────────────
+    // Aynı chatId için zaten işlenen bir mesaj varsa, bu mesajı atla
+    if (processingLocks[chatId]) {
+        console.warn(`🔒 [LOCK] chatId: ${chatId} için zaten bir mesaj işleniyor, bu mesaj atlanıyor: "${userText.substring(0, 50)}"`);
+        return;
+    }
+    processingLocks[chatId] = true;
+
+    try {
 
     // ── ÖNCELİKLİ: Resepsiyon not ekleme modu ───────────────────────────
     if (receptionNoteStates[chatId]) {
@@ -1332,6 +1346,23 @@ _Lütfen In-House verilerinizi kontrol ediniz._`;
             await saveMessageToDashboard(chatId, 'assistant', aiResult.replyToUser);
             console.log(`🤖 [${chatId}] AI: ${aiResult.replyToUser.substring(0, 80)}...`);
         }
+    }
+
+    } catch (globalErr) {
+        // ── GLOBAL HATA YAKALAYICI — Bot ASLA çökmemeli ──────────────────
+        console.error(`💥 [GLOBAL_ERROR] chatId: ${chatId} | Hata:`, globalErr.message || globalErr);
+        try {
+            const hasLatin = /[a-z]/i.test(userText) && !/[çğışöüÇĞİŞÖÜ]/.test(userText);
+            const safeMsg = hasLatin
+                ? "I apologize for the inconvenience. Our system is experiencing a temporary issue. Please try again in a moment, or contact our reception: +90 (850) 222 72 75."
+                : "Bir aksaklık yaşanıyor, lütfen birkaç saniye sonra tekrar deneyin. Acil durumlar için resepsiyonumuz 7/24 hizmetinizdedir: +90 (850) 222 72 75 📞";
+            await ctx.reply(safeMsg);
+        } catch (replyErr) {
+            console.error(`💥 [REPLY_ERROR] Yanıt da gönderilemedi:`, replyErr.message);
+        }
+    } finally {
+        // ── KİLİDİ SERBEST BIRAK ────────────────────────────────────────
+        delete processingLocks[chatId];
     }
 }
 
@@ -1693,6 +1724,29 @@ for (const secBot of secondaryBots) {
 }
 
 // (Express API webhook kaldırıldı, bu dosya sadece Telegram Guest Worker olarak hizmet verir)
+
+// ── GLOBAL HATA YAKALAYICI (bot.catch) ────────────────────────────────
+// Bu handler olmadan Telegraf "Unhandled error" loglar ve kullanıcıya hiçbir yanıt dönmez
+bot.catch(async (err, ctx) => {
+    console.error(`💥 [BOT.CATCH ANA BOT] Hata yakalandı:`, err.message || err);
+    try {
+        if (ctx && ctx.chat) {
+            await ctx.reply('Bir aksaklık yaşandı, lütfen tekrar deneyin. Acil durumlar için: +90 (850) 222 72 75 📞');
+        }
+    } catch (e) { /* yanıt da gönderilemezse sessizce devam et */ }
+});
+
+for (const secBot of secondaryBots) {
+    secBot.catch(async (err, ctx) => {
+        console.error(`💥 [BOT.CATCH ${secBot._managerName}] Hata yakalandı:`, err.message || err);
+        try {
+            if (ctx && ctx.chat) {
+                await ctx.reply('Bir aksaklık yaşandı, lütfen tekrar deneyin. Acil durumlar için: +90 (850) 222 72 75 📞');
+            }
+        } catch (e) { /* yanıt da gönderilemezse sessizce devam et */ }
+    });
+}
+
 // ── Botları Başlat ────────────────────────────────────────────────────
 console.log('⏳ Telegram bağlantıları kuruluyor...');
 

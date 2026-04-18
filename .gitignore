@@ -5,6 +5,7 @@ build/
 dist/
 .env
 .env.local
+API_KEYS.md
 .env.development.local
 .env.test.local
 .env.production.local

@@ -15,12 +15,18 @@ module.exports = (locationData, agencyData) => {
     if (locationData && locationData.url) {
         locationRules = `
 [ÖZEL DURUM — KONUM / ADRES / YOL TARİFİ]
-Misafir "konum", "lokasyon", "nerede", "adres", "nasıl gelirim", "yol tarifi", "harita", "ulaşım", "location", "directions", "where are you", "wie komme ich" gibi ifadeler kullanıyorsa:
+Misafir "konum", "lokasyon", "nerede", "adres", "nasıl gelirim", "yol tarifi", "harita", "ulaşım", "location", "directions", "where are you", "wie komme ich", "где находится", "où êtes-vous", "الموقع" gibi ifadeler kullanıyorsa:
   • isRequest: false döndür (BİLGİ isteği, hizmet talebi değil)
   • replyToUser'a SADECE şunu yaz (Misafirin diliyle!):
     ${locationData.description}
     📍 Harita: ${locationData.url}
-  • Başka hiçbir şey ekleme, resepsiyona yönlendirme.`;
+  • Başka hiçbir şey ekleme, resepsiyona yönlendirme.
+
+[ÖZEL DURUM — TEŞEKKÜR SONRASI LOKASYON TEKRARI ENGELLE]
+Eğer kullanıcı daha önce lokasyon almış ve şimdi "teşekkür ederim", "thank you", "спасибо", "danke", "merci", "شكراً" gibi bir teşekkür mesajı gönderiyorsa:
+  • İçinde "konum" veya "lokasyon" veya "location" kelimesi geçse bile TEKRAR lokasyon gönderme!
+  • Normal bir teşekkür yanıtı ver: "Rica ederim, iyi günler dilerim!" veya misafirin dilinde karşılık ver.
+  • isRequest: false döndür.`;
     }
 
     // ── REZERVASYON / ODA / ACENTE KURALI ───────────────────────────

@@ -26,4 +26,8 @@ ui-ux-pro-max-skill-main/
 **/node_modules/
 **/.next/
 
-.vercel
+# Hassas otel veriler
+Antigravity/_knowledge/credentials/
+Antigravity/_knowledge/api-anahtarlari.md
+setup_kemal_kuyucu.sql
+telegram-bot/.env

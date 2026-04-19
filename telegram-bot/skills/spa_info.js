@@ -4,26 +4,37 @@
  * SPA soruları için:
  *   1. Supabase hotel_settings → hotel_spa
  *   2. hotel_documents → SPA belgesi
- *   3. Yoksa sabit test metni
+ *   3. Yoksa sabit default metni
  */
 
 const SPA_DEFAULT_TEXT =
-`Bu bir test çalışması. Gerçek SPA bilgileri yüklendikten sonra buradan cevaplanacak.
+`💆 *SPA & Wellness Bölümü*
 
-Şu an için SPA hakkında bilgi almak için lütfen resepsiyonumuzu arayın:
-📞 +90 (850) 222 72 75`;
+SPA bölümümüz için masaj bilgileri, güzellik seansları ve diğer hizmetlerle ilgili dosyalarımızın yüklenmesini bekliyoruz.
+
+Dosyalarımız hazır olup yüklendikten sonra size detaylı bilgi vermekten memnuniyet duyarız.
+
+Şu an için SPA hakkında bilgi almak isterseniz resepsiyonumuzu arayabilirsiniz:
+📞 *+90 (850) 222 72 75*
+
+_The Green Park Gaziantep — Misafir Asistanı_`;
 
 /**
  * SPA sorusu mu?
  */
 const SPA_KEYWORDS = [
     'spa', 'masaj', 'massage', 'wellness', 'hamam', 'buhar', 'steam',
-    'terapi', 'therapy', 'relax', 'dinlenme', 'sağlık merkezi', 'sauna'
+    'terapi', 'therapy', 'relax', 'dinlenme', 'sağlık merkezi', 'sauna',
+    // Çok dilli SPA kelimeleri
+    'массаж', 'спа', 'сауна', 'хаммам',  // Rusça
+    'massage', 'bien-être', 'hammam',      // Fransızca
+    'Massage', 'Sauna', 'Dampfbad',        // Almanca
+    'مساج', 'سبا', 'حمام',                 // Arapça
 ];
 
 function isSpaQuestion(userText) {
     const lower = userText.toLowerCase();
-    return SPA_KEYWORDS.some(k => lower.includes(k));
+    return SPA_KEYWORDS.some(k => lower.includes(k.toLowerCase()));
 }
 
 /**
@@ -57,14 +68,13 @@ async function getSpaInfo(supabase) {
 
             if (!docErr && docs && docs.length > 0) {
                 console.log('[SPA] SPA belgesi bulundu:', docs[0].file_name);
-                // Belge var ama parse edilemiyor — test metni göster
                 return { source: 'document_exists', content: SPA_DEFAULT_TEXT };
             }
         } catch (e) { /* devam */ }
     }
 
-    // 3. Hiçbir şey yok → sabit test metni
-    console.log('[SPA] Belge yok, sabit test metni döndürülüyor.');
+    // 3. Hiçbir şey yok → sabit default metni
+    console.log('[SPA] Belge yok, sabit default metni döndürülüyor.');
     return { source: 'default', content: SPA_DEFAULT_TEXT };
 }
 

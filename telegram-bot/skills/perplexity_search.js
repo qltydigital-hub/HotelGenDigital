@@ -18,12 +18,12 @@ const HOTEL_LOCATION = {
     phone: '+90 (850) 222 72 75'
 };
 
-// ── Çevre Sorusu Anahtar Kelimeleri ──────────────────────────────────
+// ── ÇOK DİLLİ Çevre Sorusu Anahtar Kelimeleri ─────────────────────
 const SURROUNDINGS_KEYWORDS = [
     // Türkçe — çevre & yakın
     'yakın', 'yakında', 'civar', 'etraf', 'çevre', 'civarda',
     // Yemek & kafe
-    'restoran', 'restaurant', 'yemek', 'lokanta', 'kafe', 'cafe', 'kahve',
+    'restoran', 'lokanta', 'kafe', 'cafe', 'kahve',
     'akşam yemeği', 'öğle yemeği', 'kahvaltı yeri',
     // Gezi & kültür
     'gezi', 'gezilecek', 'görülecek', 'görülmesi gereken', 'turistik',
@@ -40,34 +40,67 @@ const SURROUNDINGS_KEYWORDS = [
     // İngilizce
     'nearby', 'around', 'close to', 'walking distance',
     'what to do', 'where to go', 'tourist', 'sightseeing', 'attraction',
-    'restaurant', 'museum', 'shopping', 'pharmacy', 'taxi', 'airport'
+    'restaurant', 'museum', 'shopping', 'pharmacy', 'taxi', 'airport',
+    // Rusça
+    'рядом', 'поблизости', 'рекомендации', 'куда пойти', 'что посмотреть',
+    'ресторан', 'музей', 'магазин', 'аптека', 'аэропорт', 'достопримечательность',
+    // Almanca
+    'in der nähe', 'empfehlung', 'wohin gehen', 'sehenswürdigkeit',
+    'einkaufen', 'apotheke', 'flughafen',
+    // Fransızca
+    'à proximité', 'près', 'recommandation', 'que faire', 'où aller',
+    'musée', 'pharmacie', 'aéroport',
+    // Arapça
+    'قريب', 'بالقرب', 'توصية', 'أين أذهب', 'ماذا أفعل',
+    'مطعم', 'متحف', 'صيدلية', 'مطار',
+    // İspanyolca
+    'cerca', 'cercano', 'recomendación', 'qué hacer', 'adónde ir',
+    'restaurante', 'museo', 'farmacia', 'aeropuerto'
 ];
 
 // Sadece lokasyon/adres soruları (Perplexity'ye gitmesin, DB'den alınsın)
 const LOC_ONLY_KEYWORDS = [
     'konum', 'lokasyon', 'adres', 'nasıl gelirim',
-    'yol tarifi', 'neredesiniz', 'harita linki'
+    'yol tarifi', 'neredesiniz', 'harita linki',
+    'location', 'address', 'how to get there', 'directions to hotel',
+    'местоположение', 'адрес отеля', 'как добраться до отеля',
+    'Standort', 'Hoteladresse',
+    'الموقع', 'عنوان الفندق'
 ];
 
-// Çevre içeriğini garantiye alan kelimeler (loci ile birlikte olsa bile Perplexity'ye yönlendir)
+// Çevre içeriğini garantiye alan kelimeler
 const SURROUNDINGS_OVERRIDE = [
     'restoran', 'kafe', 'müze', 'gezi', 'gezilecek',
     'yakın', 'nearby', 'yakında', 'civar', 'etraf', 'ne var', 'nereye',
-    'eczane', 'alışveriş', 'eğlence', 'turistik', 'tarihi'
+    'eczane', 'alışveriş', 'eğlence', 'turistik', 'tarihi',
+    'рядом', 'ресторан', 'музей', 'аптека',
+    'in der nähe', 'museum',
+    'à proximité', 'musée',
+    'قريب', 'مطعم', 'متحف',
+    'cerca', 'restaurante', 'museo'
 ];
 
 /**
+ * Kullanıcının dilini tespit eder.
+ */
+function detectLanguage(text) {
+    if (/[çğışöüÇĞİŞÖÜ]/.test(text)) return 'tr';
+    if (/[а-яА-ЯёЁ]/.test(text)) return 'ru';
+    if (/[äöüßÄÖÜ]/.test(text)) return 'de';
+    if (/[àâéèêëïîôùûüÿçœæ]/i.test(text)) return 'fr';
+    if (/[\u0600-\u06FF]/.test(text)) return 'ar';
+    if (/[áéíóúñ¿¡]/i.test(text)) return 'es';
+    return 'en';
+}
+
+/**
  * Kullanıcı mesajının çevre sorusu olup olmadığını kontrol eder.
- * Saf lokasyon soruları (adres/yol tarifi) dışarıda bırakılır.
  */
 function isSurroundingsQuestion(userText) {
     const lower = userText.toLowerCase();
-
-    // Çevre kelimesi var mı?
     const hasSurroundingsKeyword = SURROUNDINGS_KEYWORDS.some(k => lower.includes(k));
     if (!hasSurroundingsKeyword) return false;
 
-    // Saf lokasyon sorusu mu? (ve çevre içeriği YOK mu?)
     const isLocOnly = LOC_ONLY_KEYWORDS.some(k => lower.includes(k))
         && !SURROUNDINGS_OVERRIDE.some(k => lower.includes(k));
 
@@ -76,24 +109,31 @@ function isSurroundingsQuestion(userText) {
 
 /**
  * Perplexity sonar-pro ile gerçek zamanlı çevre araması yapar.
- * Key yoksa veya hata alırsa OpenAI GPT-4o ile fallback.
- *
- * @param {string} userText - Kullanıcı sorusu
- * @param {object} openaiClient - OpenAI istemcisi (fallback için)
- * @returns {{ source: string, content: string } | null}
  */
 async function searchSurroundings(userText, openaiClient) {
     const perplexityKey = process.env.PERPLEXITY_API_KEY;
+    const lang = detectLanguage(userText);
 
-    // ── 1. PERPLEXITY sonar-pro (Birincil Kaynak) ──────────────────────
+    const langInstructions = {
+        tr: 'Türkçe yaz.',
+        en: 'Respond in English.',
+        ru: 'Отвечай на русском языке.',
+        de: 'Antworte auf Deutsch.',
+        fr: 'Réponds en français.',
+        ar: '.أجب باللغة العربية',
+        es: 'Responde en español.'
+    };
+    const langNote = langInstructions[lang] || langInstructions.en;
+
+    // ── 1. PERPLEXITY sonar-pro ──────────────────────────────────────
     if (perplexityKey && perplexityKey.length > 10) {
         try {
-            console.log(`[PERPLEXITY] 🔍 sonar-pro araması başlatıldı: "${userText.substring(0, 60)}"`);
+            console.log(`[PERPLEXITY] 🔍 sonar-pro araması (dil: ${lang}): "${userText.substring(0, 60)}"`);
 
             const response = await axios.post(
                 'https://api.perplexity.ai/chat/completions',
                 {
-                    model: 'sonar-pro',          // En güçlü, web erişimli model
+                    model: 'sonar-pro',
                     messages: [
                         {
                             role: 'system',
@@ -103,7 +143,7 @@ Otel Adresi: ${HOTEL_LOCATION.address}
 
 GÖREV: Misafirin sorusuna göre otel çevresindeki gerçek, güncel yerleri bul ve listele.
 Yanıt Kuralları:
-- Türkçe yaz (misafir İngilizce yazdıysa İngilizce yanıtla)
+- ${langNote}
 - En fazla 5 somut öneri ver
 - Her öneriye 1 satır kısa açıklama ekle
 - Varsa mesafe belirt (örn: "~500m")
@@ -116,11 +156,11 @@ Yanıt Kuralları:
                         }
                     ],
                     max_tokens: 600,
-                    temperature: 0.1,           // Düşük sıcaklık = tutarlı, güvenilir
+                    temperature: 0.1,
                     return_images: false,
                     return_related_questions: false,
                     search_recency_filter: 'month',
-                    search_domain_filter: [],   // Tüm domainler
+                    search_domain_filter: [],
                 },
                 {
                     headers: {
@@ -128,16 +168,15 @@ Yanıt Kuralları:
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    timeout: 12000              // 12sn timeout
+                    timeout: 12000
                 }
             );
 
-            // Citation kaynaklarını temizle (misafir için gereksiz)
             let result = response.data?.choices?.[0]?.message?.content || '';
-            result = result.replace(/\[\d+\]/g, '').trim(); // [1], [2] gibi referansları kaldır
+            result = result.replace(/\[\d+\]/g, '').trim();
 
             if (result && result.length > 20) {
-                console.log(`✅ [PERPLEXITY] sonar-pro yanıt: ${result.length} karakter`);
+                console.log(`✅ [PERPLEXITY] sonar-pro yanıt: ${result.length} karakter (dil: ${lang})`);
                 return { source: 'perplexity', content: result };
             }
         } catch (e) {
@@ -151,7 +190,7 @@ Yanıt Kuralları:
     // ── 2. OpenAI GPT-4o Fallback ──────────────────────────────────────
     if (openaiClient) {
         try {
-            console.log('[PERPLEXITY_FALLBACK] GPT-4o ile Gaziantep bilgisi üretiliyor...');
+            console.log(`[PERPLEXITY_FALLBACK] GPT-4o ile Gaziantep bilgisi (dil: ${lang})...`);
             const response = await openaiClient.chat.completions.create({
                 model: 'gpt-4o',
                 messages: [
@@ -162,6 +201,7 @@ Yanıt Kuralları:
 Otel: ${HOTEL_LOCATION.address}
 Gaziantep hakkında kapsamlı bilgin var.
 Misafirin sorusuna 5 somut öneri ile kısa yanıt ver.
+${langNote}
 Uydurmak yerine genel ve güvenilir bilgi ver.
 Markdown kullan.`
                     },

@@ -249,9 +249,32 @@ async function processMessageWithAI(userText, session = null) {
     let ibanData = null;
 
     if (supabase) {
-        const locKeywords   = ['konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol'];
-        const agencyKeywords = ['rezervasyon', 'acenta', 'acente', 'rezervasyon link', 'booking', 'fiyat', 'yer ayırt', 'oda ayırt', 'oda ayirt'];
-        const ibanKeywords  = ['iban', 'havale', 'eft', 'banka hesab', 'hesap numar', 'para gönder', 'transfer'];
+        const locKeywords = [
+            // Türkçe
+            'konum', 'lokasyon', 'nerede', 'adres', 'nasıl gelirim', 'navigasyon', 'harita', 'yol tarifi', 'ulaşım', 'neredesiniz', 'nasıl gelir', 'yol',
+            // İngilizce
+            'location', 'where', 'directions', 'map', 'address', 'how to get', 'how do i get',
+            // Almanca
+            'wo', 'wie komme', 'adresse', 'standort', 'wegbeschreibung', 'anfahrt',
+            // Rusça
+            'местоположение', 'адрес', 'как добраться', 'где находится', 'где',
+            // Fransızca
+            'où', 'comment venir', 'emplacement', 'itinéraire',
+            // Arapça
+            'الموقع', 'العنوان', 'كيف أصل', 'أين',
+            // İspanyolca
+            'ubicación', 'dirección', 'cómo llegar', 'dónde'
+        ];
+        const agencyKeywords = [
+            'rezervasyon', 'acenta', 'acente', 'rezervasyon link', 'booking', 'fiyat', 'yer ayırt', 'oda ayırt', 'oda ayirt',
+            'reservation', 'reserve', 'room', 'price',
+            'Reservierung', 'Zimmer', 'Preis',
+            'бронирование', 'номер', 'цена',
+            'réservation', 'chambre', 'prix',
+            'حجز', 'غرفة', 'سعر',
+            'reserva', 'habitación', 'precio'
+        ];
+        const ibanKeywords  = ['iban', 'havale', 'eft', 'banka hesab', 'hesap numar', 'para gönder', 'transfer', 'bank account', 'wire transfer'];
         const lower         = userText.toLowerCase();
 
         const locMatched    = locKeywords.find(k => lower.includes(k));
@@ -260,11 +283,35 @@ async function processMessageWithAI(userText, session = null) {
 
         // ─ İntent filtresi: teşekkür/onay için lokasyon tetikleme ─
         const thankYouPatterns = [
+            // Türkçe
             'teşekkür', 'tesekkur', 'sağ ol', 'sag ol', 'tamam', 'anladım', 'harika',
-            'güzel', 'süper', 'mükemmel', 'aldım', 'gördüm', 'ok', '👍', '🙏', '❤️', '😊'
+            'güzel', 'süper', 'mükemmel', 'aldım', 'gördüm',
+            // İngilizce
+            'ok', 'thank', 'thanks', 'thank you', 'got it', 'great', 'perfect', 'noted',
+            // Almanca
+            'danke', 'danke schön', 'vielen dank', 'alles klar', 'verstanden',
+            // Rusça
+            'спасибо', 'благодарю', 'понял', 'понятно', 'хорошо',
+            // Fransızca
+            'merci', 'merci beaucoup', 'compris', 'parfait', "d'accord",
+            // Arapça
+            'شكرا', 'شكراً', 'تمام', 'حسناً',
+            // İspanyolca
+            'gracias', 'entendido', 'perfecto',
+            // Emoji
+            '👍', '🙏', '❤️', '😊'
+        ];
+        const requestWords = [
+            'nerede', 'nasıl', 'hangi', 'ver', 'gönder', 'istiyorum', 'lazım', '?',
+            'where', 'how', 'send', 'give', 'show', 'can you', 'could you', 'please',
+            'wo', 'wie', 'können', 'bitte',
+            'где', 'как', 'пожалуйста', 'покажите',
+            'où', 'comment', 'pouvez', 'envoyez',
+            'أين', 'كيف', 'من فضلك',
+            'dónde', 'cómo', 'por favor'
         ];
         const isThankYouOnly = thankYouPatterns.some(p => lower.includes(p))
-            && !['nerede', 'nasıl', 'hangi', 'ver', 'gönder', 'istiyorum', 'lazım', '?'].some(q => lower.includes(q));
+            && !requestWords.some(q => lower.includes(q));
 
         if (locMatched && !isThankYouOnly) {
             console.log(`[LOCATION_TRIGGER] Keyword: "${locMatched}"`);
@@ -1572,16 +1619,26 @@ async function handleText(ctx) {
     // ── 2. OTel İMKANLARI SORUSU? → hotel_facilities skill ─────────────────
     // NOT: Yemek/restoran soruları hem burayı HEM alerji kontrolünü tetikler.
     if (isFoodQuestion(textMsg)) {
-        console.log('[FOOD] Yemek/F&B sorusu tespit edildi → alerji kontrolü yapılacak.');
-        // Alerji sorusu sorulacak mı? Sadece session dogrulanmışsa ve alerji bilgisi yoksa.
-        const session = guestSessions[chatId];
-        if (session && session.state === 'complete' && session.name && !session.allergyAsked) {
-            session.allergyAsked = true; // Bir kez sor
-            const allergyQ = `Memnuniyetiniz için kısa bir soru: Herhangi bir gıda alerjiniz var mı? 🍽️\n_(Varsa lütfen belirtin, mutfağımızı önceden bilgilendirelim.)_`;
-            await ctx.replyWithMarkdown(allergyQ);
-            await saveMessageToDashboard(chatId, 'assistant', allergyQ);
-            console.log(`✅ [FOOD_ALLERGY] Alerji sorusu soruldu → chatId: ${chatId}`);
-            // Asıl soruya da cevap ver (AI ile devam et)
+        const lowerFood = textMsg.toLowerCase();
+        // OTEL DIŞI restoran önerisi mi? (Perplexity'ye yönlenecek)
+        const externalKeywords = ['yakın', 'yakında', 'civar', 'dışarı', 'şehir', 'bölge', 'öneri', 'tavsiye', 'nearby', 'around', 'outside', 'recommend', 'рядом', 'поблизости', 'à proximité', 'cerca', 'قريب'];
+        const isExternalFood = externalKeywords.some(k => lowerFood.includes(k));
+
+        if (isExternalFood) {
+            console.log('[FOOD_EXTERNAL] Otel dışı restoran önerisi → alerji protokolü ATLANIR.');
+            // Otel dışı sorularda alerji sorusu SORMA, sadece AI akışına bırak
+        } else {
+            console.log('[FOOD_INTERNAL] Otel içi yemek sorusu → alerji kontrolü yapılacak.');
+            // Alerji sorusu sorulacak mı? Sadece session dogrulanmışsa ve alerji bilgisi yoksa.
+            const session = guestSessions[chatId];
+            if (session && session.state === 'complete' && session.name && !session.allergyAsked) {
+                session.allergyAsked = true; // Bir kez sor
+                const allergyQ = `Memnuniyetiniz için kısa bir soru: Herhangi bir gıda alerjiniz var mı? 🍽️\n_(Varsa lütfen belirtin, mutfağımızı önceden bilgilendirelim.)_`;
+                await ctx.replyWithMarkdown(allergyQ);
+                await saveMessageToDashboard(chatId, 'assistant', allergyQ);
+                console.log(`✅ [FOOD_ALLERGY] Alerji sorusu soruldu → chatId: ${chatId}`);
+                // Asıl soruya da cevap ver (AI ile devam et)
+            }
         }
     }
 
@@ -1678,6 +1735,99 @@ async function handleVoice(ctx) {
 }
 bot.on('voice', handleVoice);
 
+// ── Fotoğraf Handler (Teknik servis görsel iletme) ────────────────────
+async function handlePhoto(ctx) {
+    const chatId = ctx.chat.id;
+    const caption = ctx.message.caption || '';
+    console.log(`📸 [${chatId}] Fotoğraf alındı. Caption: "${caption}"`);
+
+    // Oturumu kontrol et
+    if (!guestSessions[chatId]) {
+        const restored = await restoreSessionFromDB(chatId);
+        if (restored) {
+            guestSessions[chatId] = restored;
+        } else {
+            guestSessions[chatId] = { name: null, room: null, state: 'new', pendingAI: null, failedAttempts: 0 };
+        }
+    }
+    const session = guestSessions[chatId];
+
+    // Misafir doğrulanmamışsa bilgi iste
+    if (session.state !== 'complete' || !session.name || !session.room) {
+        session.pendingPhoto = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+        session.pendingPhotoCaption = caption;
+        session.state = 'awaiting_info';
+        session.pendingAI = {
+            isRequest: true,
+            department: 'TEKNIK',
+            turkishSummary: `Fotoğraflı arıza bildirimi: ${caption || 'Açıklama yok'}`,
+            replyToUser: 'Fotoğrafınızı aldım! Talebinizi iletebilmem için birkaç bilgiye ihtiyacım var. 🙏'
+        };
+        await askForGuestInfo(ctx, 1, 'both');
+        return;
+    }
+
+    // Doğrulanmış misafir → fotoğrafı departmana ilet
+    await ctx.sendChatAction('typing');
+    const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+
+    // Departman tespiti (caption'dan veya varsayılan TEKNIK)
+    let targetDept = 'TEKNIK';
+    if (caption) {
+        const lowerCap = caption.toLowerCase();
+        if (['temizlik', 'havlu', 'çarşaf', 'yastık', 'housekeeping'].some(k => lowerCap.includes(k))) {
+            targetDept = 'HOUSEKEEPING';
+        } else if (['yemek', 'restoran', 'sipariş', 'food', 'room service'].some(k => lowerCap.includes(k))) {
+            targetDept = 'F&B';
+        }
+    }
+
+    // Departman grubuna fotoğrafı ilet
+    try {
+        const _cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'skills', 'telegram_config.json'), 'utf8'));
+        const currentBotToken = ctx.telegram.token || botToken;
+        let targetChatId = null;
+        let senderBot = bot;
+
+        if (_cfg.managers) {
+            for (const [, mgr] of Object.entries(_cfg.managers)) {
+                if (mgr.botToken === currentBotToken && mgr.departments && mgr.departments[targetDept]) {
+                    targetChatId = mgr.departments[targetDept].chatId;
+                    if (mgr.botToken !== botToken) {
+                        const matched = secondaryBots.find(sb => sb.telegram && sb.telegram.token === mgr.botToken);
+                        if (matched) senderBot = matched;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (targetChatId) {
+            const photoMsg = `📸 *FOTOĞRAFLI BİLDİRİM*\n👤 *Misafir:* ${session.name}\n🚪 *Oda:* ${session.room}\n📝 *Açıklama:* ${caption || 'Açıklama eklenmedi'}\n🏢 *Departman:* ${getDepartmentDisplayName(targetDept)}`;
+            await senderBot.telegram.sendPhoto(targetChatId, photoFileId, {
+                caption: photoMsg,
+                parse_mode: 'Markdown'
+            });
+            console.log(`✅ [PHOTO] Fotoğraf iletildi → ${targetDept} (chatId: ${targetChatId})`);
+
+            const confirmMsg = `📸 Fotoğrafınız ve bildiriminiz ${getDepartmentDisplayName(targetDept)} departmanına iletildi. En kısa sürede ilgilenilecektir! 🙏`;
+            await ctx.reply(confirmMsg);
+            await saveMessageToDashboard(chatId, 'assistant', confirmMsg);
+        } else {
+            // Fallback: caption varsa normal mesaj olarak işle
+            if (caption) {
+                await handleIncomingMessage(ctx, caption);
+            } else {
+                await ctx.reply('📸 Fotoğrafınızı aldım. Lütfen sorununuzu kısaca açıklayınız, hemen ilgili departmana ileteceğim. 🙏');
+            }
+        }
+    } catch (e) {
+        console.error('[PHOTO_HANDLER] Hata:', e.message);
+        await ctx.reply('Fotoğrafınız alındı ancak iletim sırasında bir sorun oluştu. Lütfen sorununuzu yazılı olarak da bildiriniz. 🙏');
+    }
+}
+bot.on('photo', handlePhoto);
+
 // ── İKİNCİL BOTLARA HANDLERLARI KAYDET ───────────────────────────────
 // Tüm secondary bot'lara aynı handler'ları bağla
 for (const secBot of secondaryBots) {
@@ -1742,6 +1892,7 @@ for (const secBot of secondaryBots) {
     secBot.command('harita', handleHarita);
     secBot.on('text', handleText);
     secBot.on('voice', handleVoice);
+    secBot.on('photo', handlePhoto);
     console.log(`✅ [MULTI-BOT] ${secBot._managerName} bot handler'ları kaydedildi.`);
 }
 

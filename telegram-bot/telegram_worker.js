@@ -1,4 +1,4 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
+﻿require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 const { Telegraf, Markup } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
@@ -69,6 +69,9 @@ const guestSessions = {};
 
 // Resepsiyon not ekleme durumu: chatId -> { ticketId, department, guestName, guestRoom }
 const receptionNoteStates = {};
+
+// Resepsiyon teyit bekleme deposu: chatId -> { name, room, allergies, pendingAI, timer, lang }
+const pendingVerifications = {};
 
 // ── Servis Talebi Anahtar Kelime Algılayıcı (GÜVENLİK AĞI) ───────────
 // AI isRequest:false döndürse bile bu kelimeler varsa talebi yakalar
@@ -143,6 +146,130 @@ function getDepartmentDisplayName(dept) {
         'SPA': 'SPA'
     };
     return names[dept] || dept;
+}
+
+// ── Dil Tespiti (6 Dil) ────────────────────────────────────────────────
+// Mesajın diline göre 'TR' | 'EN' | 'DE' | 'RU' | 'AR' | 'FR' döner
+function detectLanguage(text) {
+    if (!text) return 'TR';
+    const t = text.toLowerCase();
+    // Arapça unicode bloğu
+    if (/[\u0600-\u06FF]/.test(text)) return 'AR';
+    // Kiril (Rusça)
+    if (/[\u0400-\u04FF]/.test(text)) return 'RU';
+    // Türkçe'ye özgü karakterler
+    if (/[çğışöüÇĞİŞÖÜ]/.test(text)) return 'TR';
+    // Almanca'ya özgü karakterler
+    if (/[äöüÄÖÜß]/.test(text)) return 'DE';
+    // Fransızca'ya özgü karakterler
+    if (/[àâäéèêëîïôùûüœæç]/i.test(text)) return 'FR';
+    // İngilizce anahtar kelimeler (Latin alfabe + İngilizce kalıplar)
+    const enWords = ['i need', 'i want', 'please', 'could you', 'can you', 'my room', 'room number', 'i am', "i'm", 'hello', 'hi ', 'good morning', 'good evening', 'thank'];
+    if (enWords.some(w => t.includes(w))) return 'EN';
+    // Almanca kelimeler
+    const deWords = ['ich ', 'bitte', 'danke', 'zimmer', 'brauche', 'guten', 'hallo', 'können sie'];
+    if (deWords.some(w => t.includes(w))) return 'DE';
+    // Fransızca kelimeler
+    const frWords = ['je ', 'vous ', 'merci', 'bonjour', "s'il vous plaît", 'chambre', 'pouvez'];
+    if (frWords.some(w => t.includes(w))) return 'FR';
+    // Varsayılan: Latin alfabe ağırlıklıysa İngilizce, değilse Türkçe
+    const latinRatio = (text.match(/[a-zA-Z]/g) || []).length / Math.max(text.length, 1);
+    return latinRatio > 0.5 ? 'EN' : 'TR';
+}
+
+// ── Çok Dilli Mesajlar ──────────────────────────────────────────────────
+const MULTILANG_MESSAGES = {
+    askBoth: {
+        TR: `Talebinizi hızlıca iletebilmem için birkaç bilgiye ihtiyacım var 🙏\n\n1️⃣ *Oda Numaranız*\n2️⃣ *Adınız Soyadınız*\n\n_(Örnek: Mehmet Kaya, Oda 412)_`,
+        EN: `To forward your request quickly, I need a few details 🙏\n\n1️⃣ *Your Room Number*\n2️⃣ *Your Full Name*\n\n_(Example: John Smith, Room 412)_`,
+        DE: `Um Ihre Anfrage schnell weiterzuleiten, benötige ich einige Angaben 🙏\n\n1️⃣ *Ihre Zimmernummer*\n2️⃣ *Ihr vollständiger Name*\n\n_(Beispiel: Hans Müller, Zimmer 412)_`,
+        RU: `Чтобы быстро передать вашу просьбу, мне нужны несколько данных 🙏\n\n1️⃣ *Номер вашего номера*\n2️⃣ *Ваше полное имя*\n\n_(Пример: Иван Иванов, номер 412)_`,
+        AR: `لتوجيه طلبك بسرعة، أحتاج إلى بعض المعلومات 🙏\n\n1️⃣ *رقم غرفتك*\n2️⃣ *اسمك الكامل*\n\n_(مثال: أحمد محمد، غرفة 412)_`,
+        FR: `Pour traiter votre demande rapidement, j'ai besoin de quelques informations 🙏\n\n1️⃣ *Votre numéro de chambre*\n2️⃣ *Votre nom complet*\n\n_(Exemple : Jean Dupont, chambre 412)_`,
+    },
+    askName: {
+        TR: `Teşekkürler, oda numaranızı aldım! 🙏\n\nŞimdi *adınızı ve soyadınızı* da yazabilir misiniz?\n\n_(Örnek: Mehmet Kaya)_`,
+        EN: `Thank you, I have your room number! 🙏\n\nCould you also provide your *full name*?\n\n_(Example: John Smith)_`,
+        DE: `Danke, ich habe Ihre Zimmernummer! 🙏\n\nKönnten Sie auch Ihren *vollständigen Namen* angeben?\n\n_(Beispiel: Hans Müller)_`,
+        RU: `Спасибо, я записал номер вашего номера! 🙏\n\nМогли бы вы также указать ваше *полное имя*?\n\n_(Пример: Иван Иванов)_`,
+        AR: `شكراً، لقد حصلت على رقم غرفتك! 🙏\n\nهل يمكنك أيضاً إخباري *باسمك الكامل*؟\n\n_(مثال: أحمد محمد)_`,
+        FR: `Merci, j'ai votre numéro de chambre ! 🙏\n\nPourriez-vous également indiquer votre *nom complet* ?\n\n_(Exemple : Jean Dupont)_`,
+    },
+    askRoom: {
+        TR: `Teşekkürler! 🙏\n\nTablebinizi iletebilmem için *oda numaranızı* da yazabilir misiniz?\n\n_(Örnek: 412)_`,
+        EN: `Thank you! 🙏\n\nCould you also provide your *room number*?\n\n_(Example: 412)_`,
+        DE: `Danke! 🙏\n\nKönnten Sie auch Ihre *Zimmernummer* angeben?\n\n_(Beispiel: 412)_`,
+        RU: `Спасибо! 🙏\n\nМогли бы вы также указать *номер вашего номера*?\n\n_(Пример: 412)_`,
+        AR: `شكراً! 🙏\n\nهل يمكنك أيضاً إخباري *برقم غرفتك*؟\n\n_(مثال: 412)_`,
+        FR: `Merci ! 🙏\n\nPourriez-vous également indiquer votre *numéro de chambre* ?\n\n_(Exemple : 412)_`,
+    },
+    retryFormat: {
+        TR: `Üzgünüm, bilgileri anlayamadım 😊 Lütfen şu formatta yazabilir misiniz?\n\n*Ad Soyad, Oda [numara]*\n_(Örnek: Mehmet Kaya, Oda 412)_`,
+        EN: `I'm sorry, I couldn't understand the details 😊 Could you write in this format?\n\n*Full Name, Room [number]*\n_(Example: John Smith, Room 412)_`,
+        DE: `Entschuldigung, ich konnte die Angaben nicht verstehen 😊 Könnten Sie in diesem Format schreiben?\n\n*Vorname Nachname, Zimmer [Nummer]*\n_(Beispiel: Hans Müller, Zimmer 412)_`,
+        RU: `Извините, я не смог понять данные 😊 Не могли бы вы написать в таком формате?\n\n*Имя Фамилия, Номер [цифра]*\n_(Пример: Иван Иванов, Номер 412)_`,
+        AR: `آسف، لم أتمكن من فهم التفاصيل 😊 هل يمكنك الكتابة بهذا الشكل؟\n\n*الاسم الكامل، غرفة [رقم]*\n_(مثال: أحمد محمد، غرفة 412)_`,
+        FR: `Désolé, je n'ai pas compris les informations 😊 Pourriez-vous écrire dans ce format ?\n\n*Nom Prénom, chambre [numéro]*\n_(Exemple : Jean Dupont, chambre 412)_`,
+    },
+    callReception: {
+        TR: `Maalesef bilgilerinizi doğrulayamıyoruz. 😔\nLütfen resepsiyonumuzu arayarak destek alabilirsiniz:\n📞 *+90 (850) 222 72 75*\n\n_Resepsiyonumuz 7/24 hizmetinizdedir._`,
+        EN: `Unfortunately, we were unable to verify your information. 😔\nPlease call our reception for assistance:\n📞 *+90 (850) 222 72 75*\n\n_Our reception is available 24/7._`,
+        DE: `Leider konnten wir Ihre Informationen nicht verifizieren. 😔\nBitte rufen Sie unsere Rezeption an:\n📞 *+90 (850) 222 72 75*\n\n_Unsere Rezeption ist rund um die Uhr erreichbar._`,
+        RU: `К сожалению, мы не смогли подтвердить ваши данные. 😔\nПожалуйста, позвоните на нашу стойку регистрации:\n📞 *+90 (850) 222 72 75*\n\n_Наша стойка работает круглосуточно._`,
+        AR: `للأسف، لم نتمكن من التحقق من معلوماتك. 😔\nيرجى الاتصال بالاستقبال للمساعدة:\n📞 *+90 (850) 222 72 75*\n\n_الاستقبال متاح 24/7._`,
+        FR: `Malheureusement, nous n'avons pas pu vérifier vos informations. 😔\nVeuillez appeler notre réception pour obtenir de l'aide :\n📞 *+90 (850) 222 72 75*\n\n_Notre réception est disponible 24h/24._`,
+    },
+    // Eşleşme yok — resepsiyonsuz senaryo (personel/grup bulunamadı)
+    mismatchNoReception: {
+        TR: `⚠️ Bilgilerinizi sistemimizle doğrulayamadık.\n\nEğer arkadaşlarınız veya aile üyelerinizle oda değişikliği yaptıysanız kayıtlarda karışıklık olmuş olabilir. Lütfen resepsiyonumuzu arayarak hemen düzeltilmesini sağlayın:\n📞 *+90 (850) 222 72 75*`,
+        EN: `⚠️ We could not verify your information in our system.\n\nIf you have swapped rooms with friends, family members, or colleagues, there may be a mix-up in our records. Please call our reception immediately to get it sorted:\n📞 *+90 (850) 222 72 75*`,
+        DE: `⚠️ Wir konnten Ihre Angaben in unserem System nicht verifizieren.\n\nFalls Sie mit Freunden oder Familienmitgliedern Zimmer getauscht haben, könnte es zu einer Verwechslung in unseren Unterlagen gekommen sein. Bitte rufen Sie sofort unsere Rezeption an:\n📞 *+90 (850) 222 72 75*`,
+        RU: `⚠️ Мы не смогли подтвердить ваши данные в нашей системе.\n\nЕсли вы поменялись номерами с друзьями или членами семьи, в наших записях могла возникнуть путаница. Пожалуйста, немедленно позвоните на стойку регистрации:\n📞 *+90 (850) 222 72 75*`,
+        AR: `⚠️ لم نتمكن من التحقق من معلوماتك في نظامنا.\n\nإذا كنت قد تبادلت الغرفة مع أصدقاء أو أفراد العائلة، فقد يكون هناك خلط في سجلاتنا. يرجى الاتصال باستقبالنا فوراً:\n📞 *+90 (850) 222 72 75*`,
+        FR: `⚠️ Nous n'avons pas pu vérifier vos informations dans notre système.\n\nSi vous avez échangé votre chambre avec des amis ou des membres de votre famille, il peut y avoir une confusion dans nos dossiers. Veuillez appeler immédiatement notre réception :\n📞 *+90 (850) 222 72 75*`,
+    },
+    // Teyit bekleniyor — resepsiyona mesaj gönderildi
+    awaitingVerify: {
+        TR: `⏳ Bilgileriniz resepsiyona iletildi. Birkaç dakika içinde teyit alarak talebinizi işleme alacağız.\n\nLütfen bekleyin... 🙏`,
+        EN: `⏳ Your information has been forwarded to our reception. We will verify and process your request within a few minutes.\n\nPlease wait... 🙏`,
+        DE: `⏳ Ihre Angaben wurden an unsere Rezeption weitergeleitet. Wir werden Ihre Anfrage innerhalb weniger Minuten prüfen und bearbeiten.\n\nBitte warten Sie... 🙏`,
+        RU: `⏳ Ваши данные переданы на стойку регистрации. Мы проверим и обработаем ваш запрос в течение нескольких минут.\n\nПожалуйста, подождите... 🙏`,
+        AR: `⏳ تم إرسال معلوماتك إلى الاستقبال. سنتحقق ونعالج طلبك في غضون دقائق قليلة.\n\nالرجاء الانتظار... 🙏`,
+        FR: `⏳ Vos informations ont été transmises à notre réception. Nous allons vérifier et traiter votre demande dans quelques minutes.\n\nVeuillez patienter... 🙏`,
+    },
+    // Resepsiyon reddi
+    verifyRejected: {
+        TR: `⚠️ Bilgileriniz sistemimizde kayıtlı olanlarla eşleşmedi.\n\nEğer arkadaşlarınız veya aile üyelerinizle oda değişikliği yaptıysanız kayıtlarda karışıklık olmuş olabilir. Lütfen resepsiyonumuzu arayarak hemen düzeltilmesini sağlayın:\n📞 *+90 (850) 222 72 75*`,
+        EN: `⚠️ Your details did not match our records.\n\nIf you have swapped rooms with friends, family members, or colleagues, there may be a mix-up in our records. Please call our reception immediately:\n📞 *+90 (850) 222 72 75*`,
+        DE: `⚠️ Ihre Angaben stimmen nicht mit unseren Unterlagen überein.\n\nFalls Sie mit Freunden oder Familienmitgliedern Zimmer getauscht haben, könnte eine Verwechslung vorliegen. Bitte rufen Sie sofort unsere Rezeption an:\n📞 *+90 (850) 222 72 75*`,
+        RU: `⚠️ Ваши данные не совпадают с нашими записями.\n\nЕсли вы поменялись номерами с друзьями или членами семьи, в наших записях могла возникнуть путаница. Пожалуйста, немедленно позвоните на регистрацию:\n📞 *+90 (850) 222 72 75*`,
+        AR: `⚠️ لم تتطابق بياناتك مع سجلاتنا.\n\nإذا كنت قد تبادلت الغرفة مع أصدقاء أو أفراد عائلتك، فقد يكون هناك خلط. يرجى الاتصال باستقبالنا فوراً:\n📞 *+90 (850) 222 72 75*`,
+        FR: `⚠️ Vos informations ne correspondent pas à nos dossiers.\n\nSi vous avez échangé votre chambre avec des amis ou des membres de votre famille, il pourrait y avoir une confusion. Veuillez appeler notre réception immédiatement :\n📞 *+90 (850) 222 72 75*`,
+    },
+    // Teyit zaman aşımı
+    verifyTimeout: {
+        TR: `⚠️ Resepsiyondan zamanında yanıt alınamadı.\n\nEğer arkadaşlarınız veya aile üyelerinizle oda değişikliği yaptıysanız kayıtlarda karışıklık olmuş olabilir. Lütfen resepsiyonumuzu arayarak hemen düzeltilmesini sağlayın:\n📞 *+90 (850) 222 72 75*`,
+        EN: `⚠️ We did not receive a timely response from reception.\n\nIf you have swapped rooms with friends or family members, there may be a mix-up in our records. Please call our reception immediately to get it sorted:\n📞 *+90 (850) 222 72 75*`,
+        DE: `⚠️ Wir haben keine rechtzeitige Antwort von der Rezeption erhalten.\n\nFalls Sie Zimmer getauscht haben, könnte eine Verwechslung vorliegen. Bitte rufen Sie sofort unsere Rezeption an:\n📞 *+90 (850) 222 72 75*`,
+        RU: `⚠️ Мы не получили своевременного ответа от стойки регистрации.\n\nЕсли вы поменялись номерами, в записях могла возникнуть путаница. Пожалуйста, срочно позвоните на стойку:\n📞 *+90 (850) 222 72 75*`,
+        AR: `⚠️ لم نتلقَ رداً في الوقت المناسب من الاستقبال.\n\nإذا كنت قد تبادلت الغرفة، فقد يكون هناك خلط. يرجى الاتصال باستقبالنا فوراً:\n📞 *+90 (850) 222 72 75*`,
+        FR: `⚠️ Nous n'avons pas reçu de réponse de la réception dans les délais impartis.\n\nSi vous avez échangé votre chambre, il peut y avoir une confusion. Veuillez appeler immédiatement notre réception :\n📞 *+90 (850) 222 72 75*`,
+    },
+    blockedCallReception: {
+        TR: `Talebiniz için lütfen resepsiyonumuzu arayın:\n📞 *+90 (850) 222 72 75*`,
+        EN: `For your request, please call our reception:\n📞 *+90 (850) 222 72 75*`,
+        DE: `Für Ihre Anfrage rufen Sie bitte unsere Rezeption an:\n📞 *+90 (850) 222 72 75*`,
+        RU: `По вашему запросу позвоните на нашу стойку регистрации:\n📞 *+90 (850) 222 72 75*`,
+        AR: `لطلبك، يرجى الاتصال باستقبالنا:\n📞 *+90 (850) 222 72 75*`,
+        FR: `Pour votre demande, veuillez appeler notre réception :\n📞 *+90 (850) 222 72 75*`,
+    },
+};
+
+// Dil koduna göre çok dilli mesaj getir (fallback: TR)
+function getLangMsg(key, lang) {
+    const msgs = MULTILANG_MESSAGES[key];
+    if (!msgs) return '';
+    return msgs[lang] || msgs['TR'];
 }
 
 // Sahte onay kelime listesi (KATMAN 2.5 için)
@@ -1009,42 +1136,23 @@ _(Örn: "Departmana ulaşıldı, ilgileniliyor.")_`;
     await ctx.reply(formMsg, { parse_mode: 'Markdown' });
 });
 
-// ── Misafir bilgisi sor ───────────────────────────────────────────────
+// ── Misafir bilgisi sor (ÇOK DİLLİ) ─────────────────────────────────
 // missingField: 'both' | 'name' | 'room' — ne eksik olduğunu belirtir
-async function askForGuestInfo(ctx, attempt = 1, missingField = 'both') {
+// lang: 'TR' | 'EN' | 'DE' | 'RU' | 'AR' | 'FR'
+async function askForGuestInfo(ctx, attempt = 1, missingField = 'both', lang = 'TR') {
     let msg;
     if (attempt === 1) {
         if (missingField === 'name') {
-            msg = `Teşekkürler, oda numaranızı aldım! 🙏
-
-Şimdi talebinizi iletebilmem için *isim ve soyisminizi* de yazabilir misiniz?
-
-_(Örnek: Mehmet Kaya)_`;
+            msg = getLangMsg('askName', lang);
         } else if (missingField === 'room') {
-            msg = `Teşekkürler! 🙏
-
-Talebinizi iletebilmem için *oda numaranızı* da yazabilir misiniz?
-
-_(Örnek: 412)_`;
+            msg = getLangMsg('askRoom', lang);
         } else {
-            msg = `Talebinizi hızlıca iletebilmem için birkaç bilgiye ihtiyacım var 🙏
-
-1️⃣ *Oda Numaranız*
-2️⃣ *Adınız Soyadınız*
-
-_(Örnek: Mehmet Kaya, Oda 412)_`;
+            msg = getLangMsg('askBoth', lang);
         }
     } else if (attempt === 2) {
-        msg = `Üzgünüm, bilgileri anlayamadım 😊 Lütfen şu formatta yazabilir misiniz?
-
-*Ad Soyad, Oda [numara]*
-_(Örnek: Mehmet Kaya, Oda 412)_`;
+        msg = getLangMsg('retryFormat', lang);
     } else {
-        msg = `Maalesef bilgilerinizi doğrulayamıyoruz. 😔
-Lütfen resepsiyonumuzu arayarak destek alabilirsiniz:
-📞 *+90 (850) 222 72 75*
-
-_Resepsiyonumuz 7/24 hizmetinizdedir._`;
+        msg = getLangMsg('callReception', lang);
     }
     await ctx.replyWithMarkdown(msg);
     await saveMessageToDashboard(ctx.chat.id, 'assistant', msg);
@@ -1146,6 +1254,13 @@ _Bu not yönetim raporlarında görünecektir._`
     }
     let session = guestSessions[chatId];
 
+
+    // Dil tespiti: her mesajda kullanicinin dilini guncelle
+    const detectedLang = detectLanguage(userText);
+    if (!session.lang || session.lang === 'TR') {
+        session.lang = detectedLang;
+    }
+    const guestLang = session.lang || 'TR';
     // Misafir çıkış tarihi geçmişse oturumu sıfırla
     if (session.state === 'complete' && session.checkout_date) {
         const checkoutDate = new Date(session.checkout_date);
@@ -1223,49 +1338,117 @@ _Bu not yönetim raporlarında görünecektir._`
             // In-House Doğrulaması
             const validation = await validateGuestInHouse(resolvedName, resolvedRoom);
             
+
             if (!validation.valid) {
-                session.failedAttempts++;
-                // Kısmi bilgileri temizle
+                // K\u0131smi bilgileri temizle
                 delete session.partialName;
                 delete session.partialRoom;
 
-                // ── EŞLEŞME YOK → RESEPSİYONA ACİL BİLDİRİM ──────────
-                // Her başarısız doğrulamada resepsiyonu bilgilendir
+                const lang = session.lang || 'TR';
+
+                // \u2500\u2500 E\u015eLEME YOK \u2192 RESEPS\u0130YONA TEYI\u0130T \u0130STE\u011e\u0130 G\u00d6NDER \u2500\u2500\u2500\u2500\u2500\u2500
+                console.warn(`\u26a0\ufe0f [DO\u011eRULAMA UYDE\u015eMEZ] ${resolvedName} / Oda ${resolvedRoom} \u2192 Resepsiyona teyit g\u00f6nderiliyor.`);
+
+                // Resepsiyon personeli veya grubunu bul
+                let receptionTargets = [];
                 if (supabase) {
                     const { data: recPersonnel } = await supabase.from('hotel_personnel')
                         .select('*').eq('department', 'RESEPSIYON').eq('is_active', true);
                     if (recPersonnel && recPersonnel.length > 0) {
-                        const urgency = session.failedAttempts >= 3 ? '🚨 ACİL' : '⚠️ BİLGİ';
-                        const infoMsg = `${urgency} *MİSAFİR DOĞRULAMA BAŞARISIZ*
-Bir kullanıcının bilgileri In-House listesiyle eşleşmedi.
-👤 *Denenen Ad:* ${resolvedName}
-🚪 *Denenen Oda:* ${resolvedRoom}
-💬 *Platform ID:* ${chatId}
-🔄 *Deneme:* ${session.failedAttempts}/3
-
-_Lütfen In-House verilerinizi kontrol ediniz._`;
-                        for (const rec of recPersonnel) {
-                            if (rec.platform.toUpperCase() === 'TELEGRAM') {
-                                try { await bot.telegram.sendMessage(rec.contact_id, infoMsg, { parse_mode: 'Markdown' }); } 
-                                catch (e) {}
+                        receptionTargets = recPersonnel.filter(p => p.platform.toUpperCase() === 'TELEGRAM');
+                    }
+                }
+                // Config'den RESEPSIYON grup ID'sini de ekle
+                try {
+                    const currentBotToken = ctx.telegram && ctx.telegram.token ? ctx.telegram.token : botToken;
+                    const _cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'skills', 'telegram_config.json'), 'utf8'));
+                    if (_cfg.managers) {
+                        for (const [, mgr] of Object.entries(_cfg.managers)) {
+                            if (mgr.botToken === currentBotToken && mgr.departments && mgr.departments.RESEPSIYON) {
+                                const resChatId = mgr.departments.RESEPSIYON.chatId;
+                                if (resChatId && !receptionTargets.some(p => String(p.contact_id) === String(resChatId))) {
+                                    receptionTargets.push({ full_name: 'Resepsiyon Grubu', platform: 'TELEGRAM', contact_id: resChatId });
+                                }
+                                break;
                             }
                         }
                     }
+                } catch (e) { /* config okuma hatas\u0131 */ }
+
+                if (receptionTargets.length === 0) {
+                    // B Se\u00e7ene\u011fi: Resepsiyon yoksa misafiri y\u00f6nlendir (oda de\u011fi\u015fikli\u011fi a\u00e7\u0131klamas\u0131yla)
+                    console.warn(`\u26a0\ufe0f [TEYI\u0130T] Resepsiyon personeli/grubu bulunamad\u0131. Misafir y\u00f6nlendiriliyor.`);
+                    const noRecMsg = getLangMsg('mismatchNoReception', lang);
+                    await ctx.replyWithMarkdown(noRecMsg);
+                    await saveMessageToDashboard(chatId, 'assistant', noRecMsg);
+                    session.state = 'blocked';
+                    return;
                 }
 
-                if (session.failedAttempts >= 3) {
-                    // 3. başarısız deneme → resepsiyona yönlendir
-                    await askForGuestInfo(ctx, 3);
-                    session.state = 'blocked';
-                    console.warn(`🚫 [DOĞRULAMA BAŞARISIZ x3] chatId: ${chatId} → Resepsiyona yönlendirildi.`);
-                } else {
-                    const failMsg = `⚠️ Üzgünüm, oda bilgileriniz (Ad/Soyad ve Oda No) konaklayan listemizle eşleşmedi.\n\nLütfen check-in sırasında verdiğiniz bilgileri kontrol edip tekrar yazınız. 🙏\n_(Deneme: ${session.failedAttempts}/3)_`;
-                    await ctx.replyWithMarkdown(failMsg);
-                    await saveMessageToDashboard(chatId, 'assistant', failMsg);
+                // Resepsiyona teyit mesaj\u0131 g\u00f6nder (Onayla / Reddet butonlar\u0131)
+                const verifyMsg = `\ud83d\udd14 *M\u0130SAF\u0130R TEYI\u0130T TALEB\u0130*\n\nA\u015fa\u011f\u0131daki bilgilerle giri\u015f yapmaya \u00e7al\u0131\u015fan bir misafir var, ancak kay\u0131tlarda e\u015fle\u015fme bulunamad\u0131.\n\n\ud83d\udc64 *\u0130ddia Edilen Ad:* ${resolvedName}\n\ud83d\udeaa *\u0130ddia Edilen Oda:* ${resolvedRoom}\n\ud83d\udcac *Telegram ID:* ${chatId}\n\n_Bu ki\u015fi ger\u00e7ekten bu odada m\u0131 kal\u0131yor? Kontrol edip onaylay\u0131n veya reddedin._`;
+
+                const verifyKeyboard = Markup.inlineKeyboard([
+                    Markup.button.callback('\u2705 Evet, Onayl\u0131yorum', `verify_yes_${chatId}`),
+                    Markup.button.callback('\u274c Hay\u0131r, Reddediyorum', `verify_no_${chatId}`)
+                ]);
+
+                const senderTelegram = ctx.telegram || bot.telegram;
+                let msgSent = false;
+                for (const target of receptionTargets) {
+                    try {
+                        await senderTelegram.sendMessage(target.contact_id, verifyMsg, {
+                            parse_mode: 'Markdown',
+                            ...verifyKeyboard
+                        });
+                        msgSent = true;
+                        console.log(`\ud83d\udce8 [TEYI\u0130T] Resepsiyona g\u00f6nderildi \u2192 ${target.full_name} (${target.contact_id})`);
+                    } catch (e) {
+                        console.error(`\u274c [TEYI\u0130T] ${target.full_name} i\u00e7in g\u00f6nderilemedi:`, e.message);
+                    }
                 }
+
+                if (!msgSent) {
+                    // Mesaj g\u00f6nderilemedi \u2192 B se\u00e7ene\u011fi
+                    const noRecMsg = getLangMsg('mismatchNoReception', lang);
+                    await ctx.replyWithMarkdown(noRecMsg);
+                    await saveMessageToDashboard(chatId, 'assistant', noRecMsg);
+                    session.state = 'blocked';
+                    return;
+                }
+
+                // Misafiri teyit bekleme moduna al
+                session.state = 'awaiting_reception_verify';
+                const waitMsg = getLangMsg('awaitingVerify', lang);
+                await ctx.replyWithMarkdown(waitMsg);
+                await saveMessageToDashboard(chatId, 'assistant', waitMsg);
+
+                // 3 dakika timeout \u2014 resepsiyon yan\u0131t vermezse y\u00f6nlendir
+                const verifyTimer = setTimeout(async () => {
+                    if (guestSessions[chatId] && guestSessions[chatId].state === 'awaiting_reception_verify') {
+                        console.warn(`\u23f0 [TEYI\u0130T TIMEOUT] chatId: ${chatId} \u2014 3 dk ge\u00e7ti, resepsiyon yan\u0131t vermedi.`);
+                        guestSessions[chatId].state = 'blocked';
+                        const timeoutMsg = getLangMsg('verifyTimeout', lang);
+                        try {
+                            await senderTelegram.sendMessage(chatId, timeoutMsg, { parse_mode: 'Markdown' });
+                        } catch (e) {}
+                        delete pendingVerifications[chatId];
+                    }
+                }, 3 * 60 * 1000); // 3 dakika
+
+                // Bekleyen teyit bilgilerini kaydet
+                pendingVerifications[chatId] = {
+                    resolvedName,
+                    resolvedRoom,
+                    resolvedAllergies,
+                    pendingAI: session.pendingAI,
+                    lang,
+                    timer: verifyTimer,
+                    senderTelegramToken: ctx.telegram && ctx.telegram.token ? ctx.telegram.token : botToken
+                };
+
                 return;
             }
-
             // Bilgi alındı ve doğrulandı, kaydet
             session.name = resolvedName;
             session.room = resolvedRoom;
@@ -1321,18 +1504,28 @@ _Lütfen In-House verilerinizi kontrol ediniz._`;
             // Kısmi bilgileri temizle (yeni turda baştan başlasın)
             delete session.partialName;
             delete session.partialRoom;
-            await askForGuestInfo(ctx, Math.min(session.failedAttempts + 1, 3));
+            await askForGuestInfo(ctx, Math.min(session.failedAttempts + 1, 3), 'both', session.lang || 'TR');
         }
         return;
     }
 
+    // -- TEYIT BEKLENIYOR: Misafir resepsiyon onayini bekliyor ---
+    if (session.state === 'awaiting_reception_verify') {
+        const lang = session.lang || 'TR';
+        const stillWaitMsg = getLangMsg('awaitingVerify', lang);
+        await ctx.replyWithMarkdown(stillWaitMsg);
+        return;
+    }
+
+
     // ── BLOCKED durumunda yeni talep gelirse ─────────────────────────
     if (session.state === 'blocked') {
+        const lang = session.lang || 'TR';
         // Sadece SORU ise yanıtla, TALEP ise resepsiyona yönlendir
         await ctx.sendChatAction('typing');
         const aiResult = await processMessageWithAI(userText, session);
         if (aiResult.isRequest) {
-            await ctx.replyWithMarkdown(`Talebiniz için lütfen resepsiyonumuzu arayın:\n📞 *+90 (850) 222 72 75*`);
+            await ctx.replyWithMarkdown(getLangMsg('blockedCallReception', session.lang || 'TR'));
             return;
         }
         await ctx.reply(aiResult.replyToUser);
@@ -1506,11 +1699,128 @@ bot.action(/busy_(.+)/, async (ctx) => {
                 `⏳ Sayın misafirimiz, talebinizle ilgileniyoruz ancak şu an yoğunluk nedeniyle kısa bir gecikme yaşanabilir. Anlayışınız için teşekkür ederiz. 🙏`);
         } catch (e) {}
     } else {
-        await ctx.answerCbQuery('Talep bulunamadı.', { show_alert: true });
+        await ctx.answerCbQuery('Talep bulunamad\u0131.', { show_alert: true });
     }
 });
 
-// ── /start Handler (Paylaşılan fonksiyon — tüm botlar için ortak) ─────
+// \u2500\u2500 Resepsiyon Teyit Buton Handler\u2019lar\u0131: ONAYLA / REDDET \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+async function handleVerifyYes(ctx) {
+    const guestChatId = parseInt(ctx.match[1], 10);
+    const verif = pendingVerifications[guestChatId];
+    const receptionist = ctx.from.first_name || 'Resepsiyon';
+
+    await ctx.answerCbQuery('Onaylan\u0131yor...', { show_alert: false });
+
+    if (!verif) {
+        await ctx.editMessageText(
+            (ctx.callbackQuery.message.text || '') + '\n\n\u2139\ufe0f Bu talep zaten i\u015flendi veya s\u00fcresi doldu.'
+        ).catch(() => {});
+        return;
+    }
+
+    clearTimeout(verif.timer);
+    delete pendingVerifications[guestChatId];
+
+    const { resolvedName, resolvedRoom, resolvedAllergies, pendingAI, lang } = verif;
+
+    // Session\u2019\u0131 tamamlanm\u0131\u015f olarak i\u015faretle
+    if (!guestSessions[guestChatId]) {
+        guestSessions[guestChatId] = { name: null, room: null, state: 'new', pendingAI: null, failedAttempts: 0, lang };
+    }
+    const session = guestSessions[guestChatId];
+    session.name = resolvedName;
+    session.room = resolvedRoom;
+    session.allergies = resolvedAllergies;
+    session.state = 'complete';
+    session.failedAttempts = 0;
+    session.real_first_name = resolvedName.split(' ')[0];
+    session.lang = lang;
+    session.pendingAI = null;
+
+    console.log(`\u2705 [VERIFY_YES] ${receptionist} onaylad\u0131: ${resolvedName} / Oda ${resolvedRoom} (chatId: ${guestChatId})`);
+
+    // Misafiri dili ile bilgilendir ve beklenen talebi i\u015fle
+    const senderTelegram = ctx.telegram || bot.telegram;
+    if (pendingAI) {
+        const { department, turkishSummary, replyToUser } = pendingAI;
+        // routeToDepartment i\u00e7in minimal ctx benzeri obje yap
+        const fakeCtx = {
+            telegram: senderTelegram,
+            chat: { id: guestChatId },
+            reply: async (msg) => senderTelegram.sendMessage(guestChatId, msg).catch(() => {}),
+            replyWithMarkdown: async (msg) => senderTelegram.sendMessage(guestChatId, msg, { parse_mode: 'Markdown' }).catch(() => {})
+        };
+        await routeToDepartment(fakeCtx, department, turkishSummary, guestChatId, resolvedName, resolvedRoom);
+        const finalMsg = await generateFinalConfirmation(resolvedName, resolvedRoom, replyToUser);
+        try { await senderTelegram.sendMessage(guestChatId, finalMsg); } catch (e) {}
+    } else {
+        const confirmMsgs = {
+            TR: 'Kimli\u011finiz do\u011fruland\u0131! Art\u0131k talebinizi iletebilirsiniz. \ud83d\ude4f',
+            EN: 'Your identity has been verified! You can now make your request. \ud83d\ude4f',
+            DE: 'Ihre Identit\u00e4t wurde best\u00e4tigt! Sie k\u00f6nnen jetzt Ihre Anfrage stellen. \ud83d\ude4f',
+            RU: '\u0412\u0430\u0448\u0430 \u043b\u0438\u0447\u043d\u043e\u0441\u0442\u044c \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430! \u0422\u0435\u043f\u0435\u0440\u044c \u0432\u044b \u043c\u043e\u0436\u0435\u0442\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0437\u0430\u043f\u0440\u043e\u0441. \ud83d\ude4f',
+            AR: '\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0647\u0648\u064a\u062a\u0643! \u064a\u0645\u0643\u0646\u0643 \u0627\u0644\u0622\u0646 \u062a\u0642\u062f\u064a\u0645 \u0637\u0644\u0628\u0643. \ud83d\ude4f',
+            FR: 'Votre identit\u00e9 a \u00e9t\u00e9 v\u00e9rifi\u00e9e ! Vous pouvez maintenant faire votre demande. \ud83d\ude4f'
+        };
+        const confirmMsg = confirmMsgs[lang] || confirmMsgs['TR'];
+        try { await senderTelegram.sendMessage(guestChatId, confirmMsg); } catch (e) {}
+    }
+
+    // Resepsiyona bilgi ver
+    const oldMsg = ctx.callbackQuery.message.text || '';
+    await ctx.editMessageText(
+        oldMsg + '\n\n\u2705 *Onaylanm\u0131\u015f* \u2014 ' + receptionist + ' taraf\u0131ndan onayland\u0131.',
+        { parse_mode: 'Markdown' }
+    ).catch(() => {});
+    console.log(`\ud83d\udce8 [VERIFY_YES] Talep departmana iletildi.`);
+}
+
+async function handleVerifyNo(ctx) {
+    const guestChatId = parseInt(ctx.match[1], 10);
+    const verif = pendingVerifications[guestChatId];
+    const receptionist = ctx.from.first_name || 'Resepsiyon';
+
+    await ctx.answerCbQuery('Reddedildi.', { show_alert: false });
+
+    if (!verif) {
+        await ctx.editMessageText(
+            (ctx.callbackQuery.message.text || '') + '\n\n\u2139\ufe0f Bu talep zaten i\u015flendi veya s\u00fcresi doldu.'
+        ).catch(() => {});
+        return;
+    }
+
+    clearTimeout(verif.timer);
+    delete pendingVerifications[guestChatId];
+
+    const lang = verif.lang || 'TR';
+
+    // Session\u2019\u0131 blocked yap
+    if (guestSessions[guestChatId]) {
+        guestSessions[guestChatId].state = 'blocked';
+    }
+
+    console.log(`\u274c [VERIFY_NO] ${receptionist} reddetti (chatId: ${guestChatId})`);
+
+    // Misafire dili ile oda de\u011fi\u015fikli\u011fi a\u00e7\u0131klamas\u0131n\u0131 i\u00e7eren mesaj g\u00f6nder
+    const senderTelegram = ctx.telegram || bot.telegram;
+    const rejMsg = getLangMsg('verifyRejected', lang);
+    try { await senderTelegram.sendMessage(guestChatId, rejMsg, { parse_mode: 'Markdown' }); } catch (e) {}
+
+    // Resepsiyona bilgi ver
+    const oldMsg = ctx.callbackQuery.message.text || '';
+    await ctx.editMessageText(
+        oldMsg + '\n\n\u274c *Reddedildi* \u2014 ' + receptionist + ' taraf\u0131ndan reddedildi.',
+        { parse_mode: 'Markdown' }
+    ).catch(() => {});
+}
+
+// Ana bot: verify butonlar\u0131
+bot.action(/verify_yes_(-?\d+)/, handleVerifyYes);
+bot.action(/verify_no_(-?\d+)/, handleVerifyNo);
+
+// \u2500\u2500 /start Handler (Payla\u015f\u0131lan fonksiyon \u2014 t\u00fcm botlar i\u00e7in ortak) \u2500\u2500\u2500\u2500\u2500
+
 async function handleStart(ctx) {
     const chatId = ctx.chat.id;
     
@@ -1887,6 +2197,8 @@ for (const secBot of secondaryBots) {
         await ctx.reply(`📝 *İnceleme Notu Ekle*\n\nNotunuzu aşağıya yazabilirsiniz:`, { parse_mode: 'Markdown' });
     });
 
+    secBot.action(/verify_yes_(-?\d+)/, handleVerifyYes);
+    secBot.action(/verify_no_(-?\d+)/, handleVerifyNo);
     // Misafir handler'ları
     secBot.start(handleStart);
     secBot.command('harita', handleHarita);

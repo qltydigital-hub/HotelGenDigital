@@ -29,7 +29,28 @@ const path = require('path');
  * @param {object} config - telegram_config.json içeriği
  * @returns {Function} alertGuestRelationsAboutAllergy fonksiyonu
  */
-function createAllergyProtocol(bot, supabase, config) {
+function createAllergyProtocol(bot, supabase, config, secondaryBots = []) {
+
+    // Doğru bot instance'ını bul: chatId hangi yöneticiye aitse o botu kullan
+    function getBotForChatId(chatId) {
+        if (config.managers) {
+            for (const [, mgr] of Object.entries(config.managers)) {
+                if (mgr.departments) {
+                    for (const [, dept] of Object.entries(mgr.departments)) {
+                        if (dept.chatId === String(chatId)) {
+                            // Bu chatId bu manager'a ait, onun botunu bul
+                            if (mgr.botToken === bot.telegram?.token) {
+                                return bot; // Ana bot
+                            }
+                            const matched = secondaryBots.find(sb => sb.telegram && sb.telegram.token === mgr.botToken);
+                            if (matched) return matched;
+                        }
+                    }
+                }
+            }
+        }
+        return bot; // Fallback: ana bot
+    }
 
     /**
      * Alerji bildirimini ilgili departmanlara ve mutfak personeline iletir.
@@ -66,7 +87,8 @@ _Detay için misafirle iletişime geçiniz._`;
         if (grDept && grDept.active && grDept.chatIds?.length > 0) {
             for (const chatId of grDept.chatIds) {
                 try {
-                    await bot.telegram.sendMessage(chatId, alertMsg, { parse_mode: 'Markdown' });
+                    const senderBot = getBotForChatId(chatId);
+                    await senderBot.telegram.sendMessage(chatId, alertMsg, { parse_mode: 'Markdown' });
                     console.log(`🚨 [ALERJİ] Guest Relations'a bildirim gönderildi → ${chatId}`);
                     notifiedDepartments.push('GUEST_RELATIONS');
                 } catch (e) {
@@ -80,7 +102,8 @@ _Detay için misafirle iletişime geçiniz._`;
         if (fbDept && fbDept.active && fbDept.chatIds?.length > 0) {
             for (const chatId of fbDept.chatIds) {
                 try {
-                    await bot.telegram.sendMessage(chatId, alertMsg, { parse_mode: 'Markdown' });
+                    const senderBot = getBotForChatId(chatId);
+                    await senderBot.telegram.sendMessage(chatId, alertMsg, { parse_mode: 'Markdown' });
                     console.log(`🚨 [ALERJİ] F&B'ye bildirim gönderildi → ${chatId}`);
                     notifiedDepartments.push('F&B');
                 } catch (e) {
@@ -95,7 +118,8 @@ _Detay için misafirle iletişime geçiniz._`;
             const infoMsg = `📋 *BİLGİ — Alerji Kaydı*\n👤 ${guestName} | 🚪 Oda ${roomNo}\n⚠️ ${allergyInfo}\n_GR, F&B ve Mutfak departmanları bilgilendirildi._`;
             for (const chatId of rsDept.chatIds) {
                 try {
-                    await bot.telegram.sendMessage(chatId, infoMsg, { parse_mode: 'Markdown' });
+                    const senderBot = getBotForChatId(chatId);
+                    await senderBot.telegram.sendMessage(chatId, infoMsg, { parse_mode: 'Markdown' });
                     notifiedDepartments.push('RESEPSIYON');
                 } catch (e) {
                     // Resepsiyon kopyası kritik değil, sessizce devam

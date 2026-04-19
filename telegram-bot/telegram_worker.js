@@ -200,7 +200,7 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
 // ── SKILL MODÜLÜ BAŞLATMA ─────────────────────────────────────────────
 // Factory-based skill'ler: bot ve supabase inject edilerek oluşturuluyor
 const saveMessageToDashboard = createDashboardLogger(supabase);
-const alertGuestRelationsAboutAllergy = createAllergyProtocol(bot, supabase, telegramConfig);
+const alertGuestRelationsAboutAllergy = createAllergyProtocol(bot, supabase, telegramConfig, secondaryBots);
 console.log('✅ Skill modülleri yüklendi: [dashboard_logger, hotel_concierge, allergy_protocol, voice_processor]');
 
 // ── Ticket'ı DB'ye kaydet / güncelle ─────────────────────────────────

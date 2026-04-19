@@ -1,16 +1,21 @@
 import { getServiceSupabase } from './supabase-client';
 
-export const KEMAL_GUEST_BOT_TOKEN = "8727716113:AAFuKlYDk1E3UebDtHVyrC6oYujOVQcVd1Q"; // otel_hesap_bot
-export const KEMAL_MANAGER_BOT_TOKEN = "8727716113:AAFuKlYDk1E3UebDtHVyrC6oYujOVQcVd1Q"; // Fallback to guest bot if needed, or if he has a manager bot, but he didn't specify.
+// ═══════════════════════════════════════════════════════════════
+// KEMAL KUYUCU — Yeni Bot Token (Tek Bot, Tüm Departmanlar)
+// ═══════════════════════════════════════════════════════════════
+export const KEMAL_GUEST_BOT_TOKEN = "8141780763:AAH2WlhlWFly6ralTFGIWkB-b88-Sw8O7Tc";
+export const KEMAL_MANAGER_BOT_TOKEN = "8141780763:AAH2WlhlWFly6ralTFGIWkB-b88-Sw8O7Tc";
 
+// Kemal'in tüm departmanları artık tek bot üzerinden çalışıyor
+// Departman ayrımı telegram_config.json'daki chatId'ler ile yapılıyor
 export const KEMAL_DEPARTMENT_BOTS: Record<string, string> = {
-    'Resepsiyon': "8649076046:AAEZjsrhVJI8kG9RXlCdvNeZmISRvbVf7SY", // F/O
-    'Housekeeping': "8766792609:AAGZBVrpfvkBWRVlqJWmTxGrRjLRT6KNRZc", // H/K
-    'F&B (Gastro)': "8677398686:AAFhdxMNnET-UuqQiykBZOoT7thZkIbGLG0", // F/B
-    'Yiyecek & İçecek (F&B)': "8677398686:AAFhdxMNnET-UuqQiykBZOoT7thZkIbGLG0", // F/B
-    'Teknik Servis': "8624247316:AAGGVwA3RI54dryzaG2MWCWly1vIE0AHcR4", // T/S
-    'Guest Relation': "8681065664:AAGt-oOzxty9bk1sF-10K2opHVCcyKqCfFE", // G/R
-    'Misafir İlişkileri (Guest Relation)': "8681065664:AAGt-oOzxty9bk1sF-10K2opHVCcyKqCfFE", // G/R
+    'Resepsiyon': KEMAL_GUEST_BOT_TOKEN,
+    'Housekeeping': KEMAL_GUEST_BOT_TOKEN,
+    'F&B (Gastro)': KEMAL_GUEST_BOT_TOKEN,
+    'Yiyecek & İçecek (F&B)': KEMAL_GUEST_BOT_TOKEN,
+    'Teknik Servis': KEMAL_GUEST_BOT_TOKEN,
+    'Guest Relation': KEMAL_GUEST_BOT_TOKEN,
+    'Misafir İlişkileri (Guest Relation)': KEMAL_GUEST_BOT_TOKEN,
 };
 
 // Aktif bot tokenlarını (Standart vs. Kemal Mode) döndüren yardımcı fonksiyon
@@ -43,7 +48,6 @@ export async function getActiveBotTokens() {
         GUEST_BOT: DEFAULT_GUEST,
         MANAGER_BOT: process.env.TELEGRAM_MANAGER_BOT_TOKEN || DEFAULT_GUEST,
         getDepartmentBot: (dept: string) => {
-            // Defaultta departman botları tek bir GA botu veya GUEST botu üzerinden yönetiliyordu
             return DEFAULT_GA;
         }
     };

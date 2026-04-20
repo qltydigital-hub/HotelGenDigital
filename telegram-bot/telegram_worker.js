@@ -1,4 +1,4 @@
-﻿require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
+require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 const { Telegraf, Markup } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
@@ -526,16 +526,24 @@ async function processMessageWithAI(userText, session = null) {
 
     try {
         const t0 = Date.now();
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',   // 5x hızlı, gpt-4o ile eş kalitede kısa JSON görevler için
-            messages: [
-                { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: userText }
-            ],
-            response_format: { type: "json_object" },
-            max_tokens: 800,        // 600'den artırıldı — JSON parse hatası riskini azaltır
-            temperature: 0.0
-        });
+        // 15 saniye timeout — OpenAI yavaşlarsa bot kilitlenmesin
+        const abortController = new AbortController();
+        const aiTimeout = setTimeout(() => abortController.abort(), 15000);
+        let response;
+        try {
+            response = await openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    { role: 'user', content: userText }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 800,
+                temperature: 0.0
+            }, { signal: abortController.signal });
+        } finally {
+            clearTimeout(aiTimeout);
+        }
         console.log(`⏱️ [AI] gpt-4o-mini yanıt süre: ${Date.now() - t0}ms`);
         
         // Güvenli JSON parse (kesilmiş JSON'a karşı koruma)
@@ -1185,18 +1193,26 @@ async function generateFinalConfirmation(guestName, guestRoom, langRef) {
 // ── Mesaj İşleme Kilidi (Duplikasyon Önleme) ──────────────────────────
 // Aynı chatId için eşzamanlı mesaj işlemeyi engeller
 const processingLocks = {};
+const processingLockTimers = {}; // Auto-release timer'ları
 
 // ── Ortak mesaj işleyici (text ve voice için) ─────────────────────────
 async function handleIncomingMessage(ctx, userText) {
     const chatId = ctx.chat.id;
 
-    // ── DUPLİKASYON KİLİDİ ──────────────────────────────────────────
+    // ── DUPLİKASYON KİLİDİ (30sn AUTO-RELEASE) ─────────────────────
     // Aynı chatId için zaten işlenen bir mesaj varsa, bu mesajı atla
     if (processingLocks[chatId]) {
         console.warn(`🔒 [LOCK] chatId: ${chatId} için zaten bir mesaj işleniyor, bu mesaj atlanıyor: "${userText.substring(0, 50)}"`);
         return;
     }
     processingLocks[chatId] = true;
+    // ⏱️ 30 saniye sonra kilit otomatik açılır (eski: süresiz kilitleme riski vardı)
+    processingLockTimers[chatId] = setTimeout(() => {
+        if (processingLocks[chatId]) {
+            console.warn(`⚠️ [LOCK_AUTO_RELEASE] chatId: ${chatId} kilidi 30sn sonra otomatik serbest bırakıldı!`);
+            delete processingLocks[chatId];
+        }
+    }, 30000);
 
     try {
 
@@ -1625,6 +1641,10 @@ _Bu not yönetim raporlarında görünecektir._`
     } finally {
         // ── KİLİDİ SERBEST BIRAK ────────────────────────────────────────
         delete processingLocks[chatId];
+        if (processingLockTimers[chatId]) {
+            clearTimeout(processingLockTimers[chatId]);
+            delete processingLockTimers[chatId];
+        }
     }
 }
 
@@ -1909,10 +1929,14 @@ async function handleHarita(ctx) {
 }
 bot.command('harita', handleHarita);
 
+// ── POLLING WATCHDOG: Son mesaj alım zamanı ──────────────────────────
+let lastPollingUpdateTime = Date.now();
+
 // ── Metin mesajları Handler (Paylaşılan) ──────────────────────────────
 async function handleText(ctx) {
     const chatId = ctx.chat.id;
     const textMsg = ctx.message.text;
+    lastPollingUpdateTime = Date.now(); // Watchdog: mesaj alındı
     console.log(`📨 [${chatId}] Müşteri: ${textMsg}`);
 
     // ── 1. SPA SORUSU? → spa_info skill ────────────────────────────────
@@ -2235,31 +2259,44 @@ for (const secBot of secondaryBots) {
 // ── Botları Başlat ────────────────────────────────────────────────────
 console.log('⏳ Telegram bağlantıları kuruluyor...');
 
-// Bot başlatma fonksiyonu (tekrar kullanılabilir)
-async function launchBot(botInstance, label) {
+// Bot ba\u015flatma fonksiyonu \u2014 409 Conflict durumunda bekleyip retry yapar (PM2'yi asla sonland\u0131rmaz)
+async function launchBot(botInstance, label, attempt = 1) {
     try {
-        await botInstance.telegram.deleteWebhook({ drop_pending_updates: true });
-        console.log(`🔄 [${label}] Webhook temizlendi, polling başlatılıyor...`);
-        
-        botInstance.launch().then(() => {
-            console.log(`🚀 [${label}] Telegram Long-Polling bağlantısı aktif!`);
-        }).catch(err => {
-            console.error(`❌ [${label}] Launch hatası:`, err.message);
+        // ⚠️ drop_pending_updates: false → Bot restart olduğunda bekleyen mesajlar KORUNUR
+        // Eski ayar (true) mesajları siliyordu ve kullanıcılar cevap alamıyordu!
+        await botInstance.telegram.deleteWebhook({ drop_pending_updates: false });
+        console.log(`🔄 [${label}] Webhook temizlendi, polling başlatılıyor... (deneme ${attempt})`);
+
+        botInstance.launch().catch(err => {
+            if (err.message && err.message.includes('409')) {
+                // 409: Telegram sunucusunda eski bağlantı var
+                // Hızlı retry: 15sn (eski: 75sn) — her seferinde webhook temizlenir
+                const waitSec = attempt <= 3 ? 15 : 30;
+                console.warn(`⚠️ [${label}] 409 Conflict (deneme ${attempt}/${attempt <= 5 ? '5' : '∞'}). ${waitSec}sn sonra tekrar denenecek...`);
+                setTimeout(() => launchBot(botInstance, label, attempt + 1), waitSec * 1000);
+            } else {
+                console.error(`❌ [${label}] Launch hatası:`, err.message);
+                // Diğer hatalarda 10sn bekleyip tekrar dene
+                setTimeout(() => launchBot(botInstance, label, attempt + 1), 10000);
+            }
         });
 
-        // 5sn sonra doğrulama
+        // 8sn sonra doğrulama
         setTimeout(async () => {
             try {
                 const me = await botInstance.telegram.getMe();
                 console.log(`✅ [${label}] Bot aktif ve çalışıyor: @${me.username} (ID: ${me.id})`);
             } catch (e) {
-                console.error(`❌ [${label}] Bot doğrulama başarısız:`, e.message);
+                console.warn(`⚠️ [${label}] getMe hatası (polling devam ediyor olabilir):`, e.message);
             }
-        }, 5000);
+        }, 8000);
     } catch (err) {
-        console.error(`❌ [${label}] Başlatma hatası:`, err.message);
+        console.error(`❌ [${label}] deleteWebhook hatası:`, err.message);
+        console.log(`🔄 [${label}] 10sn sonra tekrar denenecek...`);
+        setTimeout(() => launchBot(botInstance, label, attempt + 1), 10000);
     }
 }
+
 
 // Ana bot + ikincil botları başlat
 (async () => {
@@ -2282,6 +2319,52 @@ async function launchBot(botInstance, label) {
         adminChatId: telegramConfig.managers?.ozgur_ozen?.telegramId || '758605940'
     });
     healthMonitor.startPeriodicCheck();
+
+    // 4. POLLING WATCHDOG — Bot sessizce polling kaybederse otomatik yeniden başlat
+    const WATCHDOG_CHECK_INTERVAL = 3 * 60 * 1000;  // Her 3 dakikada kontrol
+    const WATCHDOG_MAX_SILENCE    = 5 * 60 * 1000;  // 5 dakika sessizlik = sorun
+    let watchdogRestartInProgress = false;
+
+    setInterval(async () => {
+        const silenceMs = Date.now() - lastPollingUpdateTime;
+        const silenceMin = Math.round(silenceMs / 60000);
+
+        if (silenceMs > WATCHDOG_MAX_SILENCE && !watchdogRestartInProgress) {
+            watchdogRestartInProgress = true;
+            console.error(`🐕 [WATCHDOG] ${silenceMin} dakikadır hiç mesaj alınmadı! Bot polling'i yeniden başlatılıyor...`);
+
+            // Admin'e bildirim gönder
+            const adminId = telegramConfig.managers?.ozgur_ozen?.telegramId || '758605940';
+            try {
+                await bot.telegram.sendMessage(adminId,
+                    `🐕 *WATCHDOG UYARISI*\n\n${silenceMin} dakikadır hiç mesaj alınmadı.\nBot polling yeniden başlatılıyor...\n\n⏰ ${new Date().toLocaleTimeString('tr-TR')}`,
+                    { parse_mode: 'Markdown' }
+                );
+            } catch (e) { /* admin bildirimi başarısız olabilir */ }
+
+            // Bot'u durdur ve yeniden başlat
+            try {
+                bot.stop('WATCHDOG_RESTART');
+                for (const sb of secondaryBots) {
+                    try { sb.stop('WATCHDOG_RESTART'); } catch (e) {}
+                }
+            } catch (e) {
+                console.warn('[WATCHDOG] Bot durdurma hatası:', e.message);
+            }
+
+            // 3 saniye bekle, sonra yeniden başlat
+            await new Promise(r => setTimeout(r, 3000));
+            lastPollingUpdateTime = Date.now(); // Reset timer
+            await launchBot(bot, 'ANA BOT (WATCHDOG)');
+            for (let i = 0; i < secondaryBots.length; i++) {
+                await new Promise(r => setTimeout(r, 1000));
+                await launchBot(secondaryBots[i], secondaryBots[i]._managerName || `İKİNCİL BOT ${i + 1} (WATCHDOG)`);
+            }
+            watchdogRestartInProgress = false;
+            console.log('🐕 [WATCHDOG] Bot yeniden başlatıldı.');
+        }
+    }, WATCHDOG_CHECK_INTERVAL);
+    console.log(`🐕 [WATCHDOG] Polling izleme aktif (${WATCHDOG_MAX_SILENCE / 60000}dk sessizlik eşiği)`);
 })();
 
 // Bilgilendirme (asenkron beklemeden)

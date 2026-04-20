@@ -13,6 +13,11 @@ const { createDashboardLogger } = require('./skills/dashboard_logger');
 const { sendHotelMap } = require('./skills/hotel_concierge');
 const { createAllergyProtocol } = require('./skills/allergy_protocol');
 const { convertOggToMp3 } = require('./skills/voice_processor');
+const { getPromptForDepartment } = require('./skills/prompts/index');
+const { getRelevantKnowledge, CORE_INFO } = require('./skills/knowledge/index');
+const { isSurroundingsQuestion, searchSurroundings } = require('./skills/perplexity_search');
+const { isSpaQuestion, getSpaInfo } = require('./skills/spa_info');
+const { isFoodQuestion, getFacilitiesInfo } = require('./skills/hotel_facilities');
 
 const app = express();
 app.use(cors());
@@ -180,24 +185,8 @@ async function dbLogEvent(ticketId, eventType, actor = 'system', notes = '') {
     }
 }
 
-// ── DİNAMİK .MD DOSYA OKUYUCU (DOCS LOADER) İPTAL EDİLDİ ─────────────────────
-// Token limiti aşımını ve AI halüsinasyonunu engellemek için system prompt küçültüldü.
-const HOTEL_KNOWLEDGE = `
-Sen The Green Park Gaziantep'in akıllı misafir asistanısın.
-
-GENEL BİLGİLER:
-• Otel Adı: The Green Park Gaziantep (5 Yıldız, Şehir Oteli)
-• Adres: Mithatpaşa Mah. Alibey Sok. No:1, 27500 Şehitkamil / Gaziantep
-• Telefon: +90 (850) 222 72 75
-• E-posta: info@thegreenpark.com
-• Web: https://www.thegreenpark.com/gaziantep/
-• Tesis: Spa merkezi, sauna, buhar odası, fitness, sezonluk açık yüzme havuzu.
-• Yakınlar: Zeugma Mozaik Müzesi (200m), Gaziantep Kalesi (3km)
-
-REZERVASYON:
-• Direkt: https://www.thegreenpark.com/gaziantep/
-• IBAN bilgisi SADECE talep edildiğinde paylaşılır.
-`;
+// ── DİNAMİK .MD DOSYA OKUYUCU (DOCS LOADER) İPTAL EDİLDİ ─────────────────
+// Modüler bilgi bankası kullanılıyor (skills/knowledge/)
 
 // ── AI ile mesaj işle (Soru mu, Talep mi?) ────────────────────────────
 async function processMessageWithAI(userText, session = null) {
@@ -206,49 +195,36 @@ async function processMessageWithAI(userText, session = null) {
     }
 
     const nowStr = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", dateStyle: "full", timeStyle: "short" });
+    let targetDepartment = detectDepartmentFromText(userText);
+    const basePrompt = getPromptForDepartment(targetDepartment, null, null);
+    const hotelKnowledge = getRelevantKnowledge(userText);
 
-    // ÇOK SIKI VE KISA SYSTEM PROMPT
-    const SYSTEM_PROMPT = `Sen bir 5 yıldızlı otel asistanısın. Sadece aşağıdaki kurallara göre JSON döndür.
-Tarih/Saat: ${nowStr}
+    const isVerified = session && session.state === 'complete' && !!session.room;
 
-Otel Bilgileri: ${HOTEL_KNOWLEDGE}
+    // PLATFORM TUTARLI SYSTEM PROMPT (— telegram_worker.js ile aynı mantık)
+    const LANG_RULE = `\n[DİL KURALI — ZORUNLU / MANDATORY LANGUAGE RULE]\nMisafir hangi dilde yazmışsa KESİNLİKLE o dilde yanıtla. Otel bilgileri Türkçe olsa bile misafirin diline çevirerek sun.\n⚠️ LANGUAGE: You MUST respond in the SAME language as the guest. NEVER default to Turkish for non-Turkish messages.`;
 
-GÖREVLER VE KURALLAR:
-1) SORU/BİLGİ TALEBİ: Misafir otel hakkında, bölge (gezilecek yerler), plaj veya saatler hakkında soru soruyorsa:
-   - "isRequest": false döndür.
-   - "replyToUser" içine dostça, profesyonel ve kesin bir dille cevap yaz. (Araştırıyorum/Bekleyin deme)
-
-2) FİZİKSEL HİZMET / ARIZA TALEBİ: Misafir oda servisi, temizlik, havlu, yastık, teknik arıza vb. istiyorsa:
-   - KESİNLİKLE "isRequest": true döndür.
-   - Doğrulanmamış misafire asla isim veya oda no uydurma.
-   - "replyToUser": "Talebinizi aldım, lütfen isim soyisim ve oda numaranızı yazınız."
-   - Doğrulanmış misafir ise (isim: ${session && session.real_first_name ? session.real_first_name : 'Yok'}, oda: ${session && session.room ? session.room : 'Yok'}):
-   - "replyToUser": "Talebinizi aldım, hemen ilgileniyorum."
-
-3) YEMEK/RESTORAN SORULARI VE ALERJİ POLİTİKASI (DİKKAT!):
-   - Eğer misafir OTEL DIŞINDA (şehirde, bölgede vb.) yemek yenecek bir yer soruyorsa: Restoran önerisi yap ve SADECE "Gittiğiniz yerde alerjiniz olduğunu belirtirseniz sizin için daha iyi olur." tavsiyesinde bulun. Asla alerjisini BİZE bildirmesini isteme.
-   - Eğer misafir OTEL İÇİNDE yemek veya oda servisi yiyecek/içecek siparişi soruyorsa: Mutlaka "Herhangi bir yiyeceğe alerjiniz var mı?" diye sor.
-
-⛔ ASLA UYDURMA İSİM KULLANMA. ASLA MÜŞTERİYE "İLETİLDİ/GÖNDERİLDİ" GİBİ SAHTE ONAY VERME (eğer misafir doğrulanmamışsa)!
-
-[DİL KURALI — ZORUNLU / MANDATORY LANGUAGE RULE]
-Misafir hangi dilde yazdıysa KESİNLİKLE o dilde yanıtla. Otel bilgileri Türkçe olsa bile misafirin diline çevirerek sun.
-⚠️ LANGUAGE: You MUST respond in the SAME language as the guest. If the guest writes in English, respond ONLY in English. NEVER default to Turkish for non-Turkish messages.
-
-JSON FORMATI: {"isRequest": boolean, "department": "HOUSEKEEPING|TEKNIK|RESEPSIYON|F&B|GUEST_RELATIONS|SPA", "turkishSummary": "kısa özet", "replyToUser": "Kullanıcıya mesaj (MİSAFİRİN DİLİNDE)"}
-Sadece JSON dön.`;
+    const SYSTEM_PROMPT = `${basePrompt}\n\nOtel Bilgileri:\n${hotelKnowledge}\n\nTarih/Saat: ${nowStr}\n${isVerified ? `[ONAYLI MİSAFİR] İsim: ${session.real_first_name || 'Mevcut'}, Oda: ${session.room}` : '[ONAYSIZ MİSAFİR] Eğer fiziksel bir talep ise adı ve oda numarası iste.'}${LANG_RULE}\n\n⛔ ASLA UYDURMA İSİM veya ODA KULLANMA. JSON FORMATINDA SADECE İSTENİLENİ VER.`;
 
     try {
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-                { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: userText }
-            ],
-            response_format: { type: "json_object" },
-            max_tokens: 800,
-            temperature: 0.0 // SIFIR halüsinasyon — kurumsal kullanım için yaratıcılık tamamen kapatıldı
-        });
+        // 15 saniye timeout — OpenAI yavaşlarsa bot kilitlenmesin
+        const abortController = new AbortController();
+        const aiTimeout = setTimeout(() => abortController.abort(), 15000);
+        let response;
+        try {
+            response = await openai.chat.completions.create({
+                model: 'gpt-4o-mini',  // telegram_worker ile aynı model (hız + tutarlılık)
+                messages: [
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    { role: 'user', content: userText }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 800,
+                temperature: 0.0
+            }, { signal: abortController.signal });
+        } finally {
+            clearTimeout(aiTimeout);
+        }
         const parsed = JSON.parse(response.choices[0].message.content);
         console.log(`🧠 [AI RAW OUTPUT]:`, parsed);
         

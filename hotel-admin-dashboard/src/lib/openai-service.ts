@@ -5,11 +5,14 @@ import { HOTEL_KNOWLEDGE_BASE } from './hotel-data';
 const OPENAI_KEY_DASHBOARD = process.env.OPENAI_API_KEY;
 if (!OPENAI_KEY_DASHBOARD) {
     console.error('❌ [OPENAI-SERVICE] OPENAI_API_KEY env değişkeni TANIMLI DEĞİL! Instagram/ManyChat AI yanıtları çalışmayacak.');
+    console.error('   ↳ Mevcut env keys:', Object.keys(process.env).filter(k => k.includes('OPENAI') || k.includes('API')).join(', ') || 'HİÇBİRİ');
 } else {
     console.log(`🔑 [OPENAI-SERVICE] API key yüklendi: ${OPENAI_KEY_DASHBOARD.substring(0, 12)}...${OPENAI_KEY_DASHBOARD.slice(-6)} (uzunluk: ${OPENAI_KEY_DASHBOARD.length})`);
 }
 const openai = new OpenAI({
     apiKey: OPENAI_KEY_DASHBOARD || 'MISSING_KEY',
+    timeout: 15000, // 15 saniye timeout — Vercel freeze koruması
+    maxRetries: 2,  // OpenAI SDK yerleşik retry
 });
 
 export type IntentType = "QUESTION" | "REQUEST" | "COMPLAINT" | "CANCEL" | "GREETING" | "RESERVATION" | "CONFIRMATION" | "DENIAL" | "EXTERNAL_QUERY";
@@ -134,6 +137,7 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
 
     try {
         const t0 = Date.now();
+        console.log(`🧠 [OPENAI-SERVICE] API çağrısı başlatılıyor... Key: ${OPENAI_KEY_DASHBOARD ? 'VAR' : 'YOK'} | Model: gpt-4o-mini`);
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             max_tokens: 700,
@@ -145,7 +149,7 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
             ],
             response_format: { type: "json_object" }
         });
-        console.log(`⏱️ [INSTAGRAM/gpt-4o-mini] ${Date.now() - t0}ms`);
+        console.log(`⏱️ [INSTAGRAM/gpt-4o-mini] ${Date.now() - t0}ms ✅ Başarılı`);
 
         const aiResText = response.choices[0]?.message?.content || '{}';
         const cleaned = aiResText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
@@ -161,30 +165,163 @@ CEVAP STRATEJİLERİ ('ai_safe_reply'):
 
         return result;
     } catch (error: any) {
-        console.error('❌ [OPENAI-SERVICE] AI Analiz Hatası:', error?.message || error);
-        console.error('   ↳ API Key durumu:', OPENAI_KEY_DASHBOARD ? `Mevcut (${OPENAI_KEY_DASHBOARD.substring(0, 12)}...)` : 'TANIMLI DEĞİL');
+        // ── DETAYLI HATA LOGLAMA ──────────────────────────────────────────
+        const errorType = error?.status === 401 ? 'AUTH_INVALID'
+            : error?.status === 429 ? 'RATE_LIMIT'
+            : error?.status === 500 ? 'OPENAI_SERVER_ERROR'
+            : error?.code === 'ECONNABORTED' || error?.message?.includes('timeout') ? 'TIMEOUT'
+            : error?.code === 'ENOTFOUND' ? 'DNS_ERROR'
+            : 'UNKNOWN';
+
+        console.error(`❌ [OPENAI-SERVICE] AI Analiz Hatası [${errorType}]:`, error?.message || error);
+        console.error(`   ↳ API Key durumu: ${OPENAI_KEY_DASHBOARD ? `VAR (${OPENAI_KEY_DASHBOARD.substring(0, 15)}... uzunluk:${OPENAI_KEY_DASHBOARD.length})` : '❌ TANIMLI DEĞİL'}`);
+        console.error(`   ↳ HTTP Status: ${error?.status || 'N/A'} | Error Code: ${error?.code || 'N/A'}`);
+        console.error(`   ↳ Mesaj: "${message.substring(0, 80)}"`);
         
-        // Dil tespiti: mesajda Türkçe karakter yoksa İngilizce kabul et
-        const hasLatin = /[a-z]/i.test(message) && !/[çğışöüÇĞİŞÖÜ]/.test(message);
-        const fallbackReply = hasLatin
-            ? 'Hello! Welcome to The Green Park Gaziantep. How can I assist you? For immediate help, please call +90 (850) 222 72 75.'
-            : 'Merhaba! The Green Park Gaziantep\'e hoş geldiniz. Size nasıl yardımcı olabilirim? Acil durumlar için resepsiyonumuz: +90 (850) 222 72 75 📞';
+        // ── AKILLI FALLBACK: Otel bilgi bankasından yanıt üret ────────────
+        // Jenerik "hoşgeldin" yerine mesaja göre gerçek bilgi vermeye çalış
+        const smartReply = generateSmartFallback(message);
 
         return {
-            intent: "GREETING",
+            intent: smartReply.intent as IntentType,
             department: "Resepsiyon",
-            language: hasLatin ? "en" : "tr",
-            summary: "AI servisi geçici olarak yanıt veremedi.",
+            language: smartReply.language,
+            summary: `AI servisi geçici hata (${errorType}). Akıllı fallback kullanıldı.`,
             is_alerjen: false,
             needs_reception_cc: false,
-            ai_safe_reply: fallbackReply,
-            turkish_translation: "AI servisi geçici olarak yanıt veremedi.",
-            reply_routing_lang: hasLatin ? "We are forwarding your request to the relevant department." : "İsteğinizi ilgili departmana hızlıca iletiyoruz.",
-            reply_immediate_lang: hasLatin ? "We received your request and are attending to it now." : "Talebinizi aldık, hemen ilgileniyorum.",
-            reply_later_lang: hasLatin ? "We have noted your request and will attend to it shortly." : "Talebinizi aldım, sonrasında ilgileneceğim.",
-            reply_mismatch_lang: hasLatin ? "We are forwarding your information to reception, please wait a moment." : "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz.",
+            ai_safe_reply: smartReply.reply,
+            turkish_translation: `AI servisi geçici hata (${errorType}). Akıllı fallback kullanıldı.`,
+            reply_routing_lang: smartReply.language === 'tr' ? "İsteğinizi ilgili departmana hızlıca iletiyoruz." : "We are forwarding your request to the relevant department.",
+            reply_immediate_lang: smartReply.language === 'tr' ? "Talebinizi aldık, hemen ilgileniyorum." : "We received your request and are attending to it now.",
+            reply_later_lang: smartReply.language === 'tr' ? "Talebinizi aldım, sonrasında ilgileneceğim." : "We have noted your request and will attend to it shortly.",
+            reply_mismatch_lang: smartReply.language === 'tr' ? "Bilgilerinizi resepsiyona iletiyorum, lütfen kısa bir süre bekleyiniz." : "We are forwarding your information to reception, please wait a moment.",
             extracted_room_no: null,
             extracted_guest_name: null
         };
     }
+}
+
+/**
+ * AKILLI FALLBACK — Jenerik karşılama yerine otel bilgi bankasından yanıt üretir.
+ * AI API çalışmadığında bile misafir sorusuna anlamlı cevap vermeye çalışır.
+ */
+function generateSmartFallback(message: string): { reply: string; language: string; intent: string } {
+    const lower = message.toLowerCase();
+    const hotel = HOTEL_KNOWLEDGE_BASE.hotel;
+
+    // Dil tespiti
+    const hasTurkishChar = /[çğışöüÇĞİŞÖÜ]/.test(message);
+    const hasArabic = /[\u0600-\u06FF]/.test(message);
+    const hasCyrillic = /[\u0400-\u04FF]/.test(message);
+    const hasGerman = /[äöüÄÖÜß]/.test(message);
+    const lang = hasTurkishChar ? 'tr' : hasArabic ? 'ar' : hasCyrillic ? 'ru' : hasGerman ? 'de' : 'en';
+    const isTR = lang === 'tr';
+
+    // ── HAVUZ SORUSU ──
+    const poolKeys = ['havuz', 'pool', 'yüzme', 'swimming', 'schwimmbad', 'бассейн', 'مسبح', 'piscine'];
+    if (poolKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? 'Evet, otelimizde sezonluk açık yüzme havuzumuz mevcuttur. Misafirlerimiz sezon boyunca havuzdan ücretsiz yararlanabilir. 🏊'
+                : 'Yes, we have a seasonal outdoor swimming pool available for our guests. You can enjoy the pool free of charge during the season. 🏊',
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── SPA / WELLNESS ──
+    const spaKeys = ['spa', 'sauna', 'hamam', 'masaj', 'massage', 'wellness', 'fitness', 'спа', 'сауна', 'منتجع'];
+    if (spaKeys.some(k => lower.includes(k))) {
+        const facilities = hotel.facilities.wellness_and_sport.join(', ');
+        return {
+            reply: isTR
+                ? `Otelimizde şu wellness imkanları mevcuttur: ${facilities}. Detaylı bilgi için resepsiyonumuzdan bilgi alabilirsiniz. 💆`
+                : `Our hotel offers the following wellness facilities: ${facilities}. For detailed information, please contact our reception. 💆`,
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── OTOPARK ──
+    const parkKeys = ['otopark', 'parking', 'car', 'araç', 'araba', 'парковка', 'موقف', 'parkplatz', 'şarj', 'charge'];
+    if (parkKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? 'Otelimizde ücretsiz açık otopark mevcuttur. Elektrikli araç şarj istasyonumuz da bulunmaktadır. 🚗'
+                : 'We offer free outdoor parking. Electric vehicle charging stations are also available. 🚗',
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── GİRİŞ/ÇIKIŞ SAATLERİ ──
+    const checkinKeys = ['giriş', 'çıkış', 'check-in', 'check-out', 'checkout', 'checkin', 'saat', 'регистрация', 'تسجيل'];
+    if (checkinKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? `Giriş saatimiz: ${hotel.check_in_out.check_in_from} - ${hotel.check_in_out.check_in_to}\nÇıkış saatimiz: ${hotel.check_in_out.check_out_until} 🕐`
+                : `Check-in: ${hotel.check_in_out.check_in_from} - ${hotel.check_in_out.check_in_to}\nCheck-out: ${hotel.check_in_out.check_out_until} 🕐`,
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── KAHVALTI / RESTORAN ──
+    const foodKeys = ['kahvaltı', 'restoran', 'yemek', 'breakfast', 'restaurant', 'food', 'dining', 'завтрак', 'ресторан', 'إفطار', 'مطعم', 'frühstück'];
+    if (foodKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? 'Otelimizde ana restoran ve açık büfe kahvaltı hizmeti sunulmaktadır. Oda servisi de mevcuttur. 🍽️'
+                : 'Our hotel offers a main restaurant with open buffet breakfast service. Room service is also available. 🍽️',
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── KONUM / ADRES ──
+    const locKeys = ['konum', 'adres', 'nerede', 'location', 'address', 'where', 'адрес', 'где', 'عنوان', 'أين', 'wo', 'adresse'];
+    if (locKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? `Otelimizin adresi: ${hotel.location.address}, ${hotel.location.district}/${hotel.location.city}. Zeugma Mozaik Müzesi'ne sadece 200m mesafedeyiz. 📍`
+                : `Our hotel is located at: ${hotel.location.address}, ${hotel.location.district}/${hotel.location.city}. We are just 200m from the Zeugma Mosaic Museum. 📍`,
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── WI-FI ──
+    const wifiKeys = ['wifi', 'wi-fi', 'internet', 'вай-фай', 'واي فاي', 'wlan'];
+    if (wifiKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? 'Otelimizin tüm alanlarında ücretsiz Wi-Fi hizmeti mevcuttur. 📶'
+                : 'Free Wi-Fi is available throughout the hotel. 📶',
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── ODA BİLGİLERİ ──
+    const roomKeys = ['oda', 'room', 'suite', 'номер', 'غرفة', 'zimmer'];
+    if (roomKeys.some(k => lower.includes(k))) {
+        return {
+            reply: isTR
+                ? `Otelimizde toplam ${hotel.rooms.total_rooms} oda bulunmaktadır. Standard Room ve Suite Room seçeneklerimiz mevcuttur. Tüm odalarda klima, LCD TV, ücretsiz Wi-Fi, minibar ve çalışma masası bulunur.`
+                : `Our hotel has ${hotel.rooms.total_rooms} rooms in total. We offer Standard Room and Suite Room options. All rooms feature air conditioning, LCD TV, free Wi-Fi, minibar and a work desk.`,
+            language: lang, intent: 'QUESTION'
+        };
+    }
+
+    // ── SELAMLAMA ──
+    const greetKeys = ['merhaba', 'selam', 'hello', 'hi', 'hey', 'hallo', 'bonjour', 'привет', 'здравствуйте', 'مرحبا', 'السلام'];
+    if (greetKeys.some(k => lower.includes(k)) || lower.length < 15) {
+        return {
+            reply: isTR
+                ? 'Merhaba! The Green Park Gaziantep\'e hoş geldiniz. Size nasıl yardımcı olabilirim? Otelimiz, odalar, spa, restoran veya çevre hakkında her türlü sorunuzu yanıtlayabilirim. 😊'
+                : 'Hello! Welcome to The Green Park Gaziantep. How can I assist you? I can help with information about our hotel, rooms, spa, restaurant, or the surrounding area. 😊',
+            language: lang, intent: 'GREETING'
+        };
+    }
+
+    // ── GENEL FALLBACK — Son çare: Soruyu doğal şekilde karşıla ──
+    return {
+        reply: isTR
+            ? `Sorunuzu aldım, hemen cevaplıyorum. The Green Park Gaziantep, 5 yıldızlı, ${hotel.rooms.total_rooms} odalı, şehir merkezinde Zeugma Mozaik Müzesi'ne 200m mesafede yer alan modern bir oteldir. Otelimiz hakkında detaylı bilgi için lütfen sorunuzu belirtiniz veya resepsiyonumuzu arayabilirsiniz: +90 (850) 222 72 75 📞`
+            : `Thank you for your message. The Green Park Gaziantep is a 5-star hotel with ${hotel.rooms.total_rooms} rooms, located in the city center just 200m from the Zeugma Mosaic Museum. For detailed inquiries, please feel free to ask or contact our reception: +90 (850) 222 72 75 📞`,
+        language: lang, intent: 'QUESTION'
+    };
 }

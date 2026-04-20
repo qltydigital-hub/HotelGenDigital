@@ -108,7 +108,50 @@ function isSurroundingsQuestion(userText) {
 }
 
 /**
+ * Belirsiz sorguları zenginleştirir — Perplexity'nin daha tutarlı sonuç bulması için.
+ * "Otel dışında restoran" gibi belirsiz ifadeleri net sorguya dönüştürür.
+ */
+function enrichQuery(userText) {
+    const lower = userText.toLowerCase();
+
+    // Restoran / yemek soruları
+    const foodKeys = ['restoran', 'restaurant', 'lokanta', 'yemek', 'kafe', 'cafe', 'kahve',
+                      'ресторан', 'кафе', 'مطعم', 'مقهى'];
+    // Gezi / turistik
+    const tourKeys = ['gezi', 'gezilecek', 'müze', 'turistik', 'tarihi', 'kale',
+                      'museum', 'sightseeing', 'tourist', 'attraction',
+                      'музей', 'достопримечательность', 'متحف'];
+    // Alışveriş
+    const shopKeys = ['alışveriş', 'market', 'çarşı', 'avm', 'shopping', 'mall',
+                      'магазин', 'سوق'];
+    // Eczane / sağlık
+    const healthKeys = ['eczane', 'hastane', 'pharmacy', 'hospital', 'аптека', 'صيدلية'];
+    // Ulaşım
+    const transportKeys = ['havalimanı', 'taksi', 'airport', 'taxi', 'аэропорт', 'такси', 'مطار'];
+
+    if (foodKeys.some(k => lower.includes(k))) {
+        return `Gaziantep Şehitkamil ilçesinde, Mithatpaşa Mahallesi Alibey Sokak çevresindeki en popüler ve en çok ziyaret edilen restoranlar, kafeler ve yemek mekanları nelerdir? ${HOTEL_LOCATION.address} yakınındaki gerçek ve bilinen mekanları listele. Kullanıcının orijinal sorusu: ${userText}`;
+    }
+    if (tourKeys.some(k => lower.includes(k))) {
+        return `Gaziantep'te en çok ziyaret edilen turistik yerler, müzeler ve tarihi mekanlar nelerdir? ${HOTEL_LOCATION.address} yakınında gezilecek yerler. Kullanıcının orijinal sorusu: ${userText}`;
+    }
+    if (shopKeys.some(k => lower.includes(k))) {
+        return `Gaziantep Şehitkamil'de, ${HOTEL_LOCATION.address} yakınındaki alışveriş merkezleri, çarşılar ve marketler nerededir? Kullanıcının orijinal sorusu: ${userText}`;
+    }
+    if (healthKeys.some(k => lower.includes(k))) {
+        return `Gaziantep Şehitkamil Mithatpaşa Mahallesi yakınındaki nöbetçi eczaneler ve sağlık kuruluşları nerededir? Kullanıcının orijinal sorusu: ${userText}`;
+    }
+    if (transportKeys.some(k => lower.includes(k))) {
+        return `Gaziantep Oğuzeli Havalimanı'ndan ${HOTEL_LOCATION.address} adresine nasıl gidilir? Taksi ve ulaşım seçenekleri. Kullanıcının orijinal sorusu: ${userText}`;
+    }
+
+    // Genel bağlam
+    return `Gaziantep Şehitkamil bölgesinde (${HOTEL_LOCATION.address} yakınında): ${userText}`;
+}
+
+/**
  * Perplexity sonar-pro ile gerçek zamanlı çevre araması yapar.
+ * Sorgu zenginleştirme ile tutarsızlık sorununu çözer.
  */
 async function searchSurroundings(userText, openaiClient) {
     const perplexityKey = process.env.PERPLEXITY_API_KEY;
@@ -125,6 +168,10 @@ async function searchSurroundings(userText, openaiClient) {
     };
     const langNote = langInstructions[lang] || langInstructions.en;
 
+    // Sorguyu zenginleştir — belirsiz ifadeleri net sorguya dönüştür
+    const enrichedQuery = enrichQuery(userText);
+    console.log(`[PERPLEXITY] Zenginleştirilmiş sorgu: "${enrichedQuery.substring(0, 100)}..."`);
+
     // ── 1. PERPLEXITY sonar-pro ──────────────────────────────────────
     if (perplexityKey && perplexityKey.length > 10) {
         try {
@@ -139,20 +186,25 @@ async function searchSurroundings(userText, openaiClient) {
                             role: 'system',
                             content:
 `Sen The Green Park Gaziantep otelinin dijital misafir asistanısın.
+Otel Adı: The Green Park Gaziantep
 Otel Adresi: ${HOTEL_LOCATION.address}
+Koordinatlar: ${HOTEL_LOCATION.lat}, ${HOTEL_LOCATION.lng}
+Yakın Noktalar: Zeugma Mozaik Müzesi (200m), Gaziantep Kalesi (3km), Masal Parkı (4.5km)
 
-GÖREV: Misafirin sorusuna göre otel çevresindeki gerçek, güncel yerleri bul ve listele.
+GÖREV: Misafirin sorusuna göre otel çevresindeki GERÇEK, GÜNCEL yerleri bul ve listele.
 Yanıt Kuralları:
 - ${langNote}
-- En fazla 5 somut öneri ver
+- En fazla 5 somut ve DOĞRULANMIŞ öneri ver
 - Her öneriye 1 satır kısa açıklama ekle
-- Varsa mesafe belirt (örn: "~500m")
+- Varsa otelden yaklaşık mesafe belirt (örn: "~500m", "~1km")
 - Markdown kullan (bold başlıklar, bullet points)
-- Kaynakları veya citation numaralarını YAZMA`
+- Kaynak numaralarını/citation'ları YAZMA
+- Bilmiyorsan veya emin değilsen "Bu konuda net bilgi bulamadım, resepsiyonumuzdan yardım alabilirsiniz" DE — ASLA UYDURMA
+- "Yeterli arama sonucu yok" gibi teknik ifadeler KULLANMA, onun yerine doğrudan bildiklerini söyle`
                         },
                         {
                             role: 'user',
-                            content: `Gaziantep Şehitkamil bölgesinde (${HOTEL_LOCATION.address} yakınında): ${userText}`
+                            content: enrichedQuery
                         }
                     ],
                     max_tokens: 600,
@@ -175,9 +227,25 @@ Yanıt Kuralları:
             let result = response.data?.choices?.[0]?.message?.content || '';
             result = result.replace(/\[\d+\]/g, '').trim();
 
-            if (result && result.length > 20) {
+            // "Yeterli bilgi yok" benzeri olumsuz yanıt kontrolü — bu tip yanıtlarda fallback'e düş
+            const negativePatterns = [
+                'yeterli bilgi',
+                'bilgi içermemektedir',
+                'sonuç bulunamadı',
+                'bulunamadı',
+                'insufficient',
+                'no results',
+                'could not find',
+            ];
+            const isNegativeResponse = negativePatterns.some(p => result.toLowerCase().includes(p));
+
+            if (result && result.length > 20 && !isNegativeResponse) {
                 console.log(`✅ [PERPLEXITY] sonar-pro yanıt: ${result.length} karakter (dil: ${lang})`);
                 return { source: 'perplexity', content: result };
+            }
+
+            if (isNegativeResponse) {
+                console.warn(`⚠️ [PERPLEXITY] Olumsuz yanıt tespit edildi → OpenAI fallback'e düşülüyor`);
             }
         } catch (e) {
             const errMsg = e.response?.data?.error?.message || e.message;
@@ -202,7 +270,7 @@ Otel: ${HOTEL_LOCATION.address}
 Gaziantep hakkında kapsamlı bilgin var.
 Misafirin sorusuna 5 somut öneri ile kısa yanıt ver.
 ${langNote}
-Uydurmak yerine genel ve güvenilir bilgi ver.
+KURAL: Emin olmadığın yerleri UYDURMA. Genel ve güvenilir bilgi ver.
 Markdown kullan.`
                     },
                     { role: 'user', content: userText }

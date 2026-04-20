@@ -1,12 +1,12 @@
 {
-  "mainBotToken": "8378235028:AAHJZaKchO4oI9VjZ5-SDxWM6xKOcI5ZS4M",
-  "botUsername": "hotelYoneticin8n_bot",
+  "mainBotToken": "8792626225:AAFj9qw55DQ9A7bGoAOkRhn5gTbpHIG1Ux4",
+  "botUsername": "HOTEL_GENEL_ANA_HESAP_bot",
   "managers": {
     "ozgur_ozen": {
       "name": "Özgür ÖZEN",
       "role": "ADMIN",
       "telegramId": "758605940",
-      "botToken": "8378235028:AAHJZaKchO4oI9VjZ5-SDxWM6xKOcI5ZS4M",
+      "botToken": "8792626225:AAFj9qw55DQ9A7bGoAOkRhn5gTbpHIG1Ux4",
       "departments": {
         "HOUSEKEEPING": { "chatId": "-5146686704", "groupName": "Greenpark-HK (Özgür)" },
         "TEKNIK":       { "chatId": "-5109602342", "groupName": "Greenpark-TS (Özgür)" },

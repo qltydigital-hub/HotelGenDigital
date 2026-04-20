@@ -8,9 +8,15 @@
  *
  * Sorun tespit edildiğinde yöneticiye Telegram bildirimi gönderir.
  * Her 30 dakikada bir otomatik çalışır + bot başlangıcında 1 kez çalışır.
+ *
+ * KORUMALAR:
+ * - Ağ kesilince (ENOTFOUND/ETIMEDOUT) Supabase/OpenAI çağrısı yapmaz
+ * - Admin bildirimi flood koruması: aynı hata 30dk içinde bir kez bildirilir
+ * - Supabase sorgusu 8 saniye timeout ile sınırlı
  */
 
 const HEALTH_CHECK_INTERVAL = 30 * 60 * 1000; // 30 dakika
+const ALERT_COOLDOWN_MS     = 30 * 60 * 1000; // Admin flood koruması: 30 dakika
 
 /**
  * @param {object} opts
@@ -30,10 +36,50 @@ function createHealthMonitor({ openai, supabase, bot, secondaryBots = [], adminC
         errors: []
     };
 
+    // Admin bildirim flood koruması: aynı hata 30dk içinde tekrar bildirilmez
+    let lastAlertTime = 0;
+
+    /**
+     * İnternet bağlantısı yokken gereksiz yere Supabase/OpenAI çağrısı
+     * yapmamak için önce Telegram'a erişimi kontrol et.
+     * @returns {boolean} true = ağ var, false = ağ yok
+     */
+    async function isNetworkAvailable() {
+        if (!bot || !bot.telegram) return true; // bilinmiyor, devam et
+        try {
+            await bot.telegram.getMe();
+            return true;
+        } catch (e) {
+            const isNetErr = e.message && (
+                e.message.includes('ENOTFOUND') ||
+                e.message.includes('ETIMEDOUT') ||
+                e.message.includes('ECONNREFUSED') ||
+                e.message.includes('ECONNRESET') ||
+                e.message.includes('network')
+            );
+            if (isNetErr) {
+                console.warn(`🌐 [HEALTH] Ağ erişimi yok (${e.message}), bu tur health check atlanıyor.`);
+                return false;
+            }
+            return true; // Telegram hatası ama ağ var, devam et
+        }
+    }
+
     async function runHealthCheck(silent = false) {
         const t0 = Date.now();
         results.errors = [];
         results.lastCheck = new Date().toISOString();
+
+        // ── Ağ önkontrolü: ENOTFOUND döngüsünü önler ──────────────────────
+        const networkOk = await isNetworkAvailable();
+        if (!networkOk) {
+            results.mainBot = 'FAIL: Ağ bağlantısı yok (ENOTFOUND/ETIMEDOUT)';
+            results.supabase = 'SKIP: Ağ yok';
+            results.openai   = 'SKIP: Ağ yok';
+            results.errors.push('Ağ bağlantısı yok — Telegram, Supabase ve OpenAI erişilemiyor');
+            console.warn('🔴 [HEALTH CHECK] Ağ erişimi yok, health check atlandı. İnternet bağlantısını kontrol edin.');
+            return results;
+        }
 
         // 1. OpenAI API Key Kontrolü
         if (openai) {
@@ -53,10 +99,14 @@ function createHealthMonitor({ openai, supabase, bot, secondaryBots = [], adminC
             results.errors.push('OpenAI client başlatılmamış');
         }
 
-        // 2. Supabase Bağlantı Kontrolü
+        // 2. Supabase Bağlantı Kontrolü (8sn timeout ile — fetch failed döngüsünü önler)
         if (supabase) {
             try {
-                const { data, error } = await supabase.from('hotel_settings').select('key').limit(1);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Supabase sorgu zaman aşımı (8sn)')), 8000)
+                );
+                const queryPromise = supabase.from('hotel_settings').select('key').limit(1);
+                const { error } = await Promise.race([queryPromise, timeoutPromise]);
                 if (error) throw new Error(error.message);
                 results.supabase = 'OK';
             } catch (e) {
@@ -102,14 +152,21 @@ function createHealthMonitor({ openai, supabase, bot, secondaryBots = [], adminC
             console.log(`✅ [HEALTH CHECK] Tüm sistemler çalışıyor (${elapsed}ms)`);
         }
 
-        // Sorun varsa yöneticiye bildirim
+        // ── Admin bildirimi — FLOOD KORUMALI ──────────────────────────────
         if (hasErrors && adminChatId && bot && bot.telegram) {
-            const errorList = results.errors.map(e => `• ${e}`).join('\n');
-            const alertMsg = `🔴 *SYSTEM ALERT — Sağlık Kontrolü*\n\n${results.errors.length} sorun tespit edildi:\n\n${errorList}\n\n⏰ Kontrol zamanı: ${new Date().toLocaleTimeString('tr-TR')}\n_Otomatik sağlık kontrolü (30dk periyot)_`;
-            try {
-                await bot.telegram.sendMessage(adminChatId, alertMsg, { parse_mode: 'Markdown' });
-            } catch (e) {
-                console.error('[HEALTH] Yönetici bildirimi gönderilemedi:', e.message);
+            const now = Date.now();
+            if (now - lastAlertTime < ALERT_COOLDOWN_MS) {
+                const remainMin = Math.round((ALERT_COOLDOWN_MS - (now - lastAlertTime)) / 60000);
+                console.warn(`[HEALTH] Admin bildirimi cooldown'da (${remainMin} dk kaldı), bildirim atlandı.`);
+            } else {
+                lastAlertTime = now;
+                const errorList = results.errors.map(e => `• ${e}`).join('\n');
+                const alertMsg = `🔴 *SYSTEM ALERT — Sağlık Kontrolü*\n\n${results.errors.length} sorun tespit edildi:\n\n${errorList}\n\n⏰ Kontrol zamanı: ${new Date().toLocaleTimeString('tr-TR')}\n_Otomatik sağlık kontrolü (30dk periyot)_`;
+                try {
+                    await bot.telegram.sendMessage(adminChatId, alertMsg, { parse_mode: 'Markdown' });
+                } catch (e) {
+                    console.error('[HEALTH] Yönetici bildirimi gönderilemedi:', e.message);
+                }
             }
         }
 
